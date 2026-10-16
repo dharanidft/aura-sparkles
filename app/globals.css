@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Italiana&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-ivory: #FFFFFF;
+  --color-cream: #FFFFFF;
+  --color-blush: #E8C9C5;
+  --color-plum: #452638;
+  --color-plum-light: #5D354D;
+  --color-gold: #B69A62;
+  --color-charcoal: #282522;
+  --color-white: #FFFFFF;
+}
+
+/* Dynamic font theme support — applied to both root and body */
+:root[data-font="cinzel"], body[data-font="cinzel"] {
+  --font-heading: 'Cinzel', serif;
+}
+:root[data-font="italiana"], body[data-font="italiana"] {
+  --font-heading: 'Italiana', serif;
+}
+:root[data-font="cormorant"], body[data-font="cormorant"] {
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+}
+:root[data-font="montserrat"], body[data-font="montserrat"] {
+  --font-heading: 'Montserrat', sans-serif;
+}
+:root[data-font="playfair"], body[data-font="playfair"] {
+  --font-heading: 'Playfair Display', Georgia, serif;
+}
+
+html, body {
+  background-color: #FFFFFF !important;
+  color: var(--color-charcoal);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
+  font-family: var(--font-heading) !important;
+}
+
+.font-cinzel { font-family: 'Cinzel', serif !important; }
+.font-italiana { font-family: 'Italiana', serif !important; }
+.font-cormorant { font-family: 'Cormorant Garamond', Georgia, serif !important; }
+.font-montserrat { font-family: 'Montserrat', sans-serif !important; }
+.font-playfair { font-family: 'Playfair Display', Georgia, serif !important; }
+.font-sans { font-family: var(--font-body) !important; }
+
+/* Custom editorial scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #FFFFFF; }
+::-webkit-scrollbar-thumb { background: #E8C9C5; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #B69A62; }
+
+/* ============================================
+   SCROLL REVEAL SYSTEM
+   ============================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-60px);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-scale.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Staggered delay helpers */
+.delay-100 { transition-delay: 100ms !important; }
+.delay-150 { transition-delay: 150ms !important; }
+.delay-200 { transition-delay: 200ms !important; }
+.delay-300 { transition-delay: 300ms !important; }
+.delay-400 { transition-delay: 400ms !important; }
+.delay-500 { transition-delay: 500ms !important; }
+.delay-600 { transition-delay: 600ms !important; }
+.delay-700 { transition-delay: 700ms !important; }
+.delay-800 { transition-delay: 800ms !important; }
+
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
+
+/* Floating ambient blobs */
+@keyframes floatA {
+  0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+  33%  { transform: translateY(-20px) translateX(10px) scale(1.04); }
+  66%  { transform: translateY(10px) translateX(-8px) scale(0.97); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+  40%  { transform: translateY(18px) translateX(-12px) scale(1.06); }
+  70%  { transform: translateY(-12px) translateX(6px) scale(0.96); }
+}
+
+.animate-floatA { animation: floatA 9s ease-in-out infinite; }
+.animate-floatB { animation: floatB 12s ease-in-out infinite; }
+
+/* Rising candle particle */
+@keyframes particleRise {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  15%  { opacity: 0.85; }
+  85%  { opacity: 0.5; }
+  100% { transform: translateY(-130px) scale(0.2); opacity: 0; }
+}
+
+/* Shimmer sweep */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg,
+    #B69A62 0%, #E8D5A3 40%, #B69A62 60%, #E8D5A3 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Sparkle spin */
+@keyframes spinSlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spinSlow 8s linear infinite; }
+
+/* Pulse glow */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.animate-glow { animation: pulseGlow 4s infinite ease-in-out; }
+
+/* Rising particle */
+@keyframes particleRise {
+  0%   { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-120px) scale(0.3); opacity: 0; }
+}
+
+/* Slide-in from right (mobile drawer) */
+@keyframes slideRight {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+.animate-slideRight { animation: slideRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.3s ease forwards; }
+
+/* Scale badge pop */
+@keyframes scalePop {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.animate-scale { animation: scalePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* Ticker / marquee scroll */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-ticker { animation: ticker 22s linear infinite; }
+
+/* Hero text word-by-word reveal */
+@keyframes wordReveal {
+  from { opacity: 0; transform: translateY(24px) skewY(2deg); }
+  to   { opacity: 1; transform: translateY(0) skewY(0); }
+}
+.word-reveal {
+  display: inline-block;
+  opacity: 0;
+  animation: wordReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Candle flame flicker */
+@keyframes flicker {
+  0%, 100% { transform: scaleY(1) translateY(0); opacity: 1; }
+  25% { transform: scaleY(1.06) translateY(-1px) scaleX(0.96); opacity: 0.94; }
+  50% { transform: scaleY(0.94) translateY(1px) scaleX(1.04); opacity: 0.98; }
+  75% { transform: scaleY(1.03) translateY(-0.5px) scaleX(0.98); opacity: 0.96; }
+}
+.animate-flicker { animation: flicker 2.4s ease-in-out infinite; }
+
+/* Soft border pulse */
+@keyframes borderPulse {
+  0%, 100% { border-color: rgba(182, 154, 98, 0.3); }
+  50% { border-color: rgba(182, 154, 98, 0.9); }
+}
+.animate-border-pulse { animation: borderPulse 3s ease-in-out infinite; }
+
+/* Number count up handled in JS */
+
+/* ============================================
+   INTERACTIVE & GLASS UTILITIES
+   ============================================ */
+.transition-editorial {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-gradient {
+  background: linear-gradient(135deg, rgba(250,247,242,0.95) 0%, rgba(242,233,223,0.9) 100%);
+}
+
+.glass-plum {
+  background: rgba(69, 38, 56, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-nav {
+  background: rgba(250, 247, 242, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Magnetic button effect — JS sets --tx/--ty via inline style */
+.magnetic {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* Card tilt — JS sets --rx/--ry */
+.card-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+/* Gradient text */
+.gradient-gold {
+  background: linear-gradient(135deg, #B69A62, #E8D5A3, #B69A62);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Cursor sparkle canvas */
+#cursor-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+}
