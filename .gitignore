@@ -25,6 +25,7 @@ install.log
 *.pem
 *.tsbuildinfo
 
-# archives
+# archives & temp screenshots
 *.zip
 *.tar.gz
+Screenshot*.png

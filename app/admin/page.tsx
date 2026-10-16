@@ -30,7 +30,8 @@ import {
   ExternalLink,
   ChevronRight,
   KeyRound,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard
 } from "lucide-react";
 import { getAllOrders, updateOrderStatusInStorage } from "@/lib/orders";
 import { 
@@ -1098,6 +1099,65 @@ export default function AdminPage() {
                 <p className="font-semibold text-[#452638]">Production Deployment Note:</p>
                 <p>
                   You can also configure the admin passcode in your production environment (such as Vercel, Netlify, or your host server) by setting the environment variable <code className="bg-white px-1.5 py-0.5 rounded border border-[#EAE0D5] text-[#452638] font-mono">NEXT_PUBLIC_ADMIN_PASSCODE=YourSecurePassword</code>.
+                </p>
+              </div>
+            </div>
+
+            {/* ─── Razorpay Payment Gateway Integration ─── */}
+            <div className="bg-white p-6 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAE0D5] pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="w-5 h-5 text-[#B69A62]" />
+                    <h2 className="font-serif text-xl text-[#452638]">Razorpay Payment Gateway</h2>
+                  </div>
+                  <p className="text-xs text-[#766E65]">
+                    Accept UPI (Google Pay, PhonePe, Paytm, BHIM), Indian &amp; International Credit/Debit Cards, NetBanking, and Wallets.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Razorpay Ready</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-neutral-50 rounded-xl border border-[#EAE0D5] space-y-2">
+                  <p className="text-xs font-semibold text-[#452638] flex items-center space-x-1.5">
+                    <span>1. Supported Payment Channels</span>
+                  </p>
+                  <ul className="text-xs text-[#766E65] space-y-1 list-disc pl-4">
+                    <li><strong>UPI QR &amp; Intent:</strong> Google Pay, PhonePe, Paytm, CRED, BHIM</li>
+                    <li><strong>Cards:</strong> Visa, MasterCard, RuPay, Amex, Diners Club</li>
+                    <li><strong>NetBanking:</strong> 50+ Indian banks (HDFC, ICICI, SBI, Axis, etc.)</li>
+                    <li><strong>Wallets &amp; EMI:</strong> PayTM, Mobikwik, LazyPay, Cardless EMI</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 bg-neutral-50 rounded-xl border border-[#EAE0D5] space-y-2">
+                  <p className="text-xs font-semibold text-[#452638] flex items-center space-x-1.5">
+                    <span>2. How to Connect Live Gateway</span>
+                  </p>
+                  <ol className="text-xs text-[#766E65] space-y-1 list-decimal pl-4">
+                    <li>Log into your <a href="https://dashboard.razorpay.com/#/access/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#452638] font-semibold underline">Razorpay Dashboard</a>.</li>
+                    <li>Go to <strong>Settings</strong> &rarr; <strong>API Keys</strong> &rarr; Click <strong>Generate Key</strong>.</li>
+                    <li>Copy your <strong>Key ID</strong> and <strong>Key Secret</strong>.</li>
+                    <li>In your Vercel project, go to <strong>Settings &rarr; Environment Variables</strong> and add:
+                      <div className="mt-1 font-mono text-[11px] bg-white p-2 rounded border border-[#EAE0D5] text-[#452638]">
+                        RAZORPAY_KEY_ID = rzp_live_xxxxxxxx<br />
+                        RAZORPAY_KEY_SECRET = your_secret_key
+                      </div>
+                    </li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/70 text-xs text-amber-900 flex items-start space-x-2">
+                <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+                <p>
+                  <strong>Test Mode Fallback:</strong> If keys are not yet configured in your production environment, the checkout will safely operate in verified demo mode so that customer test orders and checkout preview flows can be tested without errors.
                 </p>
               </div>
             </div>

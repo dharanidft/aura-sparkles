@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     const finalTotal = Math.max(0, subtotal - discount + shippingFee);
 
     // 4. Check Razorpay credentials
-    const razorpayKey = process.env.RAZORPAY_KEY_ID;
+    const razorpayKey = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
 
     const orderId = `AS-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
