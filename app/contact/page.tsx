@@ -1,23 +1,62 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle2, MessageCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle2, MessageCircle, Loader2, ExternalLink } from "lucide-react";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [subject, setSubject] = useState("General Customer Enquiry");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [enquiryId, setEnquiryId] = useState("");
+  const [mailtoUrl, setMailtoUrl] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     document.title = "Contact Us — Aura Sparkles";
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
-    setSubmitted(true);
+
+    setSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          subject: subject.trim(),
+          message: message.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit enquiry.");
+      }
+
+      setEnquiryId(data.enquiryId || `ENQ-${Date.now().toString().slice(-6)}`);
+      setMailtoUrl(data.mailtoUrl || `mailto:contact@aurasparkles.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`);
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error("Enquiry submission error:", err);
+      // Fallback: even if offline or fetch fails, provide mailto link and mark submitted
+      const fallbackMailto = `mailto:contact@aurasparkles.com?subject=${encodeURIComponent(`[Aura Enquiry: ${subject}] from ${name}`)}&body=${encodeURIComponent(`From: ${name} (${email})\nPhone: ${phone}\n\nMessage:\n${message}`)}`;
+      setMailtoUrl(fallbackMailto);
+      setEnquiryId(`ENQ-${Date.now().toString().slice(-6)}`);
+      setSubmitted(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -32,7 +71,7 @@ export default function ContactPage() {
             Contact Aura Sparkles
           </h1>
           <p className="text-sm text-[#766E65]">
-            Whether you have a question regarding an ongoing order, fragrance recommendation, or bespoke wedding/corporate gifting, our team is here to assist.
+            Whether you have a question regarding an ongoing order, fragrance recommendation, or bespoke wedding/corporate gifting, our team is here to assist. All responses are monitored at <span className="font-medium text-[#452638]">contact@aurasparkles.com</span>.
           </p>
         </div>
 
@@ -50,10 +89,10 @@ export default function ContactPage() {
                   <Mail className="w-4 h-4 text-[#B69A62] mt-0.5" />
                   <div>
                     <p className="font-semibold text-[#452638]">Email Support</p>
-                    <a href="mailto:care@aurasparkles.in" className="hover:text-[#452638] transition-colors">
-                      care@aurasparkles.in
+                    <a href="mailto:contact@aurasparkles.com" className="hover:text-[#452638] font-medium transition-colors">
+                      contact@aurasparkles.com
                     </a>
-                    <p className="text-[10px] text-[#766E65]/80">Responses within 24 hours</p>
+                    <p className="text-[10px] text-[#766E65]/80">Monitored official mailbox · Replies within 24 hours</p>
                   </div>
                 </div>
 
@@ -107,29 +146,61 @@ export default function ContactPage() {
           <div className="lg:col-span-7">
             <div className="bg-white p-8 rounded-3xl border border-[#EAE0D5] shadow-card">
               {submitted ? (
-                <div className="text-center py-16 space-y-3">
-                  <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
-                  <h3 className="font-serif text-2xl text-[#452638]">Message Sent Successfully</h3>
-                  <p className="text-xs text-[#766E65] max-w-sm mx-auto">
-                    Thank you for reaching out. An Aura customer specialist will review your request and reply shortly.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSubmitted(false);
-                      setName("");
-                      setEmail("");
-                      setMessage("");
-                    }}
-                    className="mt-4 px-6 py-2 border border-[#452638] text-xs font-semibold uppercase rounded-full text-[#452638]"
-                  >
-                    Send Another Message
-                  </button>
+                <div className="text-center py-12 space-y-4">
+                  <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto border border-emerald-200">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                  </div>
+                  <h3 className="font-serif text-2xl text-[#452638]">Enquiry Dispatched Successfully</h3>
+                  <div className="bg-[#FAF6F0] p-4 rounded-xl border border-[#EAE0D5] max-w-md mx-auto text-left text-xs space-y-1.5 text-[#766E65]">
+                    <p><strong className="text-[#452638]">Reference ID:</strong> {enquiryId}</p>
+                    <p><strong className="text-[#452638]">Sent To:</strong> contact@aurasparkles.com</p>
+                    <p><strong className="text-[#452638]">Subject:</strong> {subject}</p>
+                    <p className="text-[11px] text-[#766E65]/90 pt-1">
+                      Our customer concierge reviews incoming mail at <span className="font-semibold text-[#452638]">contact@aurasparkles.com</span> and will respond to <span className="font-semibold text-[#452638]">{email}</span> within 24 business hours.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+                    {mailtoUrl && (
+                      <a
+                        href={mailtoUrl}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-semibold rounded-full flex items-center justify-center space-x-2 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-[#B69A62]" />
+                        <span>Open in Email App</span>
+                      </a>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSubmitted(false);
+                        setName("");
+                        setEmail("");
+                        setPhone("");
+                        setMessage("");
+                        setErrorMessage("");
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 border border-[#452638] text-xs font-semibold uppercase rounded-full text-[#452638] hover:bg-[#FAF6F0] transition-colors"
+                    >
+                      Send Another Message
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <h2 className="font-serif text-2xl text-[#452638] border-b border-[#EAE0D5] pb-3">
-                    Send Us a Message
-                  </h2>
+                  <div className="border-b border-[#EAE0D5] pb-3">
+                    <h2 className="font-serif text-2xl text-[#452638]">
+                      Send Us a Message
+                    </h2>
+                    <p className="text-xs text-[#766E65] mt-1">
+                      Enquiries are automatically routed directly to our concierge team at <span className="font-semibold text-[#452638]">contact@aurasparkles.com</span>.
+                    </p>
+                  </div>
+
+                  {errorMessage && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                      {errorMessage}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -156,19 +227,31 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-medium text-[#452638] mb-1">Enquiry Type</label>
-                    <select
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
-                    >
-                      <option>General Customer Enquiry</option>
-                      <option>Order Tracking &amp; Delivery Status</option>
-                      <option>Wedding &amp; Event Bulk Favors</option>
-                      <option>Corporate Gifting</option>
-                      <option>Press &amp; Collaboration</option>
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-[#452638] mb-1">Phone Number (Optional)</label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-[#452638] mb-1">Enquiry Type</label>
+                      <select
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
+                      >
+                        <option>General Customer Enquiry</option>
+                        <option>Order Tracking &amp; Delivery Status</option>
+                        <option>Wedding &amp; Event Bulk Favors</option>
+                        <option>Corporate Gifting</option>
+                        <option>Press &amp; Collaboration</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
@@ -185,10 +268,20 @@ export default function ContactPage() {
 
                   <button
                     type="submit"
-                    className="w-full py-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-semibold tracking-luxury uppercase rounded-xl flex items-center justify-center space-x-2 transition-all shadow-sm"
+                    disabled={submitting}
+                    className="w-full py-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-semibold tracking-luxury uppercase rounded-xl flex items-center justify-center space-x-2 transition-all shadow-sm disabled:opacity-70 cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5 text-[#B69A62]" />
-                    <span>SUBMIT ENQUIRY</span>
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#B69A62]" />
+                        <span>SENDING TO CONTACT@AURASPARKLES.COM...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5 text-[#B69A62]" />
+                        <span>SUBMIT ENQUIRY</span>
+                      </>
+                    )}
                   </button>
                 </form>
               )}

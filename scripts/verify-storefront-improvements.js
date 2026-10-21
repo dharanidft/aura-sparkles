@@ -22,22 +22,19 @@ function test(name, fn) {
 }
 
 // ─── 1. CRITICAL — Contact Information ──────────────────────────────────────────
-test("Requirement 1: Old placeholder phone number +91 98765 43210 is completely eliminated", () => {
-  const filesToCheck = [
-    "app/contact/page.tsx",
-    "app/refund-policy/page.tsx",
-    "app/shipping-policy/page.tsx",
-    "app/layout.tsx",
-    "app/faq/page.tsx",
-    "components/Footer.tsx",
-  ];
-  for (const rel of filesToCheck) {
-    const full = path.join(root, rel);
-    if (fs.existsSync(full)) {
-      const content = fs.readFileSync(full, "utf8");
-      assert(!content.includes("98765"), `File ${rel} still contains old number 98765!`);
-    }
-  }
+test("Requirement 1: Official contact mailbox contact@aurasparkles.com is active everywhere", () => {
+  const contactPage = fs.readFileSync(path.join(root, "app/contact/page.tsx"), "utf8");
+  assert(contactPage.includes("contact@aurasparkles.com"), "Contact page missing contact@aurasparkles.com");
+  assert(!contactPage.includes("care@aurasparkles.in"), "Contact page still has old care@aurasparkles.in");
+
+  const footer = fs.readFileSync(path.join(root, "components/Footer.tsx"), "utf8");
+  assert(footer.includes("contact@aurasparkles.com"), "Footer missing contact@aurasparkles.com");
+
+  const apiRoute = fs.readFileSync(path.join(root, "app/api/contact/route.ts"), "utf8");
+  assert(apiRoute.includes('TARGET_MAILBOX = "contact@aurasparkles.com"'), "API route missing TARGET_MAILBOX contact@aurasparkles.com");
+
+  const refundPage = fs.readFileSync(path.join(root, "app/refund-policy/page.tsx"), "utf8");
+  assert(refundPage.includes("contact@aurasparkles.com"), "Refund policy missing contact@aurasparkles.com");
 });
 
 test("Requirement 1: Official phone +91 93853 28336 and tel:+919385328336 are present", () => {

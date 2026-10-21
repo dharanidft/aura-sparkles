@@ -23,7 +23,7 @@ const FAQS: FAQItem[] = [
   {
     category: "Orders & Shipping",
     q: "What happens if a glass candle jar arrives damaged in transit?",
-    a: "We take extreme care with multi-layered protective cushioning. However, if transit damage occurs, notify us within 48 hours of receipt at care@aurasparkles.in or via WhatsApp (+91 93853 28336) with a photo of the package, and we will dispatch a brand-new free replacement immediately."
+    a: "We take extreme care with multi-layered protective cushioning. However, if transit damage occurs, notify us within 48 hours of receipt at contact@aurasparkles.com or via WhatsApp (+91 93853 28336) with a photo of the package, and we will dispatch a brand-new free replacement immediately."
   },
   {
     category: "Orders & Shipping",

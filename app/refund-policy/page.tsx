@@ -25,8 +25,8 @@ export default function RefundPolicyPage() {
             </p>
             <p>
               If your glass jar or gift box arrives cracked, chipped, or damaged in transit, please notify us within <strong>48 hours</strong> of receipt with a photo of the package at{" "}
-              <a href="mailto:care@aurasparkles.in" className="text-[#452638] font-semibold hover:underline">
-                care@aurasparkles.in
+              <a href="mailto:contact@aurasparkles.com" className="text-[#452638] font-semibold hover:underline">
+                contact@aurasparkles.com
               </a>
               , call{" "}
               <a href="tel:+919385328336" className="text-[#452638] font-semibold hover:underline">

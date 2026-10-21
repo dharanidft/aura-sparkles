@@ -477,7 +477,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                       <strong>Dispatches in 24 Hours:</strong> Orders placed before 2 PM IST are packaged same day.
                     </p>
                     <p>
-                      <strong>Hassle-Free Replacement:</strong> If damaged in transit, notify us within 48 hours with a photo at care@aurasparkles.in or WhatsApp (+91 93853 28336) for immediate replacement.
+                      <strong>Hassle-Free Replacement:</strong> If damaged in transit, notify us within 48 hours with a photo at contact@aurasparkles.com or WhatsApp (+91 93853 28336) for immediate replacement.
                     </p>
                   </div>
                 )}

@@ -274,11 +274,11 @@ export default function TrackOrderPage() {
             </a>
             <span>•</span>
             <a
-              href="mailto:care@aurasparkles.in"
+              href="mailto:contact@aurasparkles.com"
               className="inline-flex items-center space-x-1.5 text-[#452638] font-semibold hover:underline"
             >
               <Mail className="w-3.5 h-3.5 text-[#B69A62]" />
-              <span>care@aurasparkles.in</span>
+              <span>contact@aurasparkles.com</span>
             </a>
           </div>
         </div>
