@@ -1713,9 +1713,17 @@ export const CURATED_COLLECTIONS = [
 ];
 
 // ─── Store Products Storage & Sync Helpers ─────────────────────────────────────
+export const STORE_CATALOGUE_VERSION = "2.1.0-catalogue-oct2026";
+
 export function getStoreProducts(): Product[] {
   if (typeof window === "undefined") return INITIAL_PRODUCTS;
   try {
+    const currentVer = localStorage.getItem("aura_catalogue_version");
+    if (currentVer !== STORE_CATALOGUE_VERSION) {
+      localStorage.removeItem("aura_products");
+      localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
+      return INITIAL_PRODUCTS;
+    }
     const raw = localStorage.getItem("aura_products");
     if (!raw) return INITIAL_PRODUCTS;
     const parsed = JSON.parse(raw);
@@ -1729,6 +1737,7 @@ export function getStoreProducts(): Product[] {
 export function saveStoreProducts(products: Product[]): void {
   if (typeof window === "undefined") return;
   try {
+    localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
     localStorage.setItem("aura_products", JSON.stringify(products));
     window.dispatchEvent(new Event("aura_products_updated"));
   } catch (err) {
