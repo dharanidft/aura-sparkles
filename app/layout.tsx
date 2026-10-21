@@ -10,10 +10,13 @@ import { CursorSparkle } from "@/components/CursorSparkle";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aurasparkles.in"),
-  title: "AURA SPARKLES — Illuminate Your Moments | Premium Scented Candles & Home Fragrance",
+  title: {
+    template: "%s",
+    default: "Aura Sparkles — Handcrafted Scented Soy Candles & Home Fragrance",
+  },
   description: "Indian home-fragrance studio specialising in hand-poured 100% natural soy wax candles, frosted-glass jars, and botanical aromas. Affordable luxury starting at ₹199.",
   keywords: [
-    "AURA SPARKLES",
+    "Aura Sparkles",
     "scented candles India",
     "soy wax candles",
     "home fragrance",
@@ -22,18 +25,18 @@ export const metadata: Metadata = {
     "luxury candles India",
     "candle gift sets"
   ],
-  authors: [{ name: "AURA SPARKLES" }],
+  authors: [{ name: "Aura Sparkles" }],
   openGraph: {
-    title: "AURA SPARKLES — Illuminate Your Moments",
-    description: "Handcrafted 100% soy wax candles and botanical home fragrances in frosted glass. Made with love in India.",
-    url: "https://aurasparkles.in",
-    siteName: "AURA SPARKLES",
+    title: "Aura Sparkles — Pure · Elegant · You",
+    description: "Handcrafted 100% soy wax candles, botanical wax sachets, casting decor, and kids creative kits. Pure · Elegant · You.",
+    url: "https://www.aurasparkles.com",
+    siteName: "Aura Sparkles",
     images: [
       {
         url: "/images/logo.png",
         width: 800,
         height: 800,
-        alt: "AURA SPARKLES Logo"
+        alt: "Aura Sparkles Logo"
       }
     ],
     locale: "en_IN",
@@ -49,13 +52,30 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "AURA SPARKLES",
-    "url": "https://aurasparkles.in",
-    "logo": "https://aurasparkles.in/images/logo.png",
-    "description": "Indian home-fragrance brand specialising in scented candles and thoughtful gifting.",
-    "slogan": "Illuminate Your Moments.",
+    "name": "Aura Sparkles",
+    "url": "https://www.aurasparkles.com",
+    "logo": "https://www.aurasparkles.com/images/logo.png",
+    "description": "Indian home-fragrance studio specialising in scented soy wax candles, botanical wax sachets, ceramic casting decor, and kids creative kits.",
+    "slogan": "Pure · Elegant · You",
+    "telephone": "+919385328336",
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "telephone": "+919385328336",
+        "contactType": "customer service",
+        "areaServed": "IN",
+        "availableLanguage": ["English", "Hindi"]
+      }
+    ],
+    "sameAs": [
+      "https://www.instagram.com/aurasparklesofficial/"
+    ],
     "address": {
       "@type": "PostalAddress",
+      "streetAddress": "Ayanambakkam, Vadanoombal",
+      "addressLocality": "Chennai",
+      "addressRegion": "Tamil Nadu",
+      "postalCode": "600095",
       "addressCountry": "India"
     }
   };

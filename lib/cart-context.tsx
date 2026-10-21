@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { CartItem, Product, DiscountCoupon } from "./types";
 import { AVAILABLE_COUPONS } from "./products-data";
+import { calculateOrderTotals, FREE_SHIPPING_THRESHOLD, STANDARD_SHIPPING_FEE } from "./shipping";
 
 interface CartContextType {
   items: CartItem[];
@@ -28,9 +29,6 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
-
-const FREE_SHIPPING_THRESHOLD = 499;
-const STANDARD_SHIPPING_FEE = 49;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -148,8 +146,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const shippingFee = subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
-  const finalTotal = Math.max(0, subtotal - discount + shippingFee);
+  // Enforce centralized free-shipping threshold on merchandise subtotal after discount
+  const totals = calculateOrderTotals(subtotal, discount);
+  const shippingFee = totals.shippingFee;
+  const finalTotal = totals.finalTotal;
 
   const applyCoupon = (code: string) => {
     const formatted = code.trim().toUpperCase();

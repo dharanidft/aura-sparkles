@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, ShoppingBag, Star, Sparkles } from "lucide-react";
 import { Product } from "@/lib/types";
 import { useCart } from "@/lib/cart-context";
 import { formatINR } from "@/lib/shipping";
+import { getProductReviewStats } from "@/lib/reviews";
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +19,21 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   const wishlisted = isWishlisted(product.id);
   const [adding, setAdding] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Requirement 4: Calculate rating strictly from real stored review data
+  const [reviewStats, setReviewStats] = useState<{ count: number; averageRating: number | null }>({
+    count: 0,
+    averageRating: null,
+  });
+
+  useEffect(() => {
+    const updateStats = () => {
+      setReviewStats(getProductReviewStats(product.id));
+    };
+    updateStats();
+    window.addEventListener("aura_reviews_updated", updateStats);
+    return () => window.removeEventListener("aura_reviews_updated", updateStats);
+  }, [product.id]);
 
   const handleAdd = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -144,11 +160,17 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
             <span className="uppercase tracking-wider font-medium text-[#B69A62]">
               {product.fragranceFamily}
             </span>
-            <div className="flex items-center space-x-1">
-              <Star className="w-3 h-3 fill-[#B69A62] text-[#B69A62]" />
-              <span className="font-semibold text-[#452638]">{product.rating}</span>
-              <span>({product.reviewCount})</span>
-            </div>
+            
+            {/* Requirement 4: Honest Rating Display based on real reviews */}
+            {reviewStats.count > 0 ? (
+              <div className="flex items-center space-x-1">
+                <Star className="w-3 h-3 fill-[#B69A62] text-[#B69A62]" />
+                <span className="font-semibold text-[#452638]">{reviewStats.averageRating}</span>
+                <span>({reviewStats.count})</span>
+              </div>
+            ) : (
+              <span className="text-[10px] text-[#766E65]/70 italic">Soy Wax</span>
+            )}
           </div>
 
           <Link href={`/shop/${product.slug}`} className="block">
@@ -158,45 +180,34 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
           </Link>
 
           <p className="text-xs text-[#766E65] line-clamp-1 italic font-light">
-            Notes: {product.notes.heart.join(", ")}
+            {product.tagline}
           </p>
         </div>
 
-        <div className="pt-2 border-t border-[#EAE0D5] flex items-center justify-between">
-          <div className="flex items-baseline space-x-2">
-            <span className="text-base font-semibold text-[#452638]">
-              {formatINR(product.price)}
-            </span>
-            {product.mrp > product.price && (
-              <span className="text-xs text-[#766E65] line-through">
-                {formatINR(product.mrp)}
+        {/* Pricing & CTA */}
+        <div className="pt-2 border-t border-[#EAE0D5]/60 flex items-center justify-between">
+          <div>
+            <div className="flex items-baseline space-x-2">
+              <span className="font-serif text-lg font-bold text-[#452638]">
+                {formatINR(product.price)}
               </span>
-            )}
-            {product.mrp > product.price && (
-              <span className="text-[10px] text-emerald-700 font-semibold">
-                {Math.round(((product.mrp - product.price) / product.mrp) * 100)}% off
-              </span>
-            )}
+              {product.mrp > product.price && (
+                <span className="text-xs text-[#766E65] line-through font-light">
+                  {formatINR(product.mrp)}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-[#766E65] mt-0.5 font-medium">{product.netWeight}</p>
           </div>
 
-          {/* Mobile direct add */}
+          {/* Mobile Quick Add */}
           <button
             onClick={handleAdd}
-            aria-label={`Add ${product.name} to cart`}
-            className={`sm:hidden p-2 rounded-full transition-all duration-300 ${
-              adding ? "bg-emerald-700 scale-90" : "bg-[#452638] hover:bg-[#5D354D] hover:scale-110"
-            } text-white`}
+            className="sm:hidden p-2 rounded-full bg-[#452638] text-white active:scale-95 transition-transform"
+            aria-label="Add to bag"
           >
-            {adding ? (
-              <Sparkles className="w-4 h-4 text-[#B69A62] animate-spin-slow" />
-            ) : (
-              <ShoppingBag className="w-4 h-4 text-[#B69A62]" />
-            )}
+            <ShoppingBag className="w-4 h-4" />
           </button>
-
-          <span className="hidden sm:inline-block text-[11px] text-[#766E65]">
-            {product.netWeight?.split("/")[0]}
-          </span>
         </div>
       </div>
     </div>

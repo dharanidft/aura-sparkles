@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, CheckCircle2, MessageCircle } from "lucide-react";
 
 export default function ContactPage() {
@@ -9,6 +9,10 @@ export default function ContactPage() {
   const [subject, setSubject] = useState("General Customer Enquiry");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    document.title = "Contact Us — Aura Sparkles";
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +29,7 @@ export default function ContactPage() {
             We Would Love to Hear from You
           </p>
           <h1 className="font-serif text-4xl sm:text-5xl text-[#452638] font-normal tracking-tight">
-            Contact AURA SPARKLES
+            Contact Aura Sparkles
           </h1>
           <p className="text-sm text-[#766E65]">
             Whether you have a question regarding an ongoing order, fragrance recommendation, or bespoke wedding/corporate gifting, our team is here to assist.
@@ -34,7 +38,7 @@ export default function ContactPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          {/* Left Column: Direct Info Cards */}
+          {/* Left Column: Direct Verified Contact Cards */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-4">
               <h2 className="font-serif text-xl font-medium text-[#452638]">
@@ -46,7 +50,9 @@ export default function ContactPage() {
                   <Mail className="w-4 h-4 text-[#B69A62] mt-0.5" />
                   <div>
                     <p className="font-semibold text-[#452638]">Email Support</p>
-                    <p>care@aurasparkles.in</p>
+                    <a href="mailto:care@aurasparkles.in" className="hover:text-[#452638] transition-colors">
+                      care@aurasparkles.in
+                    </a>
                     <p className="text-[10px] text-[#766E65]/80">Responses within 24 hours</p>
                   </div>
                 </div>
@@ -54,8 +60,10 @@ export default function ContactPage() {
                 <div className="flex items-start space-x-3">
                   <Phone className="w-4 h-4 text-[#B69A62] mt-0.5" />
                   <div>
-                    <p className="font-semibold text-[#452638]">Concierge WhatsApp & Helpline</p>
-                    <p>+91 98765 43210</p>
+                    <p className="font-semibold text-[#452638]">Concierge Helpline &amp; Telephone</p>
+                    <a href="tel:+919385328336" className="text-sm font-semibold text-[#452638] hover:underline">
+                      +91 93853 28336
+                    </a>
                     <p className="text-[10px] text-[#766E65]/80">Mon – Sat: 10:00 AM – 7:00 PM IST</p>
                   </div>
                 </div>
@@ -63,22 +71,23 @@ export default function ContactPage() {
                 <div className="flex items-start space-x-3">
                   <MapPin className="w-4 h-4 text-[#B69A62] mt-0.5" />
                   <div>
-                    <p className="font-semibold text-[#452638]">Studio & Fulfillment</p>
+                    <p className="font-semibold text-[#452638]">Studio &amp; Fulfillment</p>
                     <p>Aura Sparkles Fragrance Atelier</p>
-                    <p>Indiranagar, Bengaluru, Karnataka 560038, India</p>
+                    <p>Ayanambakkam, Vadanoombal, Tamil Nadu 600095, India</p>
                   </div>
                 </div>
               </div>
 
+              {/* Requirement 1: Official WhatsApp link with preserved message */}
               <div className="pt-2">
                 <a
-                  href="https://wa.me/919876543210?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20enquiry%20regarding%20fragrances"
+                  href="https://wa.me/919385328336?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20enquiry%20regarding%20fragrances"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 transition-colors"
+                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 transition-colors shadow-xs"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Chat on WhatsApp</span>
+                  <span>Chat on WhatsApp (+91 93853 28336)</span>
                 </a>
               </div>
             </div>
@@ -86,7 +95,7 @@ export default function ContactPage() {
             {/* Corporate & Event Gifting Banner */}
             <div className="p-6 bg-[#F2E9DF] rounded-2xl border border-[#E8C9C5] space-y-2 text-xs">
               <p className="font-serif text-lg font-medium text-[#452638]">
-                Bespoke Gifting & Weddings
+                Bespoke Gifting &amp; Weddings
               </p>
               <p className="text-[#766E65] leading-relaxed">
                 Planning wedding favors, festive hampers, or corporate appreciation gifts? We offer customized label monograms and custom candle packaging with special bulk rates.
@@ -155,10 +164,10 @@ export default function ContactPage() {
                       className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
                     >
                       <option>General Customer Enquiry</option>
-                      <option>Order Tracking & Delivery Status</option>
-                      <option>Wedding & Event Bulk Favors</option>
+                      <option>Order Tracking &amp; Delivery Status</option>
+                      <option>Wedding &amp; Event Bulk Favors</option>
                       <option>Corporate Gifting</option>
-                      <option>Press & Collaboration</option>
+                      <option>Press &amp; Collaboration</option>
                     </select>
                   </div>
 

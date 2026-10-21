@@ -36,6 +36,8 @@ export default function OrderSuccessPage() {
       });
     } catch (e) {}
 
+    document.title = `Order Confirmed (${orderId}) — Aura Sparkles`;
+
     const found = getOrderById(orderId);
     if (found) {
       setOrder(found);

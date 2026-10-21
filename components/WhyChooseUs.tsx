@@ -8,39 +8,39 @@ import { useRevealContainer } from "@/lib/useScrollReveal";
 const FEATURES = [
   {
     icon: Sparkles,
-    title: "Fragrances for Every Mood",
+    title: "Artisanal Fragrance Blends",
     description:
-      "From tranquil woody sandalwood to romantic Kannauj rose, each blend is orchestrated to complement your state of mind.",
-    stat: 25,
+      "From tranquil woody Mysore sandalwood to Kannauj damask rose, each blend is thoughtfully orchestrated with pure botanicals.",
+    stat: 12,
     statSuffix: "+",
-    statLabel: "Unique Fragrances",
+    statLabel: "Curated Fragrances",
   },
   {
     icon: Compass,
-    title: "Thoughtfully Designed",
+    title: "Thoughtfully Hand-Poured",
     description:
-      "Frosted glass containers, lead-free cotton wicks, and pure soy wax formulated for a slow, soot-free, clean burn.",
+      "Frosted glass containers, lead-free cotton wicks, and pure plant-based soy wax formulated for a clean, soot-free burn.",
     stat: 100,
     statSuffix: "%",
     statLabel: "Natural Soy Wax",
   },
   {
     icon: PackageCheck,
-    title: "Beautifully Presented",
+    title: "Keepsake Gift Presentation",
     description:
-      "Every order arrives ready for gifting, nestled in our signature blush and ivory packaging with satin accents.",
-    stat: 5000,
-    statSuffix: "+",
-    statLabel: "Happy Customers",
+      "Every order arrives securely packaged and gifting-ready, nestled with protective cushioning and complimentary gift card.",
+    stat: 499,
+    statSuffix: " ₹+",
+    statLabel: "Free Shipping Order",
   },
   {
     icon: Flame,
-    title: "Made for Everyday Moments",
+    title: "Authoritative Burn Times",
     description:
-      "Luxury that belongs in your everyday life—elevating quiet morning coffees, evening reading, and dinner with loved ones.",
-    stat: 25,
+      "Measured for consistent, safe performance: 18–22 hours for our 80g signature jars, and 3–4 hours per tea-light candle.",
+    stat: 22,
     statSuffix: " Hrs",
-    statLabel: "Burn Time",
+    statLabel: "80g Jar Burn Time",
   },
 ];
 
@@ -54,10 +54,10 @@ export function WhyChooseUs() {
 
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-xs uppercase tracking-[0.15em] text-[#B69A62] font-semibold mb-2">
-            The AURA Difference
+            The Aura Difference
           </p>
           <h2 className="font-serif text-3xl md:text-4xl text-[#452638] font-normal tracking-tight">
-            Why Choose AURA SPARKLES
+            Why Choose Aura Sparkles
           </h2>
           <div className="w-12 h-[1px] bg-[#B69A62] mx-auto my-4" />
         </div>
@@ -76,7 +76,6 @@ export function WhyChooseUs() {
                   <div className="w-16 h-16 rounded-full bg-white border border-[#E8C9C5] flex items-center justify-center text-[#452638] group-hover:bg-[#452638] group-hover:border-[#452638] transition-all duration-500 shadow-sm">
                     <Icon className="w-7 h-7 transition-all duration-500 group-hover:text-[#B69A62] group-hover:scale-110" />
                   </div>
-                  {/* Pulse ring */}
                   <div className="absolute inset-0 rounded-full border border-[#B69A62]/30 scale-100 group-hover:scale-125 group-hover:opacity-0 transition-all duration-700" />
                 </div>
 

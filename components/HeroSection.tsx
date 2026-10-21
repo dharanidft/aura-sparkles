@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { INITIAL_PRODUCTS } from "@/lib/products-data";
+import { formatINR } from "@/lib/shipping";
 
 // Floating candle particles
 function FloatingParticles() {
@@ -75,18 +77,26 @@ function MagneticButton({
   );
 }
 
-const STATS = [
-  { value: "100%", label: "Pure Soy Wax" },
-  { value: "₹199", label: "Introductory Price" },
-  { value: "25+ Hrs", label: "Clean Burn Time" },
-];
-
 export function HeroSection() {
   const [visible, setVisible] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
+  // Authoritative catalogue data derivation
+  const featuredProduct =
+    INITIAL_PRODUCTS.find((p) => p.id === "jar-80-sandalwood") ||
+    INITIAL_PRODUCTS.find((p) => p.slug === "mysore-sandalwood-candle-80g") ||
+    INITIAL_PRODUCTS[0];
+
+  const tealightProduct =
+    INITIAL_PRODUCTS.find((p) => p.category === "Tea-Light Candles") || { price: 160 };
+
+  const STATS = [
+    { value: "100%", label: "Pure Soy Wax" },
+    { value: `From ${formatINR(tealightProduct.price)}`, label: "Tea Lights (10-Pk)" },
+    { value: `From ${formatINR(featuredProduct.price)}`, label: `Jar Candles (${featuredProduct.sizeVariant || "80g"})` },
+  ];
+
   useEffect(() => {
-    // Small delay so mount animations feel intentional
     const t = setTimeout(() => setVisible(true), 80);
     return () => clearTimeout(t);
   }, []);
@@ -105,7 +115,6 @@ export function HeroSection() {
         className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[28rem] h-[28rem] rounded-full bg-[#F2E9DF]/60 blur-3xl pointer-events-none animate-floatB"
         aria-hidden
       />
-      {/* Centre faint blob */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#B69A62]/8 blur-3xl pointer-events-none animate-floatA"
         style={{ animationDelay: "3s" }}
@@ -130,7 +139,7 @@ export function HeroSection() {
               }}
             >
               <Sparkles className="w-3.5 h-3.5 text-[#B69A62] animate-spin-slow" />
-              <span>HOME FRAGRANCE, REIMAGINED</span>
+              <span>TEA LIGHTS FROM ₹160 · JAR CANDLES FROM ₹249</span>
             </div>
 
             {/* H1 — word-by-word reveal */}
@@ -168,7 +177,7 @@ export function HeroSection() {
                 transition: "opacity 0.7s ease 0.9s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.9s",
               }}
             >
-              Thoughtfully chosen fragrances to bring warmth, calm and a little everyday magic into your space. Handcrafted with 100% natural soy wax, frosted glass, and pure Indian botanicals.
+              Thoughtfully chosen fragrances to bring warmth, calm, and everyday elegance into your sanctuary. Handcrafted with 100% natural soy wax, frosted glass, and pure Indian botanicals.
             </p>
 
             {/* CTAs */}
@@ -236,13 +245,14 @@ export function HeroSection() {
               {/* Main image - uncropped with object-contain */}
               <div className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-[#EAE0D5] group flex items-center justify-center p-3">
                 <Image
-                  src="https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85"
-                  alt="AURA SPARKLES Frosted Glass Scented Candle in intimate home setting"
+                  src={featuredProduct.images[0] || "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85"}
+                  alt={`${featuredProduct.name} - ${featuredProduct.netWeight}`}
                   fill
                   className={`object-contain p-2 transition-transform duration-[1.2s] ease-out group-hover:scale-105 ${imageLoaded ? "scale-100" : "scale-110"}`}
                   priority
                   onLoad={() => setImageLoaded(true)}
                 />
+                
                 {/* Aura Sparkles Authenticity Mark */}
                 <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-[#EAE0D5]">
                   <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
@@ -253,26 +263,33 @@ export function HeroSection() {
                   </span>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#282522]/45 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#282522]/45 via-transparent to-transparent pointer-events-none" />
 
-                {/* Floating caption */}
-                <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl glass-nav border border-white/60 shadow-lg text-[#282522] translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                {/* Floating caption dynamically tied to the authoritative featured product */}
+                <Link
+                  href={`/shop/${featuredProduct.slug}`}
+                  className="absolute bottom-6 left-6 right-6 p-4 rounded-xl glass-nav border border-white/60 shadow-lg text-[#282522] translate-y-2 group-hover:translate-y-0 transition-all duration-500 block hover:border-[#B69A62]"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] tracking-[0.15em] uppercase text-[#B69A62] font-bold">
-                        Signature Edition
+                        Signature Edition · {featuredProduct.sizeVariant || "80g"} Jar
                       </p>
                       <p className="font-serif text-base font-semibold text-[#452638]">
-                        Mysore Sandalwood &amp; Amber
+                        {featuredProduct.name}
                       </p>
-                      <p className="text-xs text-[#766E65]">Frosted Glass Soy Wax Candle</p>
+                      <p className="text-xs text-[#766E65]">
+                        Frosted Glass Soy Candle · {featuredProduct.burnTime}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-base font-bold text-[#452638]">₹199</span>
+                      <span className="text-base font-bold text-[#452638]">
+                        {formatINR(featuredProduct.price)}
+                      </span>
                       <p className="text-[10px] text-emerald-700 font-medium">In Stock</p>
                     </div>
                   </div>
-                </div>
+                </Link>
               </div>
 
               {/* Secondary floating image */}

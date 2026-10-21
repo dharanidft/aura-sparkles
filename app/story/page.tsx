@@ -2,10 +2,11 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Heart, Feather, Flame } from "lucide-react";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Our Story — AURA SPARKLES | Illuminate Your Moments",
-  description: "Learn about the craft, philosophy, and artisan roots of AURA SPARKLES home fragrances.",
+export const metadata: Metadata = {
+  title: "Our Story & Philosophy — Aura Sparkles",
+  description: "Learn about the craft, philosophy, and artisan roots of Aura Sparkles handcrafted soy wax candles and home fragrances.",
 };
 
 export default function StoryPage() {
@@ -20,10 +21,10 @@ export default function StoryPage() {
             <span>The AURA Genesis</span>
           </div>
           <h1 className="font-serif text-4xl sm:text-5xl text-[#452638] font-normal tracking-tight">
-            Illuminate Your Moments
+            Pure · Elegant · You
           </h1>
           <p className="text-base text-[#766E65] font-light italic">
-            “Fragrance that turns everyday houses into welcoming, tranquil homes.”
+            &ldquo;Fragrance that turns everyday houses into welcoming, tranquil homes.&rdquo;
           </p>
         </div>
 
@@ -57,7 +58,7 @@ export default function StoryPage() {
               In our fast-paced lives, home is our anchor. Yet so often, scented candles in India were either mass-produced synthetic waxes that irritate the senses or ultra-expensive imported labels priced out of daily enjoyment.
             </p>
             <p>
-              AURA SPARKLES was born to bridge this exact gap. We set out to craft affordable luxury—formulating natural soy wax candles in timeless frosted-glass jars that you never feel hesitant to light, whether you are enjoying your morning meditation, reading in bed, or gathering around dinner with loved ones.
+              Aura Sparkles was born to bridge this exact gap. We set out to craft affordable luxury—formulating natural soy wax candles in timeless frosted-glass jars that you never feel hesitant to light, whether you are enjoying your morning meditation, reading in bed, or gathering around dinner with loved ones.
             </p>
           </div>
 
@@ -69,7 +70,7 @@ export default function StoryPage() {
               Our fragrance palette honors the sensory richness of the subcontinent. From the sacred woody depth of Mysore Sandalwood to the sweet, intoxicating nostalgia of night-blooming Kannauj Mogra and dewy Damask Roses, every fragrance is orchestrated with nuanced top, heart, and base notes.
             </p>
             <p>
-              Every jar is hand-poured with 100% natural soy wax and fitted with a clean lead-free cotton wick to guarantee a slow, soothing, soot-free burn of over 22 hours.
+              Every jar is hand-poured with 100% natural soy wax and fitted with a clean lead-free cotton wick to guarantee a slow, soothing, soot-free burn.
             </p>
           </div>
         </div>

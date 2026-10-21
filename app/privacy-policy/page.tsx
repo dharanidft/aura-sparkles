@@ -1,8 +1,9 @@
 import React from "react";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Privacy Policy — AURA SPARKLES",
-  description: "Privacy and data protection terms for AURA SPARKLES online store.",
+export const metadata: Metadata = {
+  title: "Privacy Policy — Aura Sparkles",
+  description: "Privacy and customer data protection terms for Aura Sparkles online store.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -18,7 +19,7 @@ export default function PrivacyPolicyPage() {
 
         <div className="space-y-6 text-xs text-[#766E65] leading-relaxed">
           <p>
-            At AURA SPARKLES, we respect your privacy and are committed to safeguarding your personal data. This Privacy Policy outlines what information we collect, how it is utilized, and your rights.
+            At Aura Sparkles, we respect your privacy and are committed to safeguarding your personal data. This Privacy Policy outlines what information we collect, how it is utilized, and your rights.
           </p>
 
           <section className="space-y-2">

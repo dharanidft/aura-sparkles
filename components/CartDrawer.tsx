@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Sparkles, Tag, ShieldCheck } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
-import { formatINR } from "@/lib/shipping";
+import { formatINR, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
 
 export function CartDrawer() {
   const {
@@ -41,9 +41,9 @@ export function CartDrawer() {
     }
   };
 
-  const freeShippingThreshold = 499;
-  const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
-  const amountNeeded = freeShippingThreshold - subtotal;
+  const netSubtotal = Math.max(0, subtotal - discount);
+  const progressPercent = Math.min(100, Math.round((netSubtotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const amountNeeded = Math.max(0, FREE_SHIPPING_THRESHOLD - netSubtotal);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -81,8 +81,8 @@ export function CartDrawer() {
             <span className="text-[#452638] font-medium flex items-center">
               <Sparkles className="w-3.5 h-3.5 text-[#B69A62] mr-1.5" />
               {amountNeeded > 0
-                ? `Add ${formatINR(amountNeeded)} more for Free Express Delivery`
-                : "You unlocked Free Express Delivery across India!"}
+                ? `Add ${formatINR(amountNeeded)} more for Free shipping on orders ₹499 and above.`
+                : "You unlocked Free shipping on orders ₹499 and above!"}
             </span>
             <span className="text-[11px] font-semibold text-[#B69A62]">
               {progressPercent}%

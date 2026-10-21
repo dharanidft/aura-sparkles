@@ -7,11 +7,14 @@ export type FragranceFamily =
   | "Rich & Resinous";
 
 export type ProductCategory = 
+  | "Candles"
   | "Scented Candles"
   | "Tea-Light Candles"
   | "Decorative Candles"
   | "Wax Sachets"
   | "Hanging Fragrance Bars"
+  | "Casting Decor"
+  | "Pop Art Kits"
   | "Home Fragrance"
   | "Gift Sets"
   | "Combo Offers"
@@ -54,7 +57,10 @@ export interface Product {
     | "The Home Fragrance Collection"
     | "Tea-Light Collection"
     | "Decorative Collection"
-    | "Combo Offers";
+    | "Combo Offers"
+    | "Wax Sachets Collection"
+    | "Casting Decor Collection"
+    | "Pop Art Collection";
   /** Size variant label e.g. "80g" | "100g" | "200g" */
   sizeVariant?: string;
   /** For combos — what's inside */

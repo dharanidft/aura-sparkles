@@ -6,13 +6,13 @@ import { Sparkles } from "lucide-react";
 const ITEMS = [
   "Complimentary gift note & luxury packaging on all orders",
   "✦",
-  "Free Express Shipping across India on orders above ₹499",
+  "Free shipping on orders ₹499 and above",
   "✦",
   "Pure hand-poured soy wax candles with authentic botanicals",
   "✦",
-  "Discover your signature fragrance · Handcrafted with love in India",
+  "Tea lights from ₹199 · Signature jar candles from ₹299",
   "✦",
-  "Introductory price ₹199 — Limited period offer",
+  "Handcrafted with love in India · Direct customer care: +91 93853 28336",
   "✦",
 ];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,21 +13,19 @@ import {
   ArrowLeft, 
   CheckCircle2, 
   AlertCircle,
-  Tag
+  Tag,
+  Loader2,
+  MapPin
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
-import { formatINR, checkIndianPincode } from "@/lib/shipping";
+import { 
+  formatINR, 
+  checkIndianPincode, 
+  INDIAN_STATES_AND_UTS, 
+  FREE_SHIPPING_THRESHOLD 
+} from "@/lib/shipping";
 import { ShippingAddress, Order } from "@/lib/types";
 import { saveOrderToStorage } from "@/lib/orders";
-
-const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
-  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-  "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi NCR", "Chandigarh"
-];
 
 const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -69,7 +67,8 @@ export default function CheckoutPage() {
   const [addressLine2, setAddressLine2] = useState("");
   const [landmark, setLandmark] = useState("");
   const [city, setCity] = useState("");
-  const [state, setState] = useState("Delhi NCR");
+  // Requirement 5: Start with empty "Select state" placeholder
+  const [state, setState] = useState("");
   const [pincode, setPincode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"Razorpay" | "COD">("Razorpay");
   const [couponInput, setCouponInput] = useState("");
@@ -78,14 +77,87 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Auto-fill city/state when entering 6-digit PIN code
-  const handlePincodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-    setPincode(val);
-    if (val.length === 6) {
-      const res = checkIndianPincode(val);
-      if (res.city && res.city !== "Your City") setCity(res.city);
-      if (res.state && res.state !== "India") setState(res.state);
+  // PIN-code lookup states
+  const [isLookingUpPin, setIsLookingUpPin] = useState(false);
+  const [pinLookupMessage, setPinLookupMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [availableLocalities, setAvailableLocalities] = useState<string[]>([]);
+  const [selectedLocality, setSelectedLocality] = useState<string>("");
+  const [userHasEditedCityOrState, setUserHasEditedCityOrState] = useState(false);
+  const lookupSeqRef = useRef<number>(0);
+
+  useEffect(() => {
+    document.title = "Checkout — Aura Sparkles";
+  }, []);
+
+  // Handle 6-digit Indian PIN code input with async backend lookup
+  const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 6);
+    setPincode(raw);
+    setPinLookupMessage(null);
+    setAvailableLocalities([]);
+    setSelectedLocality("");
+
+    if (raw.length === 6) {
+      if (raw.startsWith("0")) {
+        setPinLookupMessage({
+          text: "Indian postal PIN codes do not begin with 0. Please verify.",
+          isError: true,
+        });
+        return;
+      }
+
+      const seq = ++lookupSeqRef.current;
+      setIsLookingUpPin(true);
+
+      try {
+        const res = await fetch(`/api/pincode/${raw}`);
+        const data = await res.json();
+
+        // Stale response guard: discard if customer changed input since
+        if (seq !== lookupSeqRef.current) return;
+
+        if (data.success) {
+          // Only auto-populate city & state if customer hasn't explicitly customized them
+          if (!userHasEditedCityOrState || !city) {
+            if (data.city) setCity(data.city);
+          }
+          if (!userHasEditedCityOrState || !state) {
+            if (data.state) setState(data.state);
+          }
+
+          if (Array.isArray(data.localities) && data.localities.length > 1) {
+            setAvailableLocalities(data.localities);
+          }
+
+          setPinLookupMessage({
+            text: `PIN code located (${data.city || ""}, ${data.state || ""}). Final carrier serviceability confirmed at dispatch.`,
+            isError: false,
+          });
+        } else {
+          setPinLookupMessage({
+            text: data.message || "PIN lookup inconclusive. Please enter your city and select your state manually.",
+            isError: false,
+          });
+        }
+      } catch (err) {
+        if (seq === lookupSeqRef.current) {
+          setPinLookupMessage({
+            text: "Instant lookup unavailable. You can enter your city and state manually.",
+            isError: false,
+          });
+        }
+      } finally {
+        if (seq === lookupSeqRef.current) {
+          setIsLookingUpPin(false);
+        }
+      }
+    }
+  };
+
+  const handleLocalitySelect = (loc: string) => {
+    setSelectedLocality(loc);
+    if (loc && !landmark) {
+      setLandmark(loc);
     }
   };
 
@@ -110,16 +182,30 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Phone validation
+    // Phone validation (10 digits starting with 6-9)
+    const phoneClean = phone.trim().replace(/\D/g, "");
     const phoneRegex = /^[6-9]\d{9}$/;
-    if (!phoneRegex.test(phone.trim().replace(/\D/g, ""))) {
-      setErrorMessage("Please enter a valid 10-digit Indian mobile number.");
+    if (!phoneRegex.test(phoneClean)) {
+      setErrorMessage("Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).");
       return;
     }
 
-    // Pincode validation
-    if (pincode.trim().length !== 6) {
+    // PIN code validation: must be 6 digits and not start with 0
+    const pinClean = pincode.trim().replace(/\D/g, "");
+    if (pinClean.length !== 6 || pinClean.startsWith("0")) {
       setErrorMessage("Please enter a valid 6-digit Indian PIN code.");
+      return;
+    }
+
+    // State selection validation: must not be empty placeholder
+    if (!state.trim()) {
+      setErrorMessage("Please select your state or union territory from the dropdown.");
+      return;
+    }
+
+    // City validation
+    if (!city.trim()) {
+      setErrorMessage("Please enter your city.");
       return;
     }
 
@@ -128,13 +214,13 @@ export default function CheckoutPage() {
     const shippingAddress: ShippingAddress = {
       fullName: fullName.trim(),
       email: email.trim(),
-      phone: phone.trim(),
+      phone: phoneClean,
       addressLine1: addressLine1.trim(),
       addressLine2: addressLine2.trim(),
-      landmark: landmark.trim(),
+      landmark: landmark.trim() || selectedLocality || undefined,
       city: city.trim(),
       state: state.trim(),
-      pincode: pincode.trim(),
+      pincode: pinClean,
     };
 
     try {
@@ -173,7 +259,7 @@ export default function CheckoutPage() {
           paymentStatus: "COD",
           orderStatus: "Confirmed",
           trackingNumber: `EXP-IN-${Date.now().toString().slice(-6)}`,
-          estimatedDeliveryDate: checkIndianPincode(pincode).deliveryDateStr,
+          estimatedDeliveryDate: checkIndianPincode(pinClean).deliveryDateStr,
         };
 
         saveOrderToStorage(completeOrder);
@@ -193,7 +279,7 @@ export default function CheckoutPage() {
           key: orderData.razorpayKey,
           amount: Math.round(orderData.amount * 100),
           currency: orderData.currency || "INR",
-          name: "AURA SPARKLES",
+          name: "Aura Sparkles",
           description: "Handcrafted Luxury Candles & Home Fragrances",
           image: `${window.location.origin}/images/logo.png`,
           order_id: orderData.razorpayOrderId,
@@ -231,7 +317,7 @@ export default function CheckoutPage() {
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpayOrderId: response.razorpay_order_id,
                 trackingNumber: `EXP-IN-${Date.now().toString().slice(-6)}`,
-                estimatedDeliveryDate: checkIndianPincode(pincode).deliveryDateStr,
+                estimatedDeliveryDate: checkIndianPincode(pinClean).deliveryDateStr,
               };
 
               saveOrderToStorage(completeOrder);
@@ -245,7 +331,7 @@ export default function CheckoutPage() {
           prefill: {
             name: shippingAddress.fullName,
             email: email,
-            contact: phone,
+            contact: phoneClean,
           },
           notes: {
             address: `${shippingAddress.addressLine1}, ${shippingAddress.city}, ${shippingAddress.state} - ${shippingAddress.pincode}`,
@@ -301,7 +387,7 @@ export default function CheckoutPage() {
         razorpayPaymentId: verifyData.paymentId,
         razorpayOrderId: orderData.razorpayOrderId,
         trackingNumber: `EXP-IN-${Date.now().toString().slice(-6)}`,
-        estimatedDeliveryDate: checkIndianPincode(pincode).deliveryDateStr,
+        estimatedDeliveryDate: checkIndianPincode(pinClean).deliveryDateStr,
       };
 
       saveOrderToStorage(completeOrder);
@@ -331,6 +417,9 @@ export default function CheckoutPage() {
     );
   }
 
+  const statesOnly = INDIAN_STATES_AND_UTS.filter((s) => s.type === "state");
+  const utOnly = INDIAN_STATES_AND_UTS.filter((s) => s.type === "ut");
+
   return (
     <div className="py-10 md:py-16 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -345,7 +434,7 @@ export default function CheckoutPage() {
         </Link>
 
         <h1 className="font-serif text-3xl sm:text-4xl text-[#452638] font-normal tracking-tight mb-8">
-          Checkout & Delivery
+          Checkout &amp; Delivery
         </h1>
 
         <form onSubmit={handleSubmitOrder}>
@@ -409,7 +498,7 @@ export default function CheckoutPage() {
 
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-[#452638] mb-1">
-                      House / Flat / Block No. & Street *
+                      House / Flat / Block No. &amp; Street *
                     </label>
                     <input
                       type="text"
@@ -434,21 +523,30 @@ export default function CheckoutPage() {
                     />
                   </div>
 
+                  {/* PIN Code Input with Status indicator */}
                   <div>
                     <label className="block text-xs font-medium text-[#452638] mb-1">
                       6-Digit PIN Code *
                     </label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={6}
-                      value={pincode}
-                      onChange={handlePincodeChange}
-                      placeholder="e.g. 560001"
-                      className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        value={pincode}
+                        onChange={handlePincodeChange}
+                        placeholder="e.g. 560038"
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638] pr-8"
+                      />
+                      {isLookingUpPin && (
+                        <div className="absolute right-2.5 top-2.5 text-[#B69A62] animate-spin">
+                          <Loader2 className="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
+                  {/* City */}
                   <div>
                     <label className="block text-xs font-medium text-[#452638] mb-1">
                       City *
@@ -457,26 +555,84 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        setUserHasEditedCityOrState(true);
+                      }}
                       placeholder="e.g. Bengaluru"
                       className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
                     />
                   </div>
 
+                  {/* Locality dropdown when multiple results returned */}
+                  {availableLocalities.length > 1 && (
+                    <div className="sm:col-span-2 p-3 bg-[#FAF7F2] border border-[#EAE0D5] rounded-xl text-xs space-y-1.5 animate-fadeIn">
+                      <label className="block font-medium text-[#452638] text-[11px]">
+                        Select Your Area / Locality ({availableLocalities.length} options found):
+                      </label>
+                      <select
+                        value={selectedLocality}
+                        onChange={(e) => handleLocalitySelect(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-[#EAE0D5] rounded-lg text-xs text-[#452638] focus:outline-none focus:border-[#452638]"
+                      >
+                        <option value="">Choose your neighborhood...</option>
+                        {availableLocalities.map((loc) => (
+                          <option key={loc} value={loc}>
+                            {loc}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-[#766E65]">
+                        Selecting your locality helps our delivery partners locate your address faster.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* PIN Code Lookup Message Banner */}
+                  {pinLookupMessage && (
+                    <div
+                      className={`sm:col-span-2 p-2.5 rounded-lg text-xs flex items-start space-x-2 ${
+                        pinLookupMessage.isError
+                          ? "bg-red-50 text-red-700 border border-red-200"
+                          : "bg-amber-50 text-amber-900 border border-amber-200"
+                      }`}
+                    >
+                      <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      <span className="text-[11px] leading-snug">{pinLookupMessage.text}</span>
+                    </div>
+                  )}
+
+                  {/* State Select: Empty placeholder + All 28 States & 8 Union Territories */}
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-[#452638] mb-1">
-                      State *
+                      State / Union Territory *
                     </label>
                     <select
+                      required
                       value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
+                      onChange={(e) => {
+                        setState(e.target.value);
+                        setUserHasEditedCityOrState(true);
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638] text-[#282522]"
                     >
-                      {INDIAN_STATES.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
+                      <option value="" disabled>
+                        Select state or union territory *
+                      </option>
+                      <optgroup label="States (28)">
+                        {statesOnly.map((st) => (
+                          <option key={st.code} value={st.name}>
+                            {st.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Union Territories (8)">
+                        {utOnly.map((ut) => (
+                          <option key={ut.code} value={ut.name}>
+                            {ut.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
                 </div>
@@ -559,11 +715,11 @@ export default function CheckoutPage() {
                   </label>
                 </div>
 
-                {/* Gateway architecture note */}
+                {/* Gateway note */}
                 <div className="p-3 bg-white rounded-xl border border-[#EAE0D5] flex items-center space-x-2 text-[11px] text-[#766E65]">
                   <ShieldCheck className="w-4 h-4 text-[#B69A62] flex-shrink-0" />
                   <span>
-                    AURA SPARKLES never stores credit card details. Payment status is confirmed before fulfillment.
+                    Aura Sparkles never stores card or bank information. All transactions are securely processed.
                   </span>
                 </div>
               </div>
@@ -645,7 +801,7 @@ export default function CheckoutPage() {
                 {/* Amount breakdown */}
                 <div className="space-y-2 text-xs text-[#766E65] pt-3 border-t border-[#EAE0D5]">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
+                    <span>Merchandise Subtotal</span>
                     <span className="text-[#452638] font-medium">{formatINR(subtotal)}</span>
                   </div>
                   {discount > 0 && (
@@ -655,9 +811,12 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span>Estimated Shipping</span>
+                    <span>Shipping Fee</span>
                     <span>{shippingFee === 0 ? "Free" : formatINR(shippingFee)}</span>
                   </div>
+                  <p className="text-[10px] text-[#766E65]/80">
+                    Free shipping on orders ₹499 and above.
+                  </p>
                   <div className="flex justify-between text-base font-semibold text-[#452638] pt-2 border-t border-[#EAE0D5]">
                     <span>Total Payable</span>
                     <span className="font-serif text-xl">{formatINR(finalTotal)}</span>
@@ -687,7 +846,7 @@ export default function CheckoutPage() {
                 </button>
 
                 <p className="text-center text-[10px] text-[#766E65]">
-                  By confirming, you agree to AURA SPARKLES terms of service & privacy policy.
+                  By confirming, you agree to Aura Sparkles terms of service &amp; privacy policy.
                 </p>
               </div>
 

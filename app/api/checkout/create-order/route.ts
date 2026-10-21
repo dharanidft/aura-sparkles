@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { INITIAL_PRODUCTS, AVAILABLE_COUPONS } from "@/lib/products-data";
+import { calculateOrderTotals } from "@/lib/shipping";
 
 export async function POST(request: Request) {
   try {
@@ -43,9 +44,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Shipping fee
-    const shippingFee = subtotal >= 499 ? 0 : 49;
-    const finalTotal = Math.max(0, subtotal - discount + shippingFee);
+    // 3. Centralized shipping fee calculation (Free shipping on merchandise subtotal ₹499 and above after discount)
+    const orderTotals = calculateOrderTotals(subtotal, discount);
+    const shippingFee = orderTotals.shippingFee;
+    const finalTotal = orderTotals.finalTotal;
 
     // 4. Check Razorpay credentials
     const razorpayKey = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;

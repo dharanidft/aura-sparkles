@@ -8,7 +8,7 @@ import {
   ShoppingBag, 
   Heart, 
   Search, 
-  User, 
+  Truck, 
   Menu, 
   X, 
   Sparkles,
@@ -35,6 +35,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     const applySavedFont = () => {
       const saved = (localStorage.getItem("aura_font") as AuraFont) || "playfair";
@@ -63,17 +64,16 @@ export function Header() {
     setSearchOpen(false);
   }, [pathname]);
 
-  // Desktop navigation excludes duplicate "Home" since Logo already links to "/"
   const desktopNavLinks = [
     { label: "Shop All", href: "/shop" },
-    { label: "Scented Candles", href: "/shop?category=Scented+Candles" },
-    { label: "Home Fragrance", href: "/shop?category=Home+Fragrance" },
-    { label: "Gift Sets", href: "/shop?category=Gift+Sets" },
+    { label: "Candles", href: "/shop?category=Scented+Candles" },
+    { label: "Wax Sachets", href: "/shop?category=Wax+Sachets" },
+    { label: "Casting Decor", href: "/shop?category=Casting+Decor" },
+    { label: "Pop Art Kits", href: "/shop?category=Pop+Art+Kits" },
     { label: "Our Story", href: "/story" },
     { label: "Contact", href: "/contact" },
   ];
 
-  // Mobile menu keeps Home as first option
   const mobileNavLinks = [
     { label: "Home", href: "/" },
     ...desktopNavLinks,
@@ -109,13 +109,13 @@ export function Header() {
               </button>
             </div>
 
-            {/* Logo - Acts as Home link without cluttering the nav bar */}
+            {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="flex items-center space-x-3 group" title="AURA SPARKLES Home">
+              <Link href="/" className="flex items-center space-x-3 group" title="Aura Sparkles Home">
                 <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white shadow-xs border border-[#B69A62]/30 group-hover:border-[#B69A62] transition-colors p-0.5">
                   <Image
                     src="/images/logo.png"
-                    alt="AURA SPARKLES Logo"
+                    alt="Aura Sparkles Logo"
                     fill
                     className="object-contain"
                     priority
@@ -165,14 +165,14 @@ export function Header() {
                 <Search className="w-5 h-5" />
               </button>
 
-              {/* Account / Admin Portal */}
+              {/* Requirement 6: Customer Order Tracking (Replaces Admin Link in customer header) */}
               <Link
-                href="/admin"
-                aria-label="Admin and Store Management"
+                href="/track-order"
+                aria-label="Track Your Order"
                 className="p-2 text-[#452638] hover:text-[#B69A62] transition-colors hidden sm:block"
-                title="Store Admin & Settings"
+                title="Track Your Order"
               >
-                <User className="w-5 h-5" />
+                <Truck className="w-5 h-5" />
               </Link>
 
               {/* Wishlist */}
@@ -188,7 +188,6 @@ export function Header() {
                   </span>
                 )}
               </Link>
-
 
               {/* Shopping Bag Drawer Trigger */}
               <button
@@ -248,13 +247,13 @@ export function Header() {
             <div className="p-6 border-b border-[#EAE0D5] flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden bg-white shadow-xs border border-[#B69A62]/40 p-0.5">
-                  <Image src="/images/logo.png" alt="AURA Logo" fill className="object-contain" />
+                  <Image src="/images/logo.png" alt="Aura Sparkles Logo" fill className="object-contain" />
                 </div>
                 <div>
                   <span className="font-serif text-lg tracking-luxury font-medium text-[#452638] uppercase">
                     AURA SPARKLES
                   </span>
-                  <p className="text-[10px] text-[#766E65] tracking-wide">Illuminate Your Moments</p>
+                  <p className="text-[10px] text-[#766E65] tracking-wide">Pure · Elegant · You</p>
                 </div>
               </div>
               <button
@@ -268,7 +267,7 @@ export function Header() {
 
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
               <p className="text-[10px] uppercase tracking-luxury text-[#B69A62] font-semibold">
-                Menu & Collections
+                Menu &amp; Collections
               </p>
               <div className="flex flex-col space-y-3">
                 {mobileNavLinks.map((link) => (
@@ -284,18 +283,18 @@ export function Header() {
                 ))}
               </div>
 
-
+              {/* Requirement 6: Customer Order Tracking in Mobile Drawer */}
               <div className="pt-4 border-t border-[#EAE0D5] space-y-3">
                 <p className="text-[10px] uppercase tracking-luxury text-[#B69A62] font-semibold">
-                  Store Management
+                  Customer Care &amp; Orders
                 </p>
                 <Link
-                  href="/admin"
+                  href="/track-order"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center space-x-2 text-xs text-[#452638] hover:text-[#B69A62]"
                 >
-                  <User className="w-4 h-4 text-[#B69A62]" />
-                  <span>Admin Store Management</span>
+                  <Truck className="w-4 h-4 text-[#B69A62]" />
+                  <span>Track Your Order</span>
                 </Link>
               </div>
             </div>

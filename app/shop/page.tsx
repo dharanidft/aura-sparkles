@@ -43,15 +43,29 @@ function ShopContent() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (selectedCategory && selectedCategory !== "All") {
+      document.title = `${selectedCategory} Collection — Aura Sparkles`;
+    } else if (showOnlyWishlist) {
+      document.title = "Your Saved Wishlist — Aura Sparkles";
+    } else if (searchQuery) {
+      document.title = `Search: "${searchQuery}" — Aura Sparkles`;
+    } else {
+      document.title = "Shop Scented Candles & Home Fragrance — Aura Sparkles";
+    }
+  }, [selectedCategory, showOnlyWishlist, searchQuery]);
+
   const categories: (ProductCategory | "All")[] = [
     "All",
+    "Candles",
     "Scented Candles",
     "Tea-Light Candles",
     "Decorative Candles",
+    "Wax Sachets",
+    "Casting Decor",
+    "Pop Art Kits",
     "Gift Sets",
     "Combo Offers",
-    "Wax Sachets",
-    "Hanging Fragrance Bars",
   ];
 
   const fragranceFamilies: (FragranceFamily | "All")[] = [
@@ -91,7 +105,14 @@ function ShopContent() {
       }
 
       // Category match
-      if (selectedCategory !== "All" && product.category !== selectedCategory) return false;
+      if (selectedCategory !== "All") {
+        if (selectedCategory === "Candles") {
+          const candleCats = ["Candles", "Scented Candles", "Tea-Light Candles", "Decorative Candles"];
+          if (!candleCats.includes(product.category)) return false;
+        } else if (product.category !== selectedCategory) {
+          return false;
+        }
+      }
 
       // Fragrance family match
       if (selectedFragrance !== "All" && product.fragranceFamily !== selectedFragrance) return false;
