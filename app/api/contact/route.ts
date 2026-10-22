@@ -161,6 +161,7 @@ export async function POST(request: Request) {
     const resendApiKey = process.env.RESEND_API_KEY;
     if (resendApiKey && externalDispatchStatus !== "dispatched_via_smtp") {
       try {
+        const fromAddress = process.env.RESEND_FROM || "Aura Sparkles <onboarding@resend.dev>";
         const resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -168,7 +169,7 @@ export async function POST(request: Request) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Aura Sparkles Web <noreply@aurasparkles.com>",
+            from: fromAddress,
             to: [TARGET_MAILBOX],
             reply_to: trimmedEmail,
             subject: `[${trimmedSubject}] from ${trimmedName} (${enquiryId})`,
@@ -192,8 +193,12 @@ export async function POST(request: Request) {
           }),
         });
 
+        const resendData = await resendRes.json().catch(() => ({}));
         if (resendRes.ok) {
           externalDispatchStatus = "dispatched_via_resend";
+          console.log(`[Aura Sparkles Contact API] Email successfully dispatched via Resend to ${TARGET_MAILBOX}:`, resendData);
+        } else {
+          console.warn("[Aura Sparkles Contact API] Resend returned error:", resendData);
         }
       } catch (err) {
         console.error("[Aura Sparkles Contact API] Failed external Resend dispatch:", err);
