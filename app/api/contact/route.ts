@@ -146,9 +146,12 @@ export async function POST(request: Request) {
             throw firstErr;
           }
         }
-      } catch (smtpErr) {
+      } catch (smtpErr: any) {
+        externalDispatchStatus = `smtp_failed: ${smtpErr?.message || smtpErr}`;
         console.error("[Aura Sparkles Contact API] SMTP Dispatch Failed:", smtpErr);
       }
+    } else {
+      externalDispatchStatus = "missing_smtp_credentials";
     }
 
     // Optional dynamic integration with Resend if API key is provided
