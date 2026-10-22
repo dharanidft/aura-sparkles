@@ -44,16 +44,28 @@ export default function ContactPage() {
         throw new Error(data.error || "Failed to submit enquiry.");
       }
 
+      const targetMailto = data.mailtoUrl || `mailto:contact@aurasparkles.com?subject=${encodeURIComponent(`[Aura Enquiry: ${subject}] from ${name}`)}&body=${encodeURIComponent(`From: ${name} (${email})\nPhone: ${phone}\n\nMessage:\n${message}`)}`;
       setEnquiryId(data.enquiryId || `ENQ-${Date.now().toString().slice(-6)}`);
-      setMailtoUrl(data.mailtoUrl || `mailto:contact@aurasparkles.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`);
+      setMailtoUrl(targetMailto);
       setSubmitted(true);
+
+      // Auto-trigger customer email app to send directly to contact@aurasparkles.com
+      try {
+        if (typeof window !== "undefined") {
+          window.location.href = targetMailto;
+        }
+      } catch (e) {}
     } catch (err: any) {
       console.error("Enquiry submission error:", err);
-      // Fallback: even if offline or fetch fails, provide mailto link and mark submitted
       const fallbackMailto = `mailto:contact@aurasparkles.com?subject=${encodeURIComponent(`[Aura Enquiry: ${subject}] from ${name}`)}&body=${encodeURIComponent(`From: ${name} (${email})\nPhone: ${phone}\n\nMessage:\n${message}`)}`;
       setMailtoUrl(fallbackMailto);
       setEnquiryId(`ENQ-${Date.now().toString().slice(-6)}`);
       setSubmitted(true);
+      try {
+        if (typeof window !== "undefined") {
+          window.location.href = fallbackMailto;
+        }
+      } catch (e) {}
     } finally {
       setSubmitting(false);
     }
@@ -164,12 +176,21 @@ export default function ContactPage() {
                     {mailtoUrl && (
                       <a
                         href={mailtoUrl}
-                        className="w-full sm:w-auto px-5 py-2.5 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-semibold rounded-full flex items-center justify-center space-x-2 transition-colors"
+                        className="w-full sm:w-auto px-5 py-2.5 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-semibold rounded-full flex items-center justify-center space-x-2 transition-colors shadow-sm"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 text-[#B69A62]" />
-                        <span>Open in Email App</span>
+                        <Mail className="w-3.5 h-3.5 text-[#B69A62]" />
+                        <span>Send via Email App</span>
                       </a>
                     )}
+                    <a
+                      href={`https://wa.me/919385328336?text=${encodeURIComponent(`Hi AURA SPARKLES, I submitted an enquiry (${enquiryId}):\nName: ${name}\nSubject: ${subject}\nMessage: ${message}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-full flex items-center justify-center space-x-2 transition-colors shadow-sm"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-white" />
+                      <span>Send via WhatsApp</span>
+                    </a>
                     <button
                       onClick={() => {
                         setSubmitted(false);
@@ -181,7 +202,7 @@ export default function ContactPage() {
                       }}
                       className="w-full sm:w-auto px-5 py-2.5 border border-[#452638] text-xs font-semibold uppercase rounded-full text-[#452638] hover:bg-[#FAF6F0] transition-colors"
                     >
-                      Send Another Message
+                      New Message
                     </button>
                   </div>
                 </div>
