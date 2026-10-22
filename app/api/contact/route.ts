@@ -70,6 +70,15 @@ export async function POST(request: Request) {
     const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
     const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 
+    console.log(`[Aura Sparkles Contact API] Environment check:`, {
+      hasSmtpHost: !!smtpHost,
+      smtpHost: smtpHost || "MISSING",
+      hasSmtpUser: !!smtpUser,
+      smtpUser: smtpUser || "MISSING",
+      hasSmtpPass: !!smtpPass,
+      smtpPort,
+    });
+
     let externalDispatchStatus = "queued_or_logged";
 
     if (smtpHost && smtpUser && smtpPass) {
