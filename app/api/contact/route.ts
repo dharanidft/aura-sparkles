@@ -64,19 +64,22 @@ export async function POST(request: Request) {
     });
 
     // Direct SMTP integration (using nodemailer if configured in environment)
-    const smtpHost = process.env.SMTP_HOST;
+    const smtpHost = process.env.SMTP_HOST || "smtpout.secureserver.net";
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
-    const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
-    const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+    // For GoDaddy containers, port 465 with SSL is required because port 587 gives EACCES
+    const rawPort = process.env.SMTP_PORT;
+    const smtpPort = rawPort && rawPort !== "587" ? parseInt(rawPort, 10) : 465;
+    const smtpSecure = smtpPort === 465 || process.env.SMTP_SECURE === "true";
 
     console.log(`[Aura Sparkles Contact API] Environment check:`, {
       hasSmtpHost: !!smtpHost,
-      smtpHost: smtpHost || "MISSING",
+      smtpHost,
       hasSmtpUser: !!smtpUser,
       smtpUser: smtpUser || "MISSING",
       hasSmtpPass: !!smtpPass,
       smtpPort,
+      smtpSecure,
     });
 
     let externalDispatchStatus = "queued_or_logged";
@@ -84,10 +87,6 @@ export async function POST(request: Request) {
     if (smtpHost && smtpUser && smtpPass) {
       try {
         const nodemailer = await import("nodemailer");
-
-        // Try configured port, or fallback between 465 (SSL) and 587 (TLS)
-        const primaryPort = smtpPort;
-        const primarySecure = smtpSecure;
 
         const sendWithPort = async (port: number, secure: boolean) => {
           const transporter = nodemailer.createTransport({
