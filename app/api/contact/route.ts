@@ -63,11 +63,66 @@ export async function POST(request: Request) {
       subject: trimmedSubject,
     });
 
-    // Optional dynamic integration with Resend / SMTP if environment keys are supplied
-    const resendApiKey = process.env.RESEND_API_KEY;
+    // Direct SMTP integration (using nodemailer if configured in environment)
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+    const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+
     let externalDispatchStatus = "queued_or_logged";
 
-    if (resendApiKey) {
+    if (smtpHost && smtpUser && smtpPass) {
+      try {
+        const nodemailer = await import("nodemailer");
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpSecure,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"Aura Sparkles Storefront" <${smtpUser}>`,
+          to: TARGET_MAILBOX,
+          replyTo: trimmedEmail,
+          subject: `[Enquiry: ${trimmedSubject}] from ${trimmedName} (${enquiryId})`,
+          text: `Customer Name: ${trimmedName}\nEmail: ${trimmedEmail}\nPhone: ${trimmedPhone || "Not provided"}\nSubject: ${trimmedSubject}\nEnquiry ID: ${enquiryId}\n\nMessage:\n${trimmedMessage}`,
+          html: `
+            <div style="font-family: serif; color: #452638; max-width: 600px; padding: 24px; border: 1px solid #EAE0D5; border-radius: 12px;">
+              <h2 style="color: #452638; margin-bottom: 8px;">Aura Sparkles — New Customer Enquiry</h2>
+              <p style="color: #B69A62; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-top: 0;">Enquiry ID: ${enquiryId}</p>
+              <hr style="border: none; border-top: 1px solid #EAE0D5; margin: 16px 0;" />
+              <p><strong>Customer Name:</strong> ${trimmedName}</p>
+              <p><strong>Customer Email:</strong> <a href="mailto:${trimmedEmail}">${trimmedEmail}</a></p>
+              <p><strong>Customer Phone:</strong> ${trimmedPhone || "Not provided"}</p>
+              <p><strong>Subject / Department:</strong> ${trimmedSubject}</p>
+              <div style="background-color: #FAF6F0; padding: 16px; border-radius: 8px; margin-top: 16px;">
+                <p style="margin: 0; font-weight: bold; color: #452638;">Customer Message:</p>
+                <p style="margin-top: 8px; white-space: pre-wrap; color: #766E65;">${trimmedMessage}</p>
+              </div>
+              <hr style="border: none; border-top: 1px solid #EAE0D5; margin: 24px 0 16px;" />
+              <p style="font-size: 11px; color: #766E65;">Dispatched to ${TARGET_MAILBOX}. Reply directly to this email to respond to ${trimmedName} (${trimmedEmail}).</p>
+            </div>
+          `,
+        });
+
+        externalDispatchStatus = "dispatched_via_smtp";
+        console.log(`[Aura Sparkles Contact API] Email dispatched via SMTP to ${TARGET_MAILBOX}`);
+      } catch (smtpErr) {
+        console.error("[Aura Sparkles Contact API] SMTP Dispatch Failed:", smtpErr);
+      }
+    }
+
+    // Optional dynamic integration with Resend if API key is provided
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey && externalDispatchStatus !== "dispatched_via_smtp") {
       try {
         const resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -102,8 +157,6 @@ export async function POST(request: Request) {
 
         if (resendRes.ok) {
           externalDispatchStatus = "dispatched_via_resend";
-        } else {
-          console.warn("[Aura Sparkles Contact API] Resend dispatch returned non-200:", await resendRes.text());
         }
       } catch (err) {
         console.error("[Aura Sparkles Contact API] Failed external Resend dispatch:", err);
