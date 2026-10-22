@@ -130,6 +130,9 @@ export async function POST(request: Request) {
           });
         };
 
+        const primaryPort = smtpPort;
+        const primarySecure = smtpSecure;
+
         try {
           // Attempt 1: Configured port (or 465 SSL)
           await sendWithPort(primaryPort, primarySecure);
