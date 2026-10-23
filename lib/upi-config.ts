@@ -9,7 +9,7 @@ import { UpiConfig } from "./upi-types";
  */
 export function getUpiConfig(): UpiConfig {
   return {
-    upiId: process.env.UPI_ID || "aurasparkles@hdfcbank",
+    upiId: process.env.UPI_ID || "dharanidft-1@okhdfcbank",
     merchantName: process.env.UPI_MERCHANT_NAME || "AURA SPARKLES",
     qrImageUrl: process.env.UPI_QR_IMAGE_URL || "/images/upi-qr-placeholder.svg",
   };
