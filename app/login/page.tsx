@@ -4,17 +4,17 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Phone, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { 
+  Sparkles, 
+  Mail, 
+  ArrowRight, 
+  ShieldCheck, 
+  CheckCircle2, 
+  AlertCircle, 
+  RefreshCw,
+  Inbox
+} from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-
-const COUNTRY_CODES = [
-  { code: "+91", country: "India", flag: "🇮🇳" },
-  { code: "+1", country: "USA / Canada", flag: "🇺🇸" },
-  { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
-  { code: "+971", country: "UAE", flag: "🇦🇪" },
-  { code: "+65", country: "Singapore", flag: "🇸🇬" },
-  { code: "+61", country: "Australia", flag: "🇦🇺" },
-];
 
 function LoginPageContent() {
   const router = useRouter();
@@ -22,21 +22,27 @@ function LoginPageContent() {
   const redirectTarget = searchParams.get("redirect") || "/account";
 
   const {
+    customer,
     isAuthenticated,
-    sendOtp,
-    verifyOtp,
-    authStep,
-    cooldown,
-    phoneNumber,
-    countryCode,
-    isSubmitting,
-    error,
-    clearError
+    sendEmailSignInLink,
   } = useAuth();
 
-  const [selectedCountry, setSelectedCountry] = useState("+91");
-  const [phoneInput, setPhoneInput] = useState("");
-  const [otpInput, setOtpInput] = useState("");
+  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"input" | "sent">("input");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  // Cooldown countdown
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -45,33 +51,45 @@ function LoginPageContent() {
     }
   }, [isAuthenticated, redirectTarget, router]);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleSendLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
-    const cleanNumber = phoneInput.replace(/\D/g, "");
-    if (!cleanNumber || cleanNumber.length < 7) {
+    setErrorMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+      setErrorMessage("Please enter a valid email address.");
       return;
     }
-    const fullPhone = `${selectedCountry}${cleanNumber}`;
-    try {
-      await sendOtp(fullPhone);
-    } catch {
-      // handled in context
+
+    setIsLoading(true);
+    const res = await sendEmailSignInLink(cleanEmail, redirectTarget);
+    setIsLoading(false);
+
+    if (res.success) {
+      setStep("sent");
+      setCooldown(60);
+    } else {
+      setErrorMessage(res.error || "Failed to send sign-in link.");
+      if (res.waitSeconds) {
+        setCooldown(res.waitSeconds);
+      }
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-    const cleanOtp = otpInput.replace(/\D/g, "");
-    if (cleanOtp.length !== 6) {
-      return;
-    }
-    try {
-      await verifyOtp(cleanOtp);
-      router.replace(redirectTarget);
-    } catch {
-      // handled in context
+  const handleResend = async () => {
+    if (cooldown > 0 || !email) return;
+    setErrorMessage(null);
+    setIsLoading(true);
+    const res = await sendEmailSignInLink(email.trim().toLowerCase(), redirectTarget);
+    setIsLoading(false);
+
+    if (res.success) {
+      setCooldown(60);
+    } else {
+      setErrorMessage(res.error || "Failed to resend sign-in link.");
+      if (res.waitSeconds) {
+        setCooldown(res.waitSeconds);
+      }
     }
   };
 
@@ -88,69 +106,67 @@ function LoginPageContent() {
           </Link>
           <div className="space-y-1">
             <h1 className="font-serif text-2xl sm:text-3xl text-[#452638]">
-              {authStep === "PHONE" ? "Customer Sign In" : "Verify Mobile OTP"}
+              {step === "input" ? "Customer Sign In" : "Check Your Email"}
             </h1>
             <p className="text-xs text-[#766E65]">
-              {authStep === "PHONE"
-                ? "Enter your mobile number to receive a secure one-time password"
-                : `Enter the 6-digit verification code sent to ${phoneNumber}`}
+              {step === "input"
+                ? "Enter your email address to receive a secure passwordless sign-in link"
+                : `We have sent your secure sign-in link to:`}
             </p>
+            {step === "sent" && (
+              <p className="text-xs font-semibold text-[#452638] break-all bg-[#FAF7F2] py-1.5 px-3 rounded-lg border border-[#EAE0D5] inline-block">
+                {email}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Error notification */}
-        {error && (
+        {errorMessage && (
           <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center space-x-2.5 text-xs text-rose-800 animate-shake">
             <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
-            <span>{error}</span>
+            <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* STEP 1: PHONE INPUT */}
-        {authStep === "PHONE" && (
-          <form onSubmit={handleSendOtp} className="space-y-4">
+        {/* STEP 1: EMAIL INPUT FORM */}
+        {step === "input" && (
+          <form onSubmit={handleSendLink} className="space-y-4">
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
-                Mobile Number
+                Email Address
               </label>
-              <div className="flex rounded-xl border border-[#EAE0D5] focus-within:border-[#452638] focus-within:ring-1 focus-within:ring-[#452638] bg-white overflow-hidden transition-all">
-                <select
-                  value={selectedCountry}
-                  onChange={(e) => setSelectedCountry(e.target.value)}
-                  className="bg-[#FAF7F2] border-r border-[#EAE0D5] px-3 py-3 text-xs text-[#452638] font-semibold focus:outline-none cursor-pointer"
-                >
-                  {COUNTRY_CODES.map((item) => (
-                    <option key={item.code} value={item.code}>
-                      {item.flag} {item.code}
-                    </option>
-                  ))}
-                </select>
-
+              <div className="relative">
+                <Mail className="w-4 h-4 text-[#766E65] absolute left-3.5 top-3.5 pointer-events-none" />
                 <input
-                  type="tel"
+                  type="email"
                   required
                   autoFocus
-                  placeholder="Enter 10-digit mobile number"
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
-                  className="flex-1 px-4 py-3 text-sm text-[#282522] placeholder:text-[#A89F91] focus:outline-none"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-xs sm:text-sm text-[#282522] focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638]"
                 />
               </div>
+              <p className="text-[11px] text-[#766E65]">
+                No password or numeric OTP required · We send you a direct sign-in link
+              </p>
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting || phoneInput.length < 7}
+              disabled={isLoading || !email.includes("@")}
               className="w-full py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? (
+              {isLoading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin text-[#B69A62]" />
-                  <span>Dispatching OTP...</span>
+                  <span>Dispatching Login Link...</span>
                 </>
               ) : (
                 <>
-                  <span>Send One-Time Password</span>
+                  <Sparkles className="w-4 h-4 text-[#B69A62]" />
+                  <span>Send Login Link</span>
                   <ArrowRight className="w-4 h-4 text-[#B69A62]" />
                 </>
               )}
@@ -158,66 +174,54 @@ function LoginPageContent() {
           </form>
         )}
 
-        {/* STEP 2: OTP VERIFICATION */}
-        {authStep === "OTP" && (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
-                6-Digit Security Code
-              </label>
-              <input
-                type="text"
-                required
-                autoFocus
-                maxLength={6}
-                value={otpInput}
-                onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ""))}
-                placeholder="• • • • • •"
-                className="w-full text-center tracking-[0.5em] font-mono text-2xl font-bold py-3 px-4 border border-[#EAE0D5] rounded-xl focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638]"
-              />
+        {/* STEP 2: CHECK YOUR EMAIL CONFIRMATION */}
+        {step === "sent" && (
+          <div className="space-y-5 animate-fadeIn">
+            <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE0D5] text-left space-y-2.5">
+              <div className="flex items-center space-x-2 text-[#452638] text-xs font-semibold">
+                <Inbox className="w-4 h-4 text-[#B69A62]" />
+                <span>Next steps to complete sign-in:</span>
+              </div>
+              <ol className="text-xs text-[#766E65] space-y-1.5 list-decimal list-inside leading-relaxed">
+                <li>Open the email from <strong>Aura Sparkles</strong>.</li>
+                <li>Click the <strong>Sign In to Aura Sparkles</strong> link.</li>
+                <li>Your browser will authenticate and restore your cart automatically!</li>
+              </ol>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-[#766E65]">
-              <span>Didn&apos;t receive code?</span>
-              {cooldown > 0 ? (
-                <span className="text-[#B69A62] font-semibold">Resend in {cooldown}s</span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => phoneNumber && sendOtp(phoneNumber)}
-                  disabled={isSubmitting}
-                  className="text-[#452638] font-semibold hover:underline"
-                >
-                  Resend OTP
-                </button>
-              )}
-            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs pt-1">
+              <button
+                type="button"
+                onClick={() => setStep("input")}
+                className="text-[#766E65] hover:text-[#452638] text-xs underline"
+              >
+                Change email address
+              </button>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || otpInput.length !== 6}
-              className="w-full py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#B69A62]" />
-                  <span>Verifying Session...</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>Verify &amp; Continue</span>
-                </>
-              )}
-            </button>
-          </form>
+              <div>
+                {cooldown > 0 ? (
+                  <span className="text-[#B69A62] font-semibold">Resend link in {cooldown}s</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isLoading}
+                    className="text-[#452638] font-semibold hover:underline flex items-center space-x-1"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Resend Link</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Security badge footer */}
         <div className="pt-4 border-t border-[#EAE0D5] text-center space-y-1">
           <p className="text-[11px] text-[#766E65] flex items-center justify-center space-x-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>256-Bit Cryptographic HMAC Session Security</span>
+            <span>Firebase Passwordless Email Authentication · Zero SMS Fees</span>
           </p>
           <p className="text-[10px] text-[#766E65]">
             By continuing, you agree to Aura Sparkles Terms &amp; Privacy Policy.

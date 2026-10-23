@@ -2,10 +2,11 @@ import { CartItem, ShippingAddress } from "./types";
 import { OrderPaymentStatus, PaymentProof } from "./upi-types";
 
 export interface Customer {
-  uid: string; // Unique customer ID, e.g. "CUST-XXXXXX"
-  phoneNumber: string; // E.164 format, e.g. "+919876543210"
-  displayName: string;
-  email?: string;
+  uid: string; // Unique customer ID, e.g. "CUST-XXXXXX" or Firebase UID
+  email: string; // Primary account identifier
+  emailVerified: boolean;
+  displayName?: string;
+  phoneNumber?: string; // Optional delivery contact mobile number
   defaultAddressId?: string;
   createdAt: string;
   updatedAt: string;
@@ -59,7 +60,8 @@ export interface CustomerOrderSnapshot {
 
 export interface SessionTokenPayload {
   uid: string;
-  phoneNumber: string;
+  email: string;
+  phoneNumber?: string;
   issuedAt: number;
   expiresAt: number;
 }

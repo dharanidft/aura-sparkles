@@ -210,7 +210,7 @@ export function Header() {
                       aria-expanded={accountMenuOpen}
                     >
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#452638] text-white flex items-center justify-center text-xs font-semibold tracking-wider shadow-xs">
-                        {(customer?.displayName?.charAt(0) || customer?.phoneNumber?.slice(-2) || "U").toUpperCase()}
+                        {(customer?.displayName?.charAt(0) || customer?.email?.charAt(0) || "U").toUpperCase()}
                       </div>
                       <ChevronDown className="w-3.5 h-3.5 hidden sm:block text-[#766E65]" />
                     </button>
@@ -219,8 +219,8 @@ export function Header() {
                       <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#EAE0D5] py-2 z-50 animate-fadeIn">
                         <div className="px-4 py-3 border-b border-[#EAE0D5]/60 bg-[#FBF8F3]/60 rounded-t-2xl">
                           <p className="text-[10px] uppercase tracking-wider text-[#B69A62] font-semibold">Signed in as</p>
-                          <p className="text-sm font-semibold text-[#452638] truncate">{customer?.displayName || "Aura Customer"}</p>
-                          <p className="text-xs text-[#766E65]">{customer?.phoneNumber}</p>
+                          <p className="text-sm font-semibold text-[#452638] truncate">{customer?.displayName || customer?.email || "Aura Customer"}</p>
+                          <p className="text-xs text-[#766E65] truncate">{customer?.email || customer?.phoneNumber}</p>
                         </div>
 
                         <div className="py-1">
@@ -382,8 +382,8 @@ export function Header() {
                 {isAuthenticated ? (
                   <div className="space-y-2">
                     <div className="p-3 bg-[#FBF8F3] rounded-xl border border-[#EAE0D5]">
-                      <p className="text-xs font-semibold text-[#452638] truncate">{customer?.displayName || "Aura Customer"}</p>
-                      <p className="text-[11px] text-[#766E65]">{customer?.phoneNumber}</p>
+                      <p className="text-xs font-semibold text-[#452638] truncate">{customer?.displayName || customer?.email || "Aura Customer"}</p>
+                      <p className="text-[11px] text-[#766E65] truncate">{customer?.email || customer?.phoneNumber}</p>
                     </div>
 
                     <Link
@@ -434,8 +434,8 @@ export function Header() {
                     }}
                     className="w-full py-2.5 px-4 bg-[#452638] text-white text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center justify-center space-x-2 shadow-xs hover:bg-[#5D354D] transition-colors"
                   >
-                    <User className="w-4 h-4" />
-                    <span>Sign In with Mobile</span>
+                    <Mail className="w-4 h-4" />
+                    <span>Sign In with Email Link</span>
                   </button>
                 )}
 

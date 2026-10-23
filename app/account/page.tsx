@@ -90,6 +90,7 @@ function AccountDashboardContent() {
   // Profile Form state
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [deliveryPhone, setDeliveryPhone] = useState("");
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
@@ -106,6 +107,7 @@ function AccountDashboardContent() {
     if (customer) {
       setDisplayName(customer.displayName || "");
       setEmail(customer.email || "");
+      setDeliveryPhone(customer.phoneNumber ? customer.phoneNumber.replace(/\D/g, "").slice(-10) : "");
     }
   }, [customer]);
 
@@ -233,10 +235,7 @@ function AccountDashboardContent() {
     setIsUpdatingProfile(true);
 
     try {
-      await updateProfile({
-        displayName: displayName.trim(),
-        email: email.trim() || undefined
-      });
+      await updateProfile(displayName.trim(), deliveryPhone.trim() || undefined);
       setProfileMsg({ type: "success", text: "Profile details updated successfully." });
     } catch (err: any) {
       setProfileMsg({ type: "error", text: err.message || "Failed to update profile." });
@@ -256,7 +255,7 @@ function AccountDashboardContent() {
           <div className="space-y-2">
             <h1 className="font-serif text-3xl text-[#452638]">Customer Sign In</h1>
             <p className="text-xs sm:text-sm text-[#766E65]">
-              Log in with your verified mobile number to view orders, manage delivery addresses, and track real-time shipments.
+              Sign in with your verified email address to view orders, manage delivery addresses, and track real-time shipments.
             </p>
           </div>
           <div className="pt-2">
@@ -265,11 +264,11 @@ function AccountDashboardContent() {
               className="w-full py-3.5 px-6 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2"
             >
               <Sparkles className="w-4 h-4 text-[#B69A62]" />
-              <span>Sign In with Mobile OTP</span>
+              <span>Sign In with Email Link</span>
             </button>
           </div>
           <p className="text-[11px] text-[#766E65]">
-            Passwordless &amp; secure · Powered by Aura Authentication
+            Passwordless &amp; secure · No numeric OTP or password required · Zero SMS Fees
           </p>
         </div>
       </div>
@@ -300,7 +299,7 @@ function AccountDashboardContent() {
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EAE0D5] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#452638] to-[#5D354D] text-white flex items-center justify-center text-xl font-bold tracking-wider shadow-md">
-              {(customer?.displayName?.charAt(0) || customer?.phoneNumber?.slice(-2) || "A").toUpperCase()}
+              {(customer?.displayName?.charAt(0) || customer?.email?.charAt(0) || "A").toUpperCase()}
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -308,11 +307,11 @@ function AccountDashboardContent() {
                   {customer?.displayName ? `Hello, ${customer.displayName}` : "Hello, Aura Connoisseur"}
                 </h1>
                 <span className="inline-flex items-center text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full font-medium border border-emerald-200">
-                  <ShieldCheck className="w-3 h-3 mr-1 text-emerald-600" /> Verified
+                  <ShieldCheck className="w-3 h-3 mr-1 text-emerald-600" /> Email Verified
                 </span>
               </div>
               <p className="text-xs text-[#766E65] mt-0.5">
-                {customer?.phoneNumber} {customer?.email ? `• ${customer.email}` : ""}
+                {customer?.email} {customer?.phoneNumber ? `• +91 ${customer.phoneNumber}` : ""}
               </p>
             </div>
           </div>
@@ -872,21 +871,21 @@ function AccountDashboardContent() {
                 <form onSubmit={handleProfileSubmit} className="space-y-5 max-w-lg">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
-                      Verified Mobile Number
+                      Verified Email Address
                     </label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="text"
                         disabled
-                        value={customer?.phoneNumber || ""}
+                        value={customer?.email || ""}
                         className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#EAE0D5] rounded-xl text-xs text-[#766E65] cursor-not-allowed font-medium"
                       />
                       <span className="inline-flex items-center text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-3 rounded-xl font-medium whitespace-nowrap">
-                        <ShieldCheck className="w-4 h-4 mr-1 text-emerald-600" /> Verified
+                        <ShieldCheck className="w-4 h-4 mr-1 text-emerald-600" /> Email Verified
                       </span>
                     </div>
                     <p className="text-[10px] text-[#766E65]">
-                      Your verified mobile number is your primary Aura account identifier.
+                      Your verified email address is your primary Aura account identifier.
                     </p>
                   </div>
 
@@ -905,17 +904,23 @@ function AccountDashboardContent() {
 
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
-                      Email Address (Optional)
+                      Delivery Contact Mobile (Optional)
                     </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. priya@example.com"
-                      className="w-full px-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-xs text-[#282522] focus:outline-none focus:border-[#452638]"
-                    />
+                    <div className="flex">
+                      <span className="px-3 py-3 bg-[#FAF7F2] border border-r-0 border-[#EAE0D5] rounded-l-xl text-xs text-[#766E65] font-semibold">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        maxLength={10}
+                        value={deliveryPhone}
+                        onChange={(e) => setDeliveryPhone(e.target.value.replace(/\D/g, ""))}
+                        placeholder="10-digit mobile number"
+                        className="w-full px-4 py-3 bg-white border border-[#EAE0D5] rounded-r-xl text-xs text-[#282522] focus:outline-none focus:border-[#452638]"
+                      />
+                    </div>
                     <p className="text-[10px] text-[#766E65]">
-                      Used for sending digital invoices, dispatch notifications and bespoke order tracking.
+                      Used by courier partners for dispatch notifications and order delivery coordination.
                     </p>
                   </div>
 

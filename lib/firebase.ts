@@ -2,9 +2,11 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { 
   getAuth, 
   Auth, 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber, 
-  ConfirmationResult 
+  sendSignInLinkToEmail, 
+  isSignInWithEmailLink, 
+  signInWithEmailLink, 
+  ActionCodeSettings, 
+  UserCredential 
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -47,39 +49,69 @@ export function getFirebaseAuth(): Auth | null {
   return firebaseAuth;
 }
 
+export const EMAIL_SIGNIN_STORAGE_KEY = "aura_email_for_signin";
+
 /**
- * Initializes a Firebase reCAPTCHA Verifier in a target container
+ * Sends a native passwordless Firebase Email Sign-In Link.
+ * Zero ongoing SMS costs, uses Firebase Authentication native email delivery.
  */
-export function initRecaptchaVerifier(containerId: string): RecaptchaVerifier | null {
+export async function sendFirebaseEmailSignInLink(
+  email: string,
+  returnPath: string = "/account"
+): Promise<{ success: boolean; error?: string }> {
   const auth = getFirebaseAuth();
-  if (!auth || typeof window === "undefined") return null;
+  if (!auth) {
+    return { success: false, error: "Firebase Authentication is not configured." };
+  }
 
   try {
-    const verifier = new RecaptchaVerifier(auth, containerId, {
-      size: "invisible",
-      callback: () => {
-        // reCAPTCHA solved
-      },
-      "expired-callback": () => {
-        console.warn("[Firebase Auth] reCAPTCHA expired");
-      },
-    });
-    return verifier;
-  } catch (err) {
-    console.error("[Firebase Auth] Failed to initialize RecaptchaVerifier:", err);
-    return null;
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://www.aurasparkles.com";
+    const callbackUrl = `${origin}/auth/verify-link?redirect=${encodeURIComponent(returnPath)}`;
+
+    const actionCodeSettings: ActionCodeSettings = {
+      url: callbackUrl,
+      handleCodeInApp: true,
+    };
+
+    await sendSignInLinkToEmail(auth, email.trim().toLowerCase(), actionCodeSettings);
+
+    // Save email in localStorage for same-device verification
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(EMAIL_SIGNIN_STORAGE_KEY, email.trim().toLowerCase());
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[Firebase Auth] sendSignInLinkToEmail error:", err);
+    return { success: false, error: err.message || "Failed to send sign-in link." };
   }
 }
 
 /**
- * Sends Phone OTP via Firebase Phone Auth
+ * Checks if the current URL is a valid Firebase email sign-in link
  */
-export async function sendFirebasePhoneOtp(
-  phoneNumber: string,
-  verifier: RecaptchaVerifier
-): Promise<ConfirmationResult | null> {
+export function isFirebaseEmailSignInLink(url: string): boolean {
   const auth = getFirebaseAuth();
-  if (!auth) throw new Error("Firebase Auth is not configured");
+  if (!auth) return false;
+  return isSignInWithEmailLink(auth, url);
+}
 
-  return await signInWithPhoneNumber(auth, phoneNumber, verifier);
+/**
+ * Completes sign-in with a verified Firebase email link
+ */
+export async function signInWithFirebaseEmailLink(
+  email: string,
+  url: string
+): Promise<UserCredential> {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error("Firebase Authentication is not configured.");
+
+  const credential = await signInWithEmailLink(auth, email.trim().toLowerCase(), url);
+
+  // Clean up localStorage on successful sign-in
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(EMAIL_SIGNIN_STORAGE_KEY);
+  }
+
+  return credential;
 }

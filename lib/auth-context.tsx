@@ -2,20 +2,23 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Customer, CustomerAddress } from "./customer-types";
+import { isFirebaseConfigured, sendFirebaseEmailSignInLink } from "./firebase";
 
 interface AuthContextType {
   customer: Customer | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   addresses: CustomerAddress[];
   defaultAddress: CustomerAddress | null;
   refreshCustomer: () => Promise<void>;
+  sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string }>;
   sendOtp: (phoneNumber: string, countryCode?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string }>;
   verifyOtp: (phoneNumber: string, otpCode: string, displayName?: string, countryCode?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
   logout: () => Promise<void>;
   saveAddress: (addressData: Partial<CustomerAddress>) => Promise<{ success: boolean; address?: CustomerAddress; error?: string }>;
   deleteAddress: (addressId: string) => Promise<{ success: boolean; error?: string }>;
   setDefaultAddress: (addressId: string) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (displayName: string, email?: string) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (displayName: string, phoneNumber?: string) => Promise<{ success: boolean; error?: string }>;
   isAuthModalOpen: boolean;
   authModalRedirect: string | null;
   openAuthModal: (redirectUrl?: string) => void;
@@ -71,6 +74,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const closeAuthModal = () => {
     setIsAuthModalOpen(false);
+  };
+
+  const sendEmailSignInLink = async (email: string, returnPath: string = "/account") => {
+    const cleanEmail = email.trim().toLowerCase();
+    
+    // 1. If Firebase is configured with active keys, try Firebase native link first
+    if (isFirebaseConfigured()) {
+      try {
+        const fbRes = await sendFirebaseEmailSignInLink(cleanEmail, returnPath);
+        if (fbRes.success) {
+          return { success: true };
+        }
+      } catch (err) {
+        console.warn("[Auth Context] Firebase native link dispatch failed, falling back to server dispatch:", err);
+      }
+    }
+
+    // 2. Server cryptographic link dispatch
+    try {
+      const res = await fetch("/api/auth/email/send-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, redirect: returnPath }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { 
+          success: false, 
+          error: data.error || "Failed to send sign-in link.", 
+          waitSeconds: data.waitSeconds 
+        };
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Network error. Please try again." };
+    }
   };
 
   const sendOtp = async (phoneNumber: string, countryCode = "+91") => {
@@ -203,9 +242,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         customer,
         isLoading,
+        isAuthenticated: !!customer,
         addresses,
         defaultAddress,
         refreshCustomer,
+        sendEmailSignInLink,
         sendOtp,
         verifyOtp,
         logout,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
-import { getCustomerByUid, getCustomerAddresses } from "@/lib/customer-store";
+import { getCustomerByUid, getCustomerByEmail, getCustomerAddresses } from "@/lib/customer-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ authenticated: false, customer: null, addresses: [] });
     }
 
-    const customer = getCustomerByUid(session.uid);
+    let customer = getCustomerByUid(session.uid);
+    if (!customer && session.email) {
+      customer = getCustomerByEmail(session.email);
+    }
+
     if (!customer || customer.accountStatus !== "ACTIVE") {
       return NextResponse.json({ authenticated: false, customer: null, addresses: [] });
     }

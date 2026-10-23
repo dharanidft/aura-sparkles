@@ -211,7 +211,7 @@ export default function CheckoutPage() {
     // Login requirement check (Section 7)
     if (!isAuthenticated) {
       openAuthModal();
-      setErrorMessage("Please verify your mobile number with OTP to place your order and access order tracking.");
+      setErrorMessage("Please sign in with your email link to place your order and track live shipments.");
       return;
     }
 
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
                   {isAuthenticated && (
                     <span className="text-xs text-[#766E65] flex items-center space-x-1.5">
                       <User className="w-3.5 h-3.5 text-[#B69A62]" />
-                      <span>{customer?.displayName || customer?.phoneNumber}</span>
+                      <span>{customer?.displayName || customer?.email}</span>
                     </span>
                   )}
                 </div>
@@ -435,10 +435,10 @@ export default function CheckoutPage() {
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <Sparkles className="w-4 h-4 text-[#B69A62]" />
-                        <h3 className="font-serif text-base font-semibold text-[#452638]">Customer Login</h3>
+                        <h3 className="font-serif text-base font-semibold text-[#452638]">Customer Sign In</h3>
                       </div>
                       <p className="text-xs text-[#766E65]">
-                        Sign in with mobile OTP to access your saved addresses and track orders across devices.
+                        Sign in with your email link to access saved addresses and track live orders.
                       </p>
                     </div>
                     <button
@@ -446,7 +446,7 @@ export default function CheckoutPage() {
                       onClick={() => openAuthModal()}
                       className="px-5 py-2.5 bg-[#452638] text-white text-xs uppercase tracking-wider font-semibold rounded-xl hover:bg-[#5D354D] transition-colors whitespace-nowrap shadow-xs"
                     >
-                      Sign In with Mobile OTP
+                      Sign In with Email Link
                     </button>
                   </div>
                 )}

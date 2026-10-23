@@ -12,14 +12,17 @@ export async function GET(request: Request) {
   }
 
   const allOrders = getAllStoredOrders();
-  const cleanPhone = session.phoneNumber.replace(/\D/g, "").slice(-10);
+  const cleanEmail = session.email ? session.email.trim().toLowerCase() : "";
+  const cleanPhone = session.phoneNumber ? session.phoneNumber.replace(/\D/g, "").slice(-10) : "";
 
-  // Match by customer UID or matching phone number
+  // Match by customer UID, matching email, or matching phone number
   const customerOrders = allOrders.filter((order) => {
     const matchesUid = (order as any).customerUid === session.uid;
+    const orderEmail = (order.customerDetails?.email || "").trim().toLowerCase();
     const orderPhone = (order.customerDetails?.phone || "").replace(/\D/g, "").slice(-10);
-    const matchesPhone = orderPhone === cleanPhone;
-    return matchesUid || matchesPhone;
+    const matchesEmail = cleanEmail && orderEmail && orderEmail === cleanEmail;
+    const matchesPhone = cleanPhone && orderPhone && orderPhone === cleanPhone;
+    return matchesUid || matchesEmail || matchesPhone;
   });
 
   // Sort newest first

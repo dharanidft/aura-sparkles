@@ -37,14 +37,21 @@ export function getCustomerByUid(uid: string): Customer | null {
   return customers.find((c) => c.uid === uid) || null;
 }
 
+export function getCustomerByEmail(email: string): Customer | null {
+  if (!email) return null;
+  const cleanEmail = email.trim().toLowerCase();
+  const customers = getAllCustomers();
+  return customers.find((c) => c.email && c.email.toLowerCase() === cleanEmail) || null;
+}
+
 export function getCustomerByPhone(phoneNumber: string): Customer | null {
   if (!phoneNumber) return null;
   const cleanPhone = phoneNumber.replace(/\D/g, "");
   const customers = getAllCustomers();
   return (
     customers.find((c) => {
-      const cClean = c.phoneNumber.replace(/\D/g, "");
-      return cClean === cleanPhone || (cleanPhone.length >= 10 && cClean.endsWith(cleanPhone.slice(-10)));
+      const cPhone = c.phoneNumber ? c.phoneNumber.replace(/\D/g, "") : "";
+      return cPhone === cleanPhone || (cleanPhone.length >= 10 && cPhone.endsWith(cleanPhone.slice(-10)));
     }) || null
   );
 }
@@ -52,9 +59,19 @@ export function getCustomerByPhone(phoneNumber: string): Customer | null {
 export function saveCustomer(customer: Customer): void {
   ensureCustomerDirectories();
   const customers = getAllCustomers();
-  const existingIdx = customers.findIndex((c) => c.uid === customer.uid);
+  const cleanEmail = (customer.email || "").trim().toLowerCase();
+
+  // Match existing customer by UID or by matching Email
+  const existingIdx = customers.findIndex(
+    (c) => c.uid === customer.uid || (cleanEmail && c.email && c.email.toLowerCase() === cleanEmail)
+  );
+
   if (existingIdx >= 0) {
-    customers[existingIdx] = customer;
+    customers[existingIdx] = {
+      ...customers[existingIdx],
+      ...customer,
+      updatedAt: new Date().toISOString(),
+    };
   } else {
     customers.unshift(customer);
   }
@@ -196,17 +213,25 @@ export function setDefaultCustomerAddress(addressId: string, customerUid: string
 }
 
 /**
- * Links any past guest orders placed with this phone number to the newly authenticated customer UID.
+ * Links any past guest orders placed with this email or phone number to the customer UID.
  */
-export function linkOrdersToCustomer(customerUid: string, phoneNumber: string): number {
-  if (!customerUid || !phoneNumber) return 0;
-  const cleanPhone = phoneNumber.replace(/\D/g, "").slice(-10);
+export function linkOrdersToCustomer(customerUid: string, email?: string, phoneNumber?: string): number {
+  if (!customerUid) return 0;
+  const cleanEmail = email ? email.trim().toLowerCase() : "";
+  const cleanPhone = phoneNumber ? phoneNumber.replace(/\D/g, "").slice(-10) : "";
   const allOrders = getAllStoredOrders();
   let linkedCount = 0;
 
   for (const order of allOrders) {
+    if ((order as any).customerUid === customerUid) continue;
+
+    const orderEmail = (order.customerDetails?.email || "").trim().toLowerCase();
     const orderPhone = (order.customerDetails?.phone || "").replace(/\D/g, "").slice(-10);
-    if (orderPhone === cleanPhone && (order as any).customerUid !== customerUid) {
+
+    const matchesEmail = cleanEmail && orderEmail && orderEmail === cleanEmail;
+    const matchesPhone = cleanPhone && orderPhone && orderPhone === cleanPhone;
+
+    if (matchesEmail || matchesPhone) {
       (order as any).customerUid = customerUid;
       order.updatedAt = new Date().toISOString();
       saveStoredOrder(order);

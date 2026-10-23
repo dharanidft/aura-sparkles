@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
-import { getCustomerByUid, saveCustomer } from "@/lib/customer-store";
+import { getCustomerByUid, getCustomerByEmail, saveCustomer } from "@/lib/customer-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,9 +13,13 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { displayName, email } = body;
+    const { displayName, phoneNumber } = body;
 
-    const customer = getCustomerByUid(session.uid);
+    let customer = getCustomerByUid(session.uid);
+    if (!customer && session.email) {
+      customer = getCustomerByEmail(session.email);
+    }
+
     if (!customer) {
       return NextResponse.json({ error: "Customer profile not found." }, { status: 404 });
     }
@@ -24,12 +28,9 @@ export async function PATCH(request: Request) {
       customer.displayName = displayName.trim();
     }
 
-    if (email !== undefined) {
-      const cleanEmail = (email || "").trim();
-      if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-        return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
-      }
-      customer.email = cleanEmail || undefined;
+    if (phoneNumber !== undefined) {
+      const cleanPhone = (phoneNumber || "").replace(/\D/g, "");
+      customer.phoneNumber = cleanPhone ? cleanPhone.slice(-10) : undefined;
     }
 
     customer.updatedAt = new Date().toISOString();
