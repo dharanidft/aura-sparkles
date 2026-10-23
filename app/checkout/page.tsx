@@ -15,9 +15,15 @@ import {
   AlertCircle,
   Tag,
   Loader2,
-  MapPin
+  MapPin,
+  Plus,
+  Home,
+  Briefcase,
+  Building,
+  User
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useAuth } from "@/lib/auth-context";
 import { 
   formatINR, 
   checkIndianPincode, 
@@ -41,6 +47,18 @@ export default function CheckoutPage() {
     clearCart,
   } = useCart();
 
+  const {
+    customer,
+    addresses,
+    isAuthenticated,
+    openAuthModal,
+    saveAddress
+  } = useAuth();
+
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
+  const [saveAddressToAccount, setSaveAddressToAccount] = useState(true);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -57,6 +75,33 @@ export default function CheckoutPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Address population helper
+  const applyAddress = (addr: any) => {
+    setFullName(addr.recipientName);
+    setPhone(addr.deliveryPhone);
+    setAddressLine1(addr.addressLine1);
+    setAddressLine2(addr.addressLine2 || "");
+    setLandmark(addr.landmark || "");
+    setCity(addr.city);
+    setState(addr.state);
+    setPincode(addr.postalCode);
+  };
+
+  // Pre-fill or select default address when customer is loaded
+  useEffect(() => {
+    if (isAuthenticated && addresses.length > 0 && !selectedAddressId && !useNewAddress) {
+      const def = addresses.find((a) => a.isDefault) || addresses[0];
+      if (def) {
+        setSelectedAddressId(def.addressId);
+        applyAddress(def);
+      }
+    } else if (isAuthenticated && customer && !fullName && !phone) {
+      if (customer.displayName) setFullName(customer.displayName);
+      if (customer.phoneNumber) setPhone(customer.phoneNumber.replace(/\D/g, "").slice(-10));
+      if (customer.email) setEmail(customer.email);
+    }
+  }, [isAuthenticated, addresses, customer, selectedAddressId, useNewAddress]);
 
   // PIN-code lookup states
   const [isLookingUpPin, setIsLookingUpPin] = useState(false);
@@ -163,6 +208,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Login requirement check (Section 7)
+    if (!isAuthenticated) {
+      openAuthModal();
+      setErrorMessage("Please verify your mobile number with OTP to place your order and access order tracking.");
+      return;
+    }
+
     // Phone validation (10 digits starting with 6-9)
     const phoneClean = phone.trim().replace(/\D/g, "");
     const phoneRegex = /^[6-9]\d{9}$/;
@@ -204,6 +256,28 @@ export default function CheckoutPage() {
       pincode: pinClean,
     };
 
+    const deliveryAddressSnapshot = {
+      recipientName: fullName.trim(),
+      deliveryPhone: phoneClean,
+      addressLine1: addressLine1.trim(),
+      addressLine2: addressLine2.trim() || "",
+      landmark: landmark.trim() || selectedLocality || "",
+      city: city.trim(),
+      state: state.trim(),
+      postalCode: pinClean,
+      addressType: "home" as const,
+      isDefault: addresses.length === 0
+    };
+
+    // If new address entered and checkbox checked, save to customer account
+    if (saveAddressToAccount && (!selectedAddressId || useNewAddress)) {
+      try {
+        await saveAddress(deliveryAddressSnapshot);
+      } catch (e) {
+        console.warn("Could not auto-save address to account", e);
+      }
+    }
+
     try {
       if (paymentMethod === "UPI") {
         // Direct HDFC Bank UPI Checkout flow
@@ -214,6 +288,8 @@ export default function CheckoutPage() {
             items,
             couponCode: appliedCoupon?.code,
             shippingAddress,
+            customerUid: customer?.uid,
+            deliveryAddressSnapshot,
           }),
         });
 
@@ -337,17 +413,139 @@ export default function CheckoutPage() {
               
               {/* Delivery Address */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-5">
-                <div className="flex items-center space-x-2 border-b border-[#EAE0D5] pb-3">
-                  <Truck className="w-5 h-5 text-[#B69A62]" />
-                  <h2 className="font-serif text-xl font-medium text-[#452638]">
-                    1. Shipping Information
-                  </h2>
+                <div className="flex items-center justify-between border-b border-[#EAE0D5] pb-3">
+                  <div className="flex items-center space-x-2">
+                    <Truck className="w-5 h-5 text-[#B69A62]" />
+                    <h2 className="font-serif text-xl font-medium text-[#452638]">
+                      1. Shipping Information
+                    </h2>
+                  </div>
+
+                  {isAuthenticated && (
+                    <span className="text-xs text-[#766E65] flex items-center space-x-1.5">
+                      <User className="w-3.5 h-3.5 text-[#B69A62]" />
+                      <span>{customer?.displayName || customer?.phoneNumber}</span>
+                    </span>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-[#452638] mb-1">
-                      Full Name *
+                {/* Unauthenticated Visitor Prompt */}
+                {!isAuthenticated && (
+                  <div className="bg-[#FAF3EE] rounded-2xl p-5 border border-[#E8C9C5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4 text-[#B69A62]" />
+                        <h3 className="font-serif text-base font-semibold text-[#452638]">Customer Login</h3>
+                      </div>
+                      <p className="text-xs text-[#766E65]">
+                        Sign in with mobile OTP to access your saved addresses and track orders across devices.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal()}
+                      className="px-5 py-2.5 bg-[#452638] text-white text-xs uppercase tracking-wider font-semibold rounded-xl hover:bg-[#5D354D] transition-colors whitespace-nowrap shadow-xs"
+                    >
+                      Sign In with Mobile OTP
+                    </button>
+                  </div>
+                )}
+
+                {/* Saved Address Cards for Authenticated Customers */}
+                {isAuthenticated && addresses.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-[#452638]">
+                        Select Saved Delivery Address
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextState = !useNewAddress;
+                          setUseNewAddress(nextState);
+                          if (nextState) {
+                            setSelectedAddressId(null);
+                            setAddressLine1("");
+                            setAddressLine2("");
+                            setLandmark("");
+                            setCity("");
+                            setState("");
+                            setPincode("");
+                          } else {
+                            const def = addresses.find((a) => a.isDefault) || addresses[0];
+                            if (def) {
+                              setSelectedAddressId(def.addressId);
+                              applyAddress(def);
+                            }
+                          }
+                        }}
+                        className="text-xs font-semibold text-[#B69A62] hover:underline"
+                      >
+                        {useNewAddress ? "← Choose from Saved Addresses" : "+ Deliver to a New Address"}
+                      </button>
+                    </div>
+
+                    {!useNewAddress && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {addresses.map((addr) => {
+                          const isSelected = selectedAddressId === addr.addressId;
+                          return (
+                            <div
+                              key={addr.addressId}
+                              onClick={() => {
+                                setSelectedAddressId(addr.addressId);
+                                applyAddress(addr);
+                              }}
+                              className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                                isSelected
+                                  ? "border-[#452638] bg-[#FBF8F3] shadow-xs ring-1 ring-[#452638]"
+                                  : "border-[#EAE0D5] bg-white hover:border-[#B69A62]/40"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    name="selectedSavedAddress"
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      setSelectedAddressId(addr.addressId);
+                                      applyAddress(addr);
+                                    }}
+                                    className="text-[#452638] focus:ring-[#452638]"
+                                  />
+                                  <span className="text-xs font-bold text-[#452638]">{addr.recipientName}</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  {addr.isDefault && (
+                                    <span className="text-[9px] uppercase tracking-wider bg-[#452638] text-white px-2 py-0.5 rounded-full font-bold">
+                                      Default
+                                    </span>
+                                  )}
+                                  <span className="text-[9px] uppercase tracking-wider bg-[#EAE0D5] text-[#452638] px-2 py-0.5 rounded-full font-medium">
+                                    {addr.addressType}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-[#766E65] mt-2 leading-relaxed">
+                                {addr.addressLine1}, {addr.addressLine2 ? `${addr.addressLine2}, ` : ""}
+                                {addr.city}, {addr.state} — <strong className="text-[#452638]">{addr.postalCode}</strong>
+                              </p>
+                              <p className="text-[11px] text-[#766E65] mt-1">Mobile: +91 {addr.deliveryPhone}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Form Inputs (Visible when using new address or no saved addresses) */}
+                <div className={`space-y-4 ${isAuthenticated && addresses.length > 0 && !useNewAddress ? "hidden" : "block"}`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-medium text-[#452638] mb-1">
+                        Full Name *
                     </label>
                     <input
                       type="text"
@@ -527,8 +725,44 @@ export default function CheckoutPage() {
                       </optgroup>
                     </select>
                   </div>
+
+                  {/* Save address to account checkbox */}
+                  {isAuthenticated && (
+                    <div className="sm:col-span-2 pt-1">
+                      <label className="flex items-center space-x-2 text-xs text-[#452638] font-medium cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={saveAddressToAccount}
+                          onChange={(e) => setSaveAddressToAccount(e.target.checked)}
+                          className="w-4 h-4 text-[#452638] rounded border-[#EAE0D5] focus:ring-[#452638]"
+                        />
+                        <span>Save this address to my Aura account address book</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Selected address review when card is picked */}
+              {isAuthenticated && addresses.length > 0 && !useNewAddress && selectedAddressId && (
+                <div className="p-4 bg-[#FAF7F2] rounded-2xl border border-[#EAE0D5] text-xs flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-[#452638]">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>Delivering to <strong>{fullName}</strong> ({city}, {pincode})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseNewAddress(true);
+                      setSelectedAddressId(null);
+                    }}
+                    className="text-[#B69A62] font-semibold hover:underline text-[11px]"
+                  >
+                    Edit / Change
+                  </button>
+                </div>
+              )}
+            </div>
 
               {/* Payment Method */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-5">

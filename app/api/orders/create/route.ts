@@ -4,13 +4,18 @@ import { calculateOrderTotals } from "@/lib/shipping";
 import { generateAuraOrderId, generateAccessKey, saveStoredOrder } from "@/lib/order-store";
 import { StoredOrder } from "@/lib/upi-types";
 import { ShippingAddress } from "@/lib/types";
+import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    const session = getAuthenticatedCustomerFromRequest(request);
     const body = await request.json().catch(() => ({}));
-    const { items, couponCode, shippingAddress } = body;
+    const { items, couponCode, shippingAddress, customerUid: clientProvidedUid } = body;
+
+    // Use verified session UID if logged in, fallback to client provided or undefined
+    const authenticatedUid = session?.uid || clientProvidedUid || undefined;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Shopping bag is empty." }, { status: 400 });
@@ -79,19 +84,23 @@ export async function POST(request: Request) {
     const accessKey = generateAccessKey();
     const now = new Date().toISOString();
 
-    const storedOrder: StoredOrder = {
+    const addressSnapshot: ShippingAddress = {
+      fullName: shippingAddress.fullName.trim(),
+      email: (shippingAddress.email || "").trim(),
+      phone: shippingAddress.phone.trim(),
+      addressLine1: shippingAddress.addressLine1.trim(),
+      addressLine2: (shippingAddress.addressLine2 || "").trim(),
+      landmark: (shippingAddress.landmark || "").trim(),
+      city: shippingAddress.city.trim(),
+      state: shippingAddress.state.trim(),
+      pincode: shippingAddress.pincode.trim(),
+    };
+
+    const storedOrder: any = {
       orderId,
-      customerDetails: {
-        fullName: shippingAddress.fullName.trim(),
-        email: (shippingAddress.email || "").trim(),
-        phone: shippingAddress.phone.trim(),
-        addressLine1: shippingAddress.addressLine1.trim(),
-        addressLine2: (shippingAddress.addressLine2 || "").trim(),
-        landmark: (shippingAddress.landmark || "").trim(),
-        city: shippingAddress.city.trim(),
-        state: shippingAddress.state.trim(),
-        pincode: shippingAddress.pincode.trim(),
-      },
+      customerUid: authenticatedUid,
+      customerDetails: addressSnapshot,
+      deliveryAddressSnapshot: addressSnapshot,
       items: validatedItems,
       subtotalPaise,
       shippingPaise,

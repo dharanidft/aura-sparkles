@@ -1,1 +1,139 @@
-[]
+[
+  {
+    "orderId": "AURA-2026-000001",
+    "customerDetails": {
+      "fullName": "Dharanivel Kandhasamy",
+      "email": "dharaniddft@gmail.com",
+      "phone": "9566725454",
+      "addressLine1": "5/1, chennai",
+      "addressLine2": "",
+      "landmark": "Padi",
+      "city": "Tiruvallur",
+      "state": "Tamil Nadu",
+      "pincode": "600050"
+    },
+    "items": [
+      {
+        "product": {
+          "id": "jar-80-sandalwood",
+          "slug": "mysore-sandalwood-candle-80g",
+          "name": "Mysore Sandalwood Candle",
+          "tagline": "Sacred temple warmth in hand-poured frosted glass — 80g signature jar",
+          "category": "Scented Candles",
+          "fragranceFamily": "Earthy & Woody",
+          "price": 249,
+          "mrp": 299,
+          "rating": 4.9,
+          "reviewCount": 42,
+          "inStock": true,
+          "stockCount": 65,
+          "isBestseller": true,
+          "isNewArrival": false,
+          "isGiftReady": true,
+          "netWeight": "80g soy wax / Frosted Glass Jar",
+          "burnTime": "18–22 Hours",
+          "jarType": "Frosted Glass Jar with Gold Accents",
+          "waxType": "100% Pure Soy Wax with Lead-free Cotton Wick",
+          "description": "Handcrafted with pure Mysore sandalwood botanicals and clean-burning soy wax. Grounding, woody, and sacred — an everyday luxury for evening wind-downs and peaceful living spaces.",
+          "notes": {
+            "top": [
+              "Golden Amber",
+              "Cardamom Seed"
+            ],
+            "heart": [
+              "Pure Mysore Sandalwood",
+              "Cashmere Wood"
+            ],
+            "base": [
+              "Smoked Cedarwood",
+              "Warm Vanilla"
+            ]
+          },
+          "careInstructions": [
+            "Trim the wick to 6 mm (1/4 inch) before every lighting to prevent soot.",
+            "Allow the wax pool to melt to the jar edges on the very first burn (approx. 2 hours) to avoid tunnelling.",
+            "Never burn for more than 4 consecutive hours.",
+            "Keep away from drafts, pets, children, and all flammable objects.",
+            "Never leave a burning candle unattended.",
+            "Discontinue use when 10 mm of wax remains."
+          ],
+          "images": [
+            "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1000&q=80",
+            "https://images.unsplash.com/photo-1572726729207-a78d6feb18d7?auto=format&fit=crop&w=1000&q=80",
+            "https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?auto=format&fit=crop&w=1000&q=80"
+          ],
+          "collection": "The Signature Fragrance Collection",
+          "sizeVariant": "80g"
+        },
+        "quantity": 1,
+        "selectedVariant": "80g"
+      },
+      {
+        "product": {
+          "id": "jar-80-vanilla",
+          "slug": "vanilla-scented-candle-80g",
+          "name": "Vanilla Scented Candle",
+          "tagline": "Warm Madagascar vanilla pod and toasted tonka — 80g frosted jar",
+          "category": "Scented Candles",
+          "fragranceFamily": "Warm & Comforting",
+          "price": 249,
+          "mrp": 299,
+          "rating": 4.8,
+          "reviewCount": 37,
+          "inStock": true,
+          "stockCount": 60,
+          "isBestseller": true,
+          "isNewArrival": false,
+          "isGiftReady": true,
+          "netWeight": "80g soy wax / Frosted Glass Jar",
+          "burnTime": "18–22 Hours",
+          "jarType": "Frosted Glass Jar with Gold Accents",
+          "waxType": "100% Pure Soy Wax with Lead-free Cotton Wick",
+          "description": "An enveloping blanket of sweet cream, warm tonka bean, and pure vanilla pod. The perfect companion for rainy afternoons and book reading.",
+          "notes": {
+            "top": [
+              "Whipped Cream",
+              "Butter Blossom"
+            ],
+            "heart": [
+              "Madagascar Vanilla Pod",
+              "Toasted Tonka"
+            ],
+            "base": [
+              "Caramelised Sugar",
+              "Soft Sandalwood"
+            ]
+          },
+          "careInstructions": [
+            "Trim the wick to 6 mm (1/4 inch) before every lighting to prevent soot.",
+            "Allow the wax pool to melt to the jar edges on the very first burn (approx. 2 hours) to avoid tunnelling.",
+            "Never burn for more than 4 consecutive hours.",
+            "Keep away from drafts, pets, children, and all flammable objects.",
+            "Never leave a burning candle unattended.",
+            "Discontinue use when 10 mm of wax remains."
+          ],
+          "images": [
+            "https://images.unsplash.com/photo-1596433809252-260c2745dfdd?auto=format&fit=crop&w=1000&q=80",
+            "https://images.unsplash.com/photo-1605651202774-7d573fd3f12d?auto=format&fit=crop&w=1000&q=80"
+          ],
+          "collection": "The Signature Fragrance Collection",
+          "sizeVariant": "80g"
+        },
+        "quantity": 1,
+        "selectedVariant": "80g"
+      }
+    ],
+    "subtotalPaise": 49800,
+    "shippingPaise": 4900,
+    "discountPaise": 0,
+    "totalPaise": 54700,
+    "currency": "INR",
+    "paymentMethod": "UPI",
+    "paymentStatus": "PENDING_PAYMENT",
+    "orderStatus": "Pending",
+    "createdAt": "2026-10-23T09:22:47.452Z",
+    "updatedAt": "2026-10-23T10:18:17.468Z",
+    "accessKey": "563c026ad81912d85a51099220144aa2ece07793770a4426",
+    "customerUid": "CUST-CF789CEF"
+  }
+]

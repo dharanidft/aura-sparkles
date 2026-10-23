@@ -6,6 +6,8 @@ import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Toast } from "@/components/Toast";
 import { CartProvider } from "@/lib/cart-context";
+import { AuthProvider } from "@/lib/auth-context";
+import { AuthModal } from "@/components/AuthModal";
 import { CursorSparkle } from "@/components/CursorSparkle";
 
 export const metadata: Metadata = {
@@ -116,15 +118,18 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-white text-[#282522] selection:bg-[#E8C9C5] selection:text-[#452638]">
-        <CartProvider>
-          <CursorSparkle />
-          <AnnouncementBar />
-          <Header />
-          <main className="flex-grow">{children}</main>
-          <CartDrawer />
-          <Toast />
-          <Footer />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <CursorSparkle />
+            <AnnouncementBar />
+            <Header />
+            <main className="flex-grow">{children}</main>
+            <CartDrawer />
+            <Toast />
+            <AuthModal />
+            <Footer />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

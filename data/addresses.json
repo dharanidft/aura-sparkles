@@ -1,0 +1,21 @@
+[
+  {
+    "addressId": "ADDR-304c01432e7c",
+    "customerUid": "CUST-CF789CEF",
+    "recipientName": "Dharanivel",
+    "deliveryPhone": "9566725454",
+    "houseFlat": "",
+    "buildingApartment": "",
+    "addressLine1": "Plot 42, Aura Residency",
+    "addressLine2": "Anna Nagar Main Road",
+    "landmark": "Near Grand Mall",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "postalCode": "600040",
+    "addressType": "Home",
+    "deliveryInstructions": "",
+    "isDefault": true,
+    "createdAt": "2026-10-23T10:18:17.684Z",
+    "updatedAt": "2026-10-23T10:18:17.684Z"
+  }
+]

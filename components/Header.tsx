@@ -12,9 +12,15 @@ import {
   Menu, 
   X, 
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  User,
+  LogOut,
+  Package,
+  MapPin,
+  ChevronDown
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useAuth } from "@/lib/auth-context";
 
 export type AuraFont = "playfair" | "cinzel" | "italiana" | "cormorant" | "montserrat";
 
@@ -31,8 +37,10 @@ export const FONT_LIST: AuraFont[] = ["playfair", "cinzel", "italiana", "cormora
 export function Header() {
   const pathname = usePathname();
   const { totalItemsCount, setIsCartOpen, wishlist } = useCart();
+  const { customer, isAuthenticated, openAuthModal, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -58,10 +66,11 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change
+  // Close menus on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setSearchOpen(false);
+    setAccountMenuOpen(false);
   }, [pathname]);
 
   const desktopNavLinks = [
@@ -189,6 +198,87 @@ export function Header() {
                 )}
               </Link>
 
+              {/* Customer Account / Profile Menu */}
+              <div className="relative">
+                {isAuthenticated ? (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                      className="flex items-center space-x-1.5 p-1 sm:p-1.5 text-[#452638] hover:text-[#B69A62] transition-colors rounded-full hover:bg-[#FBF8F3]"
+                      aria-label="Customer account menu"
+                      aria-expanded={accountMenuOpen}
+                    >
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#452638] text-white flex items-center justify-center text-xs font-semibold tracking-wider shadow-xs">
+                        {(customer?.displayName?.charAt(0) || customer?.phoneNumber?.slice(-2) || "U").toUpperCase()}
+                      </div>
+                      <ChevronDown className="w-3.5 h-3.5 hidden sm:block text-[#766E65]" />
+                    </button>
+
+                    {accountMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#EAE0D5] py-2 z-50 animate-fadeIn">
+                        <div className="px-4 py-3 border-b border-[#EAE0D5]/60 bg-[#FBF8F3]/60 rounded-t-2xl">
+                          <p className="text-[10px] uppercase tracking-wider text-[#B69A62] font-semibold">Signed in as</p>
+                          <p className="text-sm font-semibold text-[#452638] truncate">{customer?.displayName || "Aura Customer"}</p>
+                          <p className="text-xs text-[#766E65]">{customer?.phoneNumber}</p>
+                        </div>
+
+                        <div className="py-1">
+                          <Link
+                            href="/account"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center px-4 py-2.5 text-xs font-medium text-[#452638] hover:bg-[#FBF8F3] hover:text-[#B69A62] transition-colors"
+                          >
+                            <User className="w-4 h-4 mr-3 text-[#B69A62]" />
+                            My Account
+                          </Link>
+                          <Link
+                            href="/account?tab=orders"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center px-4 py-2.5 text-xs font-medium text-[#452638] hover:bg-[#FBF8F3] hover:text-[#B69A62] transition-colors"
+                          >
+                            <Package className="w-4 h-4 mr-3 text-[#B69A62]" />
+                            My Orders
+                          </Link>
+                          <Link
+                            href="/account?tab=addresses"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center px-4 py-2.5 text-xs font-medium text-[#452638] hover:bg-[#FBF8F3] hover:text-[#B69A62] transition-colors"
+                          >
+                            <MapPin className="w-4 h-4 mr-3 text-[#B69A62]" />
+                            My Addresses
+                          </Link>
+                        </div>
+
+                        <div className="border-t border-[#EAE0D5]/60 pt-1 mt-1">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setAccountMenuOpen(false);
+                              await logout();
+                            }}
+                            className="w-full flex items-center px-4 py-2.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                          >
+                            <LogOut className="w-4 h-4 mr-3" />
+                            Log Out
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal()}
+                    aria-label="Customer Login"
+                    className="p-2 text-[#452638] hover:text-[#B69A62] transition-colors"
+                    title="Sign In / Register"
+                  >
+                    <User className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
               {/* Shopping Bag Drawer Trigger */}
               <button
                 type="button"
@@ -283,15 +373,76 @@ export function Header() {
                 ))}
               </div>
 
-              {/* Requirement 6: Customer Order Tracking in Mobile Drawer */}
+              {/* Customer Account & Orders */}
               <div className="pt-4 border-t border-[#EAE0D5] space-y-3">
                 <p className="text-[10px] uppercase tracking-luxury text-[#B69A62] font-semibold">
-                  Customer Care &amp; Orders
+                  Customer Account &amp; Orders
                 </p>
+
+                {isAuthenticated ? (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-[#FBF8F3] rounded-xl border border-[#EAE0D5]">
+                      <p className="text-xs font-semibold text-[#452638] truncate">{customer?.displayName || "Aura Customer"}</p>
+                      <p className="text-[11px] text-[#766E65]">{customer?.phoneNumber}</p>
+                    </div>
+
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center space-x-2.5 py-1.5 text-xs text-[#452638] hover:text-[#B69A62]"
+                    >
+                      <User className="w-4 h-4 text-[#B69A62]" />
+                      <span>My Account Dashboard</span>
+                    </Link>
+
+                    <Link
+                      href="/account?tab=orders"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center space-x-2.5 py-1.5 text-xs text-[#452638] hover:text-[#B69A62]"
+                    >
+                      <Package className="w-4 h-4 text-[#B69A62]" />
+                      <span>My Orders</span>
+                    </Link>
+
+                    <Link
+                      href="/account?tab=addresses"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center space-x-2.5 py-1.5 text-xs text-[#452638] hover:text-[#B69A62]"
+                    >
+                      <MapPin className="w-4 h-4 text-[#B69A62]" />
+                      <span>Saved Addresses</span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setMobileMenuOpen(false);
+                        await logout();
+                      }}
+                      className="flex items-center space-x-2.5 py-1.5 text-xs text-rose-600 hover:text-rose-700"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal();
+                    }}
+                    className="w-full py-2.5 px-4 bg-[#452638] text-white text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center justify-center space-x-2 shadow-xs hover:bg-[#5D354D] transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Sign In with Mobile</span>
+                  </button>
+                )}
+
                 <Link
                   href="/track-order"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center space-x-2 text-xs text-[#452638] hover:text-[#B69A62]"
+                  className="flex items-center space-x-2 pt-2 text-xs text-[#452638] hover:text-[#B69A62]"
                 >
                   <Truck className="w-4 h-4 text-[#B69A62]" />
                   <span>Track Your Order</span>
