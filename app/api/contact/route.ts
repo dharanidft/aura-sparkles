@@ -86,7 +86,11 @@ export async function POST(request: Request) {
 
     if (smtpHost && smtpUser && smtpPass) {
       try {
-        const nodemailer = await import("nodemailer");
+        const nodemailerModule: any = await import("nodemailer").catch(() => null);
+        if (!nodemailerModule) {
+          throw new Error("nodemailer is not available in environment");
+        }
+        const nodemailer = nodemailerModule.default || nodemailerModule;
 
         const sendWithPort = async (port: number, secure: boolean) => {
           const transporter = nodemailer.createTransport({
