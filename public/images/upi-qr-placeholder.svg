@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#FFFFFF"/>
+  <rect x="15" y="15" width="270" height="270" fill="none" stroke="#452638" stroke-width="2" rx="12"/>
+  
+  <!-- Outer Corner Positioning Squares -->
+  <rect x="35" y="35" width="60" height="60" fill="none" stroke="#452638" stroke-width="8" rx="4"/>
+  <rect x="50" y="50" width="30" height="30" fill="#452638" rx="2"/>
+
+  <rect x="205" y="35" width="60" height="60" fill="none" stroke="#452638" stroke-width="8" rx="4"/>
+  <rect x="220" y="50" width="30" height="30" fill="#452638" rx="2"/>
+
+  <rect x="35" y="205" width="60" height="60" fill="none" stroke="#452638" stroke-width="8" rx="4"/>
+  <rect x="50" y="220" width="30" height="30" fill="#452638" rx="2"/>
+
+  <!-- Matrix Modules Pattern -->
+  <rect x="110" y="40" width="15" height="15" fill="#452638"/>
+  <rect x="135" y="40" width="15" height="15" fill="#452638"/>
+  <rect x="160" y="40" width="15" height="15" fill="#452638"/>
+  <rect x="110" y="65" width="15" height="15" fill="#452638"/>
+  <rect x="150" y="65" width="25" height="15" fill="#452638"/>
+  <rect x="110" y="90" width="80" height="12" fill="#452638"/>
+
+  <rect x="40" y="115" width="20" height="20" fill="#452638"/>
+  <rect x="70" y="115" width="15" height="15" fill="#452638"/>
+  <rect x="95" y="115" width="30" height="15" fill="#452638"/>
+  <rect x="135" y="115" width="20" height="20" fill="#452638"/>
+  <rect x="165" y="115" width="35" height="15" fill="#452638"/>
+  <rect x="210" y="115" width="25" height="20" fill="#452638"/>
+  <rect x="245" y="115" width="15" height="15" fill="#452638"/>
+
+  <rect x="40" y="145" width="35" height="15" fill="#452638"/>
+  <rect x="85" y="145" width="20" height="20" fill="#452638"/>
+  <rect x="115" y="145" width="70" height="25" fill="#FAF6F0" stroke="#B69A62" stroke-width="1.5" rx="4"/>
+  <text x="150" y="161" font-family="sans-serif" font-size="10" font-weight="bold" fill="#452638" text-anchor="middle">UPI • HDFC</text>
+  <rect x="195" y="145" width="20" height="20" fill="#452638"/>
+  <rect x="225" y="145" width="35" height="15" fill="#452638"/>
+
+  <rect x="40" y="175" width="20" height="20" fill="#452638"/>
+  <rect x="70" y="175" width="25" height="15" fill="#452638"/>
+  <rect x="105" y="175" width="15" height="20" fill="#452638"/>
+  <rect x="130" y="175" width="40" height="15" fill="#452638"/>
+  <rect x="180" y="175" width="20" height="20" fill="#452638"/>
+  <rect x="210" y="175" width="25" height="15" fill="#452638"/>
+  <rect x="245" y="175" width="15" height="20" fill="#452638"/>
+
+  <rect x="110" y="205" width="30" height="15" fill="#452638"/>
+  <rect x="150" y="205" width="20" height="20" fill="#452638"/>
+  <rect x="180" y="205" width="40" height="15" fill="#452638"/>
+  <rect x="230" y="205" width="30" height="25" fill="#452638"/>
+
+  <rect x="110" y="235" width="45" height="20" fill="#452638"/>
+  <rect x="165" y="235" width="30" height="15" fill="#452638"/>
+  <rect x="205" y="240" width="55" height="15" fill="#452638"/>
+
+  <!-- Footer Brand Tag -->
+  <text x="150" y="280" font-family="serif" font-size="10" letter-spacing="1.5" fill="#B69A62" text-anchor="middle">AURA SPARKLES • OFFICIAL UPI</text>
+</svg>

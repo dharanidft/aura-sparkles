@@ -86,9 +86,15 @@ export async function POST(request: Request) {
 
     if (smtpHost && smtpUser && smtpPass) {
       try {
-        const nodemailerModule: any = await import("nodemailer").catch(() => null);
+        let nodemailerModule: any = null;
+        try {
+          const req = eval("require");
+          nodemailerModule = req("nodemailer");
+        } catch {
+          nodemailerModule = null;
+        }
         if (!nodemailerModule) {
-          throw new Error("nodemailer is not available in environment");
+          throw new Error("nodemailer is not installed in environment");
         }
         const nodemailer = nodemailerModule.default || nodemailerModule;
 

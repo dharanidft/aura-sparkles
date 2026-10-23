@@ -27,25 +27,6 @@ import {
 import { ShippingAddress, Order } from "@/lib/types";
 import { saveOrderToStorage } from "@/lib/orders";
 
-const loadRazorpayScript = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") {
-      resolve(false);
-      return;
-    }
-    if ((window as any).Razorpay) {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
 export default function CheckoutPage() {
   const router = useRouter();
   const {
@@ -70,7 +51,7 @@ export default function CheckoutPage() {
   // Requirement 5: Start with empty "Select state" placeholder
   const [state, setState] = useState("");
   const [pincode, setPincode] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"Razorpay" | "COD">("Razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "COD">("UPI");
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
 
@@ -224,27 +205,64 @@ export default function CheckoutPage() {
     };
 
     try {
-      // 1. Create order on server
-      const createRes = await fetch("/api/checkout/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          couponCode: appliedCoupon?.code,
+      if (paymentMethod === "UPI") {
+        // Direct HDFC Bank UPI Checkout flow
+        const createRes = await fetch("/api/orders/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items,
+            couponCode: appliedCoupon?.code,
+            shippingAddress,
+          }),
+        });
+
+        const orderData = await createRes.json();
+        if (!createRes.ok || !orderData.success) {
+          throw new Error(orderData.error || "Failed to create UPI order.");
+        }
+
+        // Save order locally for browser tracking backup
+        const clientOrder: Order = {
+          id: orderData.orderId,
+          createdAt: new Date().toISOString(),
+          items: [...items],
+          subtotal,
+          discount,
+          discountCode: appliedCoupon?.code,
+          shippingFee,
+          total: orderData.totalRupees || finalTotal,
           shippingAddress,
-          paymentMethod,
-        }),
-      });
+          paymentMethod: "UPI",
+          paymentStatus: "Pending",
+          orderStatus: "Pending",
+        };
+        saveOrderToStorage(clientOrder);
 
-      const orderData = await createRes.json();
-
-      if (!createRes.ok || !orderData.success) {
-        throw new Error(orderData.error || "Failed to create order.");
+        // Clear cart and redirect directly to UPI Payment Page
+        clearCart();
+        router.push(orderData.paymentUrl || `/pay/${orderData.orderId}?key=${orderData.accessKey}`);
+        return;
       }
 
-      // 2. Process Payment
+      // Cash on Delivery Fallback
       if (paymentMethod === "COD") {
-        // Cash on delivery flow
+        const createRes = await fetch("/api/checkout/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items,
+            couponCode: appliedCoupon?.code,
+            shippingAddress,
+            paymentMethod: "COD",
+          }),
+        });
+
+        const orderData = await createRes.json();
+        if (!createRes.ok || !orderData.success) {
+          throw new Error(orderData.error || "Failed to create order.");
+        }
+
         const completeOrder: Order = {
           id: orderData.orderId,
           createdAt: new Date().toISOString(),
@@ -267,132 +285,6 @@ export default function CheckoutPage() {
         router.push(`/order-success/${completeOrder.id}`);
         return;
       }
-
-      // Online payment (Razorpay / Test Gateway flow)
-      if (orderData.isLiveGateway && orderData.razorpayKey) {
-        const isLoaded = await loadRazorpayScript();
-        if (!isLoaded) {
-          throw new Error("Unable to load Razorpay payment gateway. Please check your internet connection.");
-        }
-
-        const options = {
-          key: orderData.razorpayKey,
-          amount: Math.round(orderData.amount * 100),
-          currency: orderData.currency || "INR",
-          name: "Aura Sparkles",
-          description: "Handcrafted Luxury Candles & Home Fragrances",
-          image: `${window.location.origin}/images/logo.png`,
-          order_id: orderData.razorpayOrderId,
-          handler: async function (response: any) {
-            try {
-              const verifyRes = await fetch("/api/checkout/verify-payment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  isTestMode: false,
-                }),
-              });
-
-              const verifyData = await verifyRes.json();
-              if (!verifyData.verified) {
-                throw new Error(verifyData.error || "Payment verification failed.");
-              }
-
-              const completeOrder: Order = {
-                id: orderData.orderId,
-                createdAt: new Date().toISOString(),
-                items: [...items],
-                subtotal,
-                discount,
-                discountCode: appliedCoupon?.code,
-                shippingFee,
-                total: finalTotal,
-                shippingAddress,
-                paymentMethod: "Razorpay",
-                paymentStatus: "Paid",
-                orderStatus: "Confirmed",
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                trackingNumber: `EXP-IN-${Date.now().toString().slice(-6)}`,
-                estimatedDeliveryDate: checkIndianPincode(pinClean).deliveryDateStr,
-              };
-
-              saveOrderToStorage(completeOrder);
-              clearCart();
-              router.push(`/order-success/${completeOrder.id}`);
-            } catch (verErr: any) {
-              setErrorMessage(verErr.message || "Payment verification failed.");
-              setIsProcessing(false);
-            }
-          },
-          prefill: {
-            name: shippingAddress.fullName,
-            email: email,
-            contact: phoneClean,
-          },
-          notes: {
-            address: `${shippingAddress.addressLine1}, ${shippingAddress.city}, ${shippingAddress.state} - ${shippingAddress.pincode}`,
-          },
-          theme: {
-            color: "#452638",
-          },
-          modal: {
-            ondismiss: function () {
-              setIsProcessing(false);
-            },
-          },
-        };
-
-        const razorpayInstance = new (window as any).Razorpay(options);
-        razorpayInstance.on("payment.failed", function (response: any) {
-          setErrorMessage(response.error?.description || "Payment failed. Please try a different payment method.");
-          setIsProcessing(false);
-        });
-        razorpayInstance.open();
-        return;
-      }
-
-      // Test Mode Simulation (when keys have not yet been added to environment)
-      const verifyRes = await fetch("/api/checkout/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          razorpay_order_id: orderData.razorpayOrderId,
-          razorpay_payment_id: `pay_test_${Date.now().toString().slice(-8)}`,
-          isTestMode: true,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (!verifyData.verified) {
-        throw new Error(verifyData.error || "Payment verification failed.");
-      }
-
-      const completeOrder: Order = {
-        id: orderData.orderId,
-        createdAt: new Date().toISOString(),
-        items: [...items],
-        subtotal,
-        discount,
-        discountCode: appliedCoupon?.code,
-        shippingFee,
-        total: finalTotal,
-        shippingAddress,
-        paymentMethod: "Razorpay",
-        paymentStatus: "Paid",
-        orderStatus: "Confirmed",
-        razorpayPaymentId: verifyData.paymentId,
-        razorpayOrderId: orderData.razorpayOrderId,
-        trackingNumber: `EXP-IN-${Date.now().toString().slice(-6)}`,
-        estimatedDeliveryDate: checkIndianPincode(pinClean).deliveryDateStr,
-      };
-
-      saveOrderToStorage(completeOrder);
-      clearCart();
-      router.push(`/order-success/${completeOrder.id}`);
     } catch (err: any) {
       console.error("Checkout process error", err);
       setErrorMessage(err.message || "An unexpected error occurred during checkout.");
@@ -648,10 +540,10 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Razorpay Option */}
+                  {/* Direct UPI Payment Option */}
                   <label
                     className={`flex items-start justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      paymentMethod === "Razorpay"
+                      paymentMethod === "UPI"
                         ? "border-[#452638] bg-white ring-1 ring-[#452638]/20 shadow-xs"
                         : "border-[#EAE0D5] bg-white hover:border-[#B69A62]"
                     }`}
@@ -660,28 +552,38 @@ export default function CheckoutPage() {
                       <input
                         type="radio"
                         name="payment"
-                        checked={paymentMethod === "Razorpay"}
-                        onChange={() => setPaymentMethod("Razorpay")}
+                        checked={paymentMethod === "UPI"}
+                        onChange={() => setPaymentMethod("UPI")}
                         className="mt-1 text-[#452638] focus:ring-[#452638]"
                       />
                       <div>
-                        <p className="text-xs font-semibold text-[#452638]">
-                          Razorpay (UPI, Google Pay, PhonePe, Paytm, Cards, NetBanking)
-                        </p>
-                        <p className="text-[11px] text-[#766E65] mt-0.5">
-                          Instant verification via Razorpay Gateway. 100% secure encrypted transaction.
+                        <div className="flex items-center space-x-2">
+                          <p className="text-xs font-semibold text-[#452638]">
+                            Direct UPI Payment (GPay, PhonePe, Paytm, BHIM)
+                          </p>
+                          <span className="px-2 py-0.5 rounded-full bg-[#B69A62]/15 text-[#452638] text-[10px] font-medium tracking-wide">
+                            Recommended
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#766E65] mt-1 leading-relaxed">
+                          Pay directly to our official HDFC Bank UPI ID or scan QR code. Upload payment screenshot &amp; UTR to submit for verification.
                         </p>
                       </div>
                     </div>
-                    <div className="flex space-x-1.5 flex-shrink-0">
-                      <span className="px-2 py-0.5 bg-neutral-50 rounded border text-[9px] font-bold text-[#452638]">
-                        UPI
-                      </span>
-                      <span className="px-2 py-0.5 bg-neutral-50 rounded border text-[9px] font-bold text-[#452638]">
-                        Cards
-                      </span>
-                      <span className="px-2 py-0.5 bg-neutral-50 rounded border text-[9px] font-bold text-[#452638]">
-                        NetBanking
+                    <div className="hidden sm:flex flex-col items-end space-y-1 flex-shrink-0">
+                      <div className="flex space-x-1">
+                        <span className="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold text-[#452638]">
+                          GPay
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold text-[#452638]">
+                          PhonePe
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold text-[#452638]">
+                          Paytm
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-medium text-[#B69A62]">
+                        HDFC Bank UPI
                       </span>
                     </div>
                   </label>
@@ -719,7 +621,7 @@ export default function CheckoutPage() {
                 <div className="p-3 bg-white rounded-xl border border-[#EAE0D5] flex items-center space-x-2 text-[11px] text-[#766E65]">
                   <ShieldCheck className="w-4 h-4 text-[#B69A62] flex-shrink-0" />
                   <span>
-                    Aura Sparkles never stores card or bank information. All transactions are securely processed.
+                    Direct UPI transactions are verified before dispatch. No third-party gateway charges.
                   </span>
                 </div>
               </div>

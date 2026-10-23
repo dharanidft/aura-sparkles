@@ -140,6 +140,35 @@ export default function TrackOrderPage() {
               </Link>
             </div>
 
+            {/* UPI Payment Status Banner */}
+            {matchedOrder.paymentMethod === "UPI" && (
+              <div className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-neutral-50 border-[#EAE0D5]">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-semibold text-[#452638]">
+                      UPI Payment Status:
+                    </span>
+                    <span className="font-semibold text-xs text-[#B69A62]">
+                      {matchedOrder.paymentStatus === "Paid" ? "Verified & Paid" : "Under Review / Awaiting Verification"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#766E65]">
+                    {matchedOrder.paymentStatus === "Paid"
+                      ? "Your direct UPI payment has been verified with our HDFC Bank account. Order is confirmed for dispatch."
+                      : "If you have not uploaded your transaction screenshot or need to submit your UTR, you can complete it anytime below."}
+                  </p>
+                </div>
+                {matchedOrder.paymentStatus !== "Paid" && (
+                  <Link
+                    href={`/pay/${matchedOrder.id}`}
+                    className="px-4 py-2 bg-[#452638] text-white rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#5D354D] transition-colors shadow-xs"
+                  >
+                    View UPI / Upload Proof →
+                  </Link>
+                )}
+              </div>
+            )}
+
             {/* Timeline */}
             <div className="grid grid-cols-4 gap-2 text-center text-xs pt-2">
               <div className="space-y-2">
