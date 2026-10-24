@@ -133,14 +133,16 @@ export function verifyEmailSignInToken(email: string, rawToken: string): { valid
 export async function sendEmailSignInMessage(
   email: string,
   signInUrl: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; devUrl?: string }> {
   const cleanEmail = email.trim().toLowerCase();
 
   const smtpHost = process.env.SMTP_HOST || "smtpout.secureserver.net";
   const smtpUser = process.env.SMTP_USER || "contact@aurasparkles.com";
   const smtpPass = process.env.SMTP_PASS;
 
-  if (smtpPass) {
+  const isPlaceholderPass = !smtpPass || smtpPass === "Your_GoDaddy_Email_Password_Here";
+
+  if (!isPlaceholderPass) {
     try {
       const transporter = nodemailer.createTransport({
         host: smtpHost,
@@ -190,10 +192,19 @@ export async function sendEmailSignInMessage(
       return { success: true };
     } catch (err: any) {
       console.error("[Aura Auth] SMTP dispatch failed:", err.message);
+      return { 
+        success: false, 
+        error: `SMTP dispatch failed: ${err.message}`, 
+        devUrl: signInUrl 
+      };
     }
   }
 
-  // Development Fallback Logging
+  // Fallback when SMTP_PASS is placeholder or missing
   console.log(`[Aura Email Link Auth] Link generated for ${cleanEmail}: ${signInUrl}`);
-  return { success: true };
+  return { 
+    success: false, 
+    error: "SMTP credentials not configured (SMTP_PASS is a placeholder).", 
+    devUrl: signInUrl 
+  };
 }

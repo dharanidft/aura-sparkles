@@ -52,11 +52,18 @@ export async function POST(request: Request) {
     const verifyUrl = `${origin}/auth/verify-link?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(cleanEmail)}&redirect=${encodeURIComponent(returnPath)}`;
 
     // Dispatch email
-    await sendEmailSignInMessage(cleanEmail, verifyUrl);
+    const sendResult = await sendEmailSignInMessage(cleanEmail, verifyUrl);
+
+    const isLocalhost = host.includes("localhost") || origin.includes("localhost");
 
     return NextResponse.json({
       success: true,
-      message: "Check your email for your secure login link.",
+      emailSent: sendResult.success,
+      warning: !sendResult.success ? sendResult.error : undefined,
+      devLink: !sendResult.success || isLocalhost ? verifyUrl : undefined,
+      message: sendResult.success 
+        ? "Check your email for your secure login link."
+        : "Sign-in link created. (Email delivery waiting for Firebase keys or GoDaddy SMTP password)",
       cooldownSeconds: 60,
       expiresAt,
     });

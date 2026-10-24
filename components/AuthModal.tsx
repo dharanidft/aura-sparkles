@@ -28,6 +28,8 @@ export function AuthModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [devLink, setDevLink] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -44,6 +46,8 @@ export function AuthModal() {
     if (isAuthModalOpen) {
       setStep("input");
       setErrorMessage(null);
+      setDevLink(null);
+      setWarningMessage(null);
     }
   }, [isAuthModalOpen]);
 
@@ -52,6 +56,8 @@ export function AuthModal() {
   const handleSendLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setDevLink(null);
+    setWarningMessage(null);
 
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
@@ -67,6 +73,8 @@ export function AuthModal() {
     if (res.success) {
       setStep("sent");
       setCooldown(60);
+      if (res.devLink) setDevLink(res.devLink);
+      if (res.warning) setWarningMessage(res.warning);
     } else {
       setErrorMessage(res.error || "Failed to send sign-in link.");
       if (res.waitSeconds) {
@@ -78,6 +86,8 @@ export function AuthModal() {
   const handleResend = async () => {
     if (cooldown > 0 || !email) return;
     setErrorMessage(null);
+    setDevLink(null);
+    setWarningMessage(null);
     setIsLoading(true);
     const returnTarget = authModalRedirect || "/account";
     const res = await sendEmailSignInLink(email.trim().toLowerCase(), returnTarget);
@@ -85,6 +95,8 @@ export function AuthModal() {
 
     if (res.success) {
       setCooldown(60);
+      if (res.devLink) setDevLink(res.devLink);
+      if (res.warning) setWarningMessage(res.warning);
     } else {
       setErrorMessage(res.error || "Failed to resend sign-in link.");
       if (res.waitSeconds) {
@@ -189,6 +201,23 @@ export function AuthModal() {
         {/* STEP 2: CHECK YOUR EMAIL CONFIRMATION */}
         {step === "sent" && (
           <div className="space-y-5 animate-fadeIn">
+            {devLink && (
+              <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 text-left space-y-2">
+                <div className="flex items-center space-x-1.5 text-amber-900 text-xs font-semibold">
+                  <span>⚡ Instant Sign-In Link (Testing & Development)</span>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  {warningMessage || "Email delivery is awaiting Firebase keys or GoDaddy SMTP password in .env."}
+                </p>
+                <a
+                  href={devLink}
+                  className="block text-center py-2 px-3 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-medium rounded-xl transition-colors shadow-xs"
+                >
+                  Click Here to Sign In Instantly →
+                </a>
+              </div>
+            )}
+
             <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE0D5] text-left space-y-2.5">
               <div className="flex items-center space-x-2 text-[#452638] text-xs font-semibold">
                 <Inbox className="w-4 h-4 text-[#B69A62]" />

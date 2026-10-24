@@ -11,7 +11,7 @@ interface AuthContextType {
   addresses: CustomerAddress[];
   defaultAddress: CustomerAddress | null;
   refreshCustomer: () => Promise<void>;
-  sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string }>;
+  sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devLink?: string; warning?: string }>;
   sendOtp: (phoneNumber: string, countryCode?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string }>;
   verifyOtp: (phoneNumber: string, otpCode: string, displayName?: string, countryCode?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -106,7 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           waitSeconds: data.waitSeconds 
         };
       }
-      return { success: true };
+      return { 
+        success: true, 
+        devLink: data.devLink, 
+        warning: data.warning 
+      };
     } catch (err: any) {
       return { success: false, error: err.message || "Network error. Please try again." };
     }
