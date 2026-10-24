@@ -9,9 +9,12 @@ import {
   ShieldCheck, 
   RefreshCw, 
   AlertCircle, 
-  CheckCircle2,
   Sparkles,
-  Inbox
+  Inbox,
+  Phone,
+  MessageSquare,
+  Lock,
+  CheckCircle2
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -20,16 +23,32 @@ export function AuthModal() {
     isAuthModalOpen, 
     closeAuthModal, 
     authModalRedirect, 
-    sendEmailSignInLink 
+    sendEmailSignInLink,
+    sendOtp,
+    verifyOtp
   } = useAuth();
 
+  // Active method: "whatsapp" or "email"
+  const [authMethod, setAuthMethod] = useState<"whatsapp" | "email">("whatsapp");
+
+  // WhatsApp OTP states
+  const [phone, setPhone] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [phoneStep, setPhoneStep] = useState<"phone_input" | "otp_input">("phone_input");
+  const [devOtp, setDevOtp] = useState<string | null>(null);
+
+  // Email link states
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState<"input" | "sent">("input");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
+  const [emailStep, setEmailStep] = useState<"input" | "sent">("input");
   const [devLink, setDevLink] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
+
+  // Common states
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -44,16 +63,83 @@ export function AuthModal() {
   // Reset state on modal open
   useEffect(() => {
     if (isAuthModalOpen) {
-      setStep("input");
+      setPhoneStep("phone_input");
+      setEmailStep("input");
       setErrorMessage(null);
+      setSuccessMessage(null);
       setDevLink(null);
+      setDevOtp(null);
       setWarningMessage(null);
+      setOtpCode("");
     }
   }, [isAuthModalOpen]);
 
   if (!isAuthModalOpen) return null;
 
-  const handleSendLink = async (e: React.FormEvent) => {
+  // ---------------------------------------------------------------------------
+  // WhatsApp OTP Handlers
+  // ---------------------------------------------------------------------------
+  const handleSendWhatsAppOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setDevOtp(null);
+
+    const clean = phone.replace(/\D/g, "");
+    if (clean.length < 10) {
+      setErrorMessage("Please enter a valid 10-digit Indian WhatsApp mobile number.");
+      return;
+    }
+
+    setIsLoading(true);
+    const res = await sendOtp(clean, "+91", "whatsapp");
+    setIsLoading(false);
+
+    if (res.success) {
+      setPhoneStep("otp_input");
+      setCooldown(60);
+      setSuccessMessage(`WhatsApp OTP code sent to +91 ${clean.slice(-10)}`);
+      if (res.devOtp) {
+        setDevOtp(res.devOtp);
+      }
+    } else {
+      setErrorMessage(res.error || "Failed to send WhatsApp verification code.");
+      if (res.waitSeconds) {
+        setCooldown(res.waitSeconds);
+      }
+    }
+  };
+
+  const handleVerifyWhatsAppOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const cleanOtp = otpCode.trim();
+    if (cleanOtp.length !== 6) {
+      setErrorMessage("Please enter the 6-digit OTP code received on WhatsApp.");
+      return;
+    }
+
+    setIsLoading(true);
+    const clean = phone.replace(/\D/g, "");
+    const res = await verifyOtp(clean, cleanOtp, displayName || undefined, "+91");
+    setIsLoading(false);
+
+    if (res.success) {
+      closeAuthModal();
+      if (authModalRedirect && typeof window !== "undefined") {
+        window.location.href = authModalRedirect;
+      }
+    } else {
+      setErrorMessage(res.error || "Invalid OTP code. Please check and try again.");
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Email Link Handlers
+  // ---------------------------------------------------------------------------
+  const handleSendEmailLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setDevLink(null);
@@ -71,34 +157,12 @@ export function AuthModal() {
     setIsLoading(false);
 
     if (res.success) {
-      setStep("sent");
+      setEmailStep("sent");
       setCooldown(60);
       if (res.devLink) setDevLink(res.devLink);
       if (res.warning) setWarningMessage(res.warning);
     } else {
       setErrorMessage(res.error || "Failed to send sign-in link.");
-      if (res.waitSeconds) {
-        setCooldown(res.waitSeconds);
-      }
-    }
-  };
-
-  const handleResend = async () => {
-    if (cooldown > 0 || !email) return;
-    setErrorMessage(null);
-    setDevLink(null);
-    setWarningMessage(null);
-    setIsLoading(true);
-    const returnTarget = authModalRedirect || "/account";
-    const res = await sendEmailSignInLink(email.trim().toLowerCase(), returnTarget);
-    setIsLoading(false);
-
-    if (res.success) {
-      setCooldown(60);
-      if (res.devLink) setDevLink(res.devLink);
-      if (res.warning) setWarningMessage(res.warning);
-    } else {
-      setErrorMessage(res.error || "Failed to resend sign-in link.");
       if (res.waitSeconds) {
         setCooldown(res.waitSeconds);
       }
@@ -130,19 +194,47 @@ export function AuthModal() {
           </div>
           <div className="space-y-1">
             <h2 className="font-serif text-2xl text-[#452638]">
-              {step === "input" ? "Customer Sign In" : "Check Your Email"}
+              Customer Sign In
             </h2>
             <p className="text-xs text-[#766E65]">
-              {step === "input"
-                ? "Enter your email address to receive a secure passwordless login link"
-                : `We have sent your secure sign-in link to:`}
+              Instant login to track orders, save addresses &amp; checkout
             </p>
-            {step === "sent" && (
-              <p className="text-xs font-semibold text-[#452638] break-all bg-[#FAF7F2] py-1.5 px-3 rounded-lg border border-[#EAE0D5] inline-block">
-                {email}
-              </p>
-            )}
           </div>
+        </div>
+
+        {/* Auth Method Selector Tabs */}
+        <div className="grid grid-cols-2 gap-2 p-1 bg-[#FAF7F2] rounded-2xl border border-[#EAE0D5]">
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMethod("whatsapp");
+              setErrorMessage(null);
+            }}
+            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
+              authMethod === "whatsapp"
+                ? "bg-emerald-600 text-white shadow-xs"
+                : "text-[#766E65] hover:text-[#452638]"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>WhatsApp OTP</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMethod("email");
+              setErrorMessage(null);
+            }}
+            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
+              authMethod === "email"
+                ? "bg-[#452638] text-white shadow-xs"
+                : "text-[#766E65] hover:text-[#452638]"
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Email Link</span>
+          </button>
         </div>
 
         {/* Error notification */}
@@ -153,108 +245,267 @@ export function AuthModal() {
           </div>
         )}
 
-        {/* STEP 1: EMAIL INPUT FORM */}
-        {step === "input" && (
-          <form onSubmit={handleSendLink} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-[#766E65] absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type="email"
-                  required
-                  autoFocus
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. yourname@example.com"
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-xs sm:text-sm text-[#282522] focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638]"
-                />
-              </div>
-              <p className="text-[11px] text-[#766E65]">
-                Passwordless login · No numeric OTP or password needed
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !email.includes("@")}
-              className="w-full py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#B69A62]" />
-                  <span>Sending Login Link...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 text-[#B69A62]" />
-                  <span>Send Login Link</span>
-                  <ArrowRight className="w-4 h-4 text-[#B69A62]" />
-                </>
-              )}
-            </button>
-          </form>
+        {/* Success notification */}
+        {successMessage && !errorMessage && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <span>{successMessage}</span>
+          </div>
         )}
 
-        {/* STEP 2: CHECK YOUR EMAIL CONFIRMATION */}
-        {step === "sent" && (
-          <div className="space-y-5 animate-fadeIn">
-            {devLink && (
-              <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 text-left space-y-2">
-                <div className="flex items-center space-x-1.5 text-amber-900 text-xs font-semibold">
-                  <span>⚡ Instant Sign-In Link (Testing & Development)</span>
+        {/* =================================================================== */}
+        {/* METHOD 1: WHATSAPP OTP FLOW                                         */}
+        {/* =================================================================== */}
+        {authMethod === "whatsapp" && (
+          <div className="space-y-4">
+            {phoneStep === "phone_input" ? (
+              <form onSubmit={handleSendWhatsAppOtp} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
+                    WhatsApp Mobile Number
+                  </label>
+                  <div className="relative flex rounded-xl border border-[#EAE0D5] bg-white overflow-hidden focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600">
+                    <span className="px-3.5 py-3 bg-[#FAF7F2] text-[#452638] font-semibold text-xs border-r border-[#EAE0D5] flex items-center">
+                      🇮🇳 +91
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      autoFocus
+                      maxLength={10}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      placeholder="Enter 10-digit mobile number"
+                      className="w-full px-3.5 py-3 text-xs sm:text-sm text-[#282522] focus:outline-none"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#766E65]">
+                    We will send a 6-digit verification code directly to your WhatsApp
+                  </p>
                 </div>
-                <p className="text-[11px] text-amber-800 leading-relaxed">
-                  {warningMessage || "Email delivery is awaiting Firebase keys or GoDaddy SMTP password in .env."}
-                </p>
-                <a
-                  href={devLink}
-                  className="block text-center py-2 px-3 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-medium rounded-xl transition-colors shadow-xs"
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#766E65]">
+                    Your Name <span className="text-[10px] lowercase font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="e.g. Priya Sharma"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs sm:text-sm text-[#282522] focus:outline-none focus:border-[#452638]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || phone.replace(/\D/g, "").length !== 10}
+                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Click Here to Sign In Instantly →
-                </a>
-              </div>
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                      <span>Sending WhatsApp OTP...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="w-4 h-4 text-emerald-200" />
+                      <span>Send WhatsApp OTP</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* Step 2: OTP Entry */
+              <form onSubmit={handleVerifyWhatsAppOtp} className="space-y-4 animate-fadeIn">
+                {devOtp && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-left space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-emerald-900">
+                        ⚡ WhatsApp OTP Code: <code className="bg-emerald-100 px-2 py-0.5 rounded text-emerald-950 font-mono text-sm">{devOtp}</code>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setOtpCode(devOtp)}
+                        className="text-[11px] font-semibold text-emerald-700 underline hover:text-emerald-900"
+                      >
+                        Auto-fill
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
+                      Enter 6-Digit OTP
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhoneStep("phone_input");
+                        setOtpCode("");
+                      }}
+                      className="text-[11px] text-[#766E65] hover:text-[#452638] underline"
+                    >
+                      Change Number
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-3.5 pointer-events-none" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      autoFocus
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="••••••"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-lg tracking-widest font-mono text-[#282522] focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || otpCode.length !== 6}
+                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                      <span>Verifying OTP...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Verify &amp; Sign In</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+
+                <div className="text-center pt-1">
+                  {cooldown > 0 ? (
+                    <span className="text-xs text-[#B69A62]">Resend WhatsApp code in {cooldown}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendWhatsAppOtp}
+                      disabled={isLoading}
+                      className="text-xs text-emerald-700 font-semibold hover:underline inline-flex items-center space-x-1"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Resend WhatsApp OTP</span>
+                    </button>
+                  )}
+                </div>
+              </form>
             )}
+          </div>
+        )}
 
-            <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE0D5] text-left space-y-2.5">
-              <div className="flex items-center space-x-2 text-[#452638] text-xs font-semibold">
-                <Inbox className="w-4 h-4 text-[#B69A62]" />
-                <span>Next steps to complete login:</span>
-              </div>
-              <ol className="text-xs text-[#766E65] space-y-1.5 list-decimal list-inside leading-relaxed">
-                <li>Open the email from <strong>Aura Sparkles</strong>.</li>
-                <li>Click the <strong>Sign In to Aura Sparkles</strong> link.</li>
-                <li>You will be instantly signed in, and your cart will be restored!</li>
-              </ol>
-            </div>
+        {/* =================================================================== */}
+        {/* METHOD 2: EMAIL LINK FLOW                                           */}
+        {/* =================================================================== */}
+        {authMethod === "email" && (
+          <div className="space-y-4">
+            {emailStep === "input" ? (
+              <form onSubmit={handleSendEmailLink} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-[#766E65] absolute left-3.5 top-3.5 pointer-events-none" />
+                    <input
+                      type="email"
+                      required
+                      autoFocus
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. yourname@example.com"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-xs sm:text-sm text-[#282522] focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638]"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#766E65]">
+                    Passwordless email login · No password needed
+                  </p>
+                </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs pt-1">
-              <button
-                type="button"
-                onClick={() => setStep("input")}
-                className="text-[#766E65] hover:text-[#452638] text-xs underline"
-              >
-                Change email address
-              </button>
+                <button
+                  type="submit"
+                  disabled={isLoading || !email.includes("@")}
+                  className="w-full py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#B69A62]" />
+                      <span>Sending Login Link...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-[#B69A62]" />
+                      <span>Send Login Link</span>
+                      <ArrowRight className="w-4 h-4 text-[#B69A62]" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-5 animate-fadeIn">
+                {devLink && (
+                  <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 text-left space-y-2">
+                    <div className="flex items-center space-x-1.5 text-amber-900 text-xs font-semibold">
+                      <span>⚡ Instant Sign-In Link (Testing &amp; Development)</span>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      {warningMessage || "Email delivery is awaiting Firebase keys or GoDaddy SMTP password in .env."}
+                    </p>
+                    <a
+                      href={devLink}
+                      className="block text-center py-2 px-3 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-medium rounded-xl transition-colors shadow-xs"
+                    >
+                      Click Here to Sign In Instantly →
+                    </a>
+                  </div>
+                )}
 
-              <div>
-                {cooldown > 0 ? (
-                  <span className="text-[#B69A62] font-semibold">Resend link in {cooldown}s</span>
-                ) : (
+                <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE0D5] text-left space-y-2.5">
+                  <div className="flex items-center space-x-2 text-[#452638] text-xs font-semibold">
+                    <Inbox className="w-4 h-4 text-[#B69A62]" />
+                    <span>Check your email for your sign-in link:</span>
+                  </div>
+                  <p className="text-xs font-medium text-[#452638] break-all bg-white py-1 px-2.5 rounded border border-[#EAE0D5]">
+                    {email}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
                   <button
                     type="button"
-                    onClick={handleResend}
-                    disabled={isLoading}
-                    className="text-[#452638] font-semibold hover:underline flex items-center space-x-1"
+                    onClick={() => setEmailStep("input")}
+                    className="text-[#766E65] hover:text-[#452638] underline"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Resend Link</span>
+                    Change email
                   </button>
-                )}
+                  {cooldown > 0 ? (
+                    <span className="text-[#B69A62] font-semibold">Resend in {cooldown}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendEmailLink}
+                      disabled={isLoading}
+                      className="text-[#452638] font-semibold hover:underline"
+                    >
+                      Resend Link
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -262,7 +513,7 @@ export function AuthModal() {
         <div className="pt-4 border-t border-[#EAE0D5] text-center space-y-1">
           <p className="text-[11px] text-[#766E65] flex items-center justify-center space-x-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Firebase Passwordless Email Authentication · Zero SMS Fees</span>
+            <span>Secure WhatsApp OTP &amp; Email Authentication</span>
           </p>
           <p className="text-[10px] text-[#A89F91]">
             Your shopping cart is preserved and automatically restored upon sign-in.

@@ -13,9 +13,19 @@ interface RateLimitRecord {
   requestTimestamps: number[];
 }
 
-// In-memory records
-const activeEmailLinks = new Map<string, EmailLinkRecord>();
-const emailRateLimits = new Map<string, RateLimitRecord>();
+// In-memory records preserved across Next.js reloads
+const globalForEmail = globalThis as unknown as {
+  activeEmailLinks?: Map<string, EmailLinkRecord>;
+  emailRateLimits?: Map<string, RateLimitRecord>;
+};
+
+const activeEmailLinks = globalForEmail.activeEmailLinks || new Map<string, EmailLinkRecord>();
+const emailRateLimits = globalForEmail.emailRateLimits || new Map<string, RateLimitRecord>();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForEmail.activeEmailLinks = activeEmailLinks;
+  globalForEmail.emailRateLimits = emailRateLimits;
+}
 
 const LINK_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
 const COOLDOWN_MS = 60 * 1000; // 60 seconds

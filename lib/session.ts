@@ -13,12 +13,13 @@ function getSessionSecret(): string {
 /**
  * Creates a signed session token: base64(payload).signature
  */
-export function createSessionToken(uid: string, email: string, phoneNumber?: string): string {
+export function createSessionToken(uid: string, emailOrPhone: string = "", phoneNumber?: string): string {
   const now = Math.floor(Date.now() / 1000);
+  const isEmail = emailOrPhone ? emailOrPhone.includes("@") : false;
   const payload: SessionTokenPayload = {
     uid,
-    email,
-    ...(phoneNumber ? { phoneNumber } : {}),
+    email: isEmail ? emailOrPhone : "",
+    phoneNumber: phoneNumber || (!isEmail && emailOrPhone ? emailOrPhone : undefined),
     issuedAt: now,
     expiresAt: now + SESSION_MAX_AGE_SECONDS,
   };

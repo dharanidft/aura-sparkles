@@ -14,9 +14,19 @@ interface RateLimitRecord {
   requestTimestamps: number[];
 }
 
-// In-memory active OTP records and rate limit registries
-const activeOtps = new Map<string, OtpRecord>();
-const rateLimits = new Map<string, RateLimitRecord>();
+// In-memory active OTP records and rate limit registries preserved across Next.js reloads
+const globalForOtp = globalThis as unknown as {
+  activeOtps?: Map<string, OtpRecord>;
+  rateLimits?: Map<string, RateLimitRecord>;
+};
+
+const activeOtps = globalForOtp.activeOtps || new Map<string, OtpRecord>();
+const rateLimits = globalForOtp.rateLimits || new Map<string, RateLimitRecord>();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForOtp.activeOtps = activeOtps;
+  globalForOtp.rateLimits = rateLimits;
+}
 
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
@@ -229,4 +239,166 @@ export async function dispatchOtpSms(phoneNumber: string, otp: string): Promise<
   }
 
   return { success: true, provider: "system_dispatch" };
+}
+
+/**
+ * Sends OTP via WhatsApp.
+ * Supports:
+ * 1. Meta WhatsApp Cloud API (Graph API)
+ * 2. MSG91 WhatsApp API
+ * 3. Twilio WhatsApp
+ * 4. Fallback dev logger with devOtp
+ */
+export async function dispatchOtpWhatsApp(
+  phoneNumber: string,
+  otp: string
+): Promise<{ success: boolean; provider: string; error?: string; devOtp?: string }> {
+  const maskedPhone = phoneNumber.replace(/(\+\d{2})(\d{3})\d{4}(\d{3})/, "$1 $2 **** $3");
+  const cleanDigits = phoneNumber.replace(/\D/g, "");
+
+  // 1. Meta WhatsApp Cloud API (Direct Meta Graph API)
+  const metaToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN;
+  const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.META_PHONE_NUMBER_ID;
+  const metaTemplateName = process.env.WHATSAPP_TEMPLATE_NAME || "aura_otp_verification";
+
+  if (metaToken && metaPhoneId) {
+    try {
+      const res = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${metaToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: cleanDigits,
+          type: "template",
+          template: {
+            name: metaTemplateName,
+            language: { code: "en_US" },
+            components: [
+              {
+                type: "body",
+                parameters: [{ type: "text", text: otp }],
+              },
+              {
+                type: "button",
+                sub_type: "url",
+                index: "0",
+                parameters: [{ type: "text", text: otp }],
+              },
+            ],
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.messages) {
+        console.log(`[Aura WhatsApp Auth] Meta Cloud API dispatched OTP to ${maskedPhone}`);
+        return { success: true, provider: "meta_whatsapp" };
+      } else {
+        console.warn("[Aura WhatsApp Auth] Meta template failed, trying text fallback:", data?.error?.message || data);
+        const textRes = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${metaToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: cleanDigits,
+            type: "text",
+            text: {
+              body: `Your Aura Sparkles login verification code is: *${otp}*. Valid for 5 minutes. Do not share this code.`,
+            },
+          }),
+        });
+        const textData = await textRes.json();
+        if (textRes.ok && textData.messages) {
+          return { success: true, provider: "meta_whatsapp_text" };
+        }
+      }
+    } catch (err: any) {
+      console.error("[Aura WhatsApp Auth] Meta Cloud API error:", err.message);
+    }
+  }
+
+  // 2. MSG91 WhatsApp Outbound API
+  const msg91Auth = process.env.MSG91_AUTH_KEY;
+  const msg91IntegratedNumber = process.env.MSG91_INTEGRATED_NUMBER;
+  const msg91Template = process.env.MSG91_WHATSAPP_TEMPLATE || "aura_otp";
+
+  if (msg91Auth && msg91IntegratedNumber) {
+    try {
+      const res = await fetch("https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/", {
+        method: "POST",
+        headers: {
+          authkey: msg91Auth,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          integrated_number: msg91IntegratedNumber,
+          content_type: "template",
+          payload: {
+            to: cleanDigits,
+            type: "template",
+            template: {
+              name: msg91Template,
+              language: { code: "en", policy: "deterministic" },
+              components: {
+                body_1: { type: "text", value: otp },
+                button_1: { type: "text", value: otp },
+              },
+            },
+          },
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === "success") {
+        console.log(`[Aura WhatsApp Auth] MSG91 dispatched OTP to ${maskedPhone}`);
+        return { success: true, provider: "msg91_whatsapp" };
+      }
+    } catch (err: any) {
+      console.error("[Aura WhatsApp Auth] MSG91 error:", err.message);
+    }
+  }
+
+  // 3. Twilio WhatsApp Integration
+  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
+  const twilioFrom = process.env.TWILIO_WHATSAPP_FROM;
+
+  if (twilioSid && twilioAuth && twilioFrom) {
+    try {
+      const auth = Buffer.from(`${twilioSid}:${twilioAuth}`).toString("base64");
+      const body = new URLSearchParams({
+        To: `whatsapp:${phoneNumber}`,
+        From: twilioFrom.startsWith("whatsapp:") ? twilioFrom : `whatsapp:${twilioFrom}`,
+        Body: `Your Aura Sparkles login verification code is *${otp}*. Valid for 5 minutes.`,
+      });
+      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
+      });
+      if (res.ok) {
+        console.log(`[Aura WhatsApp Auth] Twilio WhatsApp dispatched OTP to ${maskedPhone}`);
+        return { success: true, provider: "twilio_whatsapp" };
+      }
+    } catch (err: any) {
+      console.error("[Aura WhatsApp Auth] Twilio WhatsApp error:", err.message);
+    }
+  }
+
+  // 4. Test Mode & Local Fallback
+  console.log(`[Aura WhatsApp OTP] Code generated for ${maskedPhone}: ${otp}`);
+  return { 
+    success: true, 
+    provider: "test_mode", 
+    devOtp: otp 
+  };
 }

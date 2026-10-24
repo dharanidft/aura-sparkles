@@ -12,7 +12,7 @@ interface AuthContextType {
   defaultAddress: CustomerAddress | null;
   refreshCustomer: () => Promise<void>;
   sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devLink?: string; warning?: string }>;
-  sendOtp: (phoneNumber: string, countryCode?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string }>;
+  sendOtp: (phoneNumber: string, countryCode?: string, channel?: "whatsapp" | "sms") => Promise<{ success: boolean; waitSeconds?: number; error?: string; devOtp?: string; message?: string }>;
   verifyOtp: (phoneNumber: string, otpCode: string, displayName?: string, countryCode?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
   logout: () => Promise<void>;
   saveAddress: (addressData: Partial<CustomerAddress>) => Promise<{ success: boolean; address?: CustomerAddress; error?: string }>;
@@ -116,18 +116,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const sendOtp = async (phoneNumber: string, countryCode = "+91") => {
+  const sendOtp = async (phoneNumber: string, countryCode = "+91", channel: "whatsapp" | "sms" = "whatsapp") => {
     try {
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber, countryCode }),
+        body: JSON.stringify({ phoneNumber, countryCode, channel }),
       });
       const data = await res.json();
       if (!res.ok) {
         return { success: false, error: data.error || "Failed to send OTP.", waitSeconds: data.waitSeconds };
       }
-      return { success: true };
+      return { 
+        success: true, 
+        devOtp: data.devOtp, 
+        message: data.message 
+      };
     } catch (err: any) {
       return { success: false, error: err.message || "Network error. Please try again." };
     }
