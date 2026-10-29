@@ -4,11 +4,18 @@ import {
   PINCODE_PREFIX_MAP, 
   checkIndianPincode 
 } from "@/lib/shipping";
+import { checkRateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(
   request: Request,
   { params }: { params: { pincode: string } }
 ) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(`pincode:${ip}`, { maxRequests: 30, windowMs: 60 * 1000 });
+  if (!rl.allowed) {
+    return createRateLimitResponse(rl.limit, rl.resetSeconds);
+  }
+
   const rawPincode = params.pincode || "";
   const cleanPin = rawPincode.trim().replace(/\D/g, "");
 

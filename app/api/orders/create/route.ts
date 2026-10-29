@@ -6,6 +6,7 @@ import { StoredOrder } from "@/lib/upi-types";
 import { ShippingAddress } from "@/lib/types";
 import { sanitizeText, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
 import { checkRateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
+import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
 
 export const runtime = "nodejs";
 

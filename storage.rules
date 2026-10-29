@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Row Level Security: Deny direct public reads and writes
+    // Payment proofs and uploads are stored privately and verified server-side
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

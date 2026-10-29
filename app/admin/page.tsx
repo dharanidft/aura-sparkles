@@ -50,15 +50,8 @@ import { StoredOrder, OrderPaymentStatus } from "@/lib/upi-types";
 import { formatINR } from "@/lib/shipping";
 import { AuraFont, FONT_MAP, FONT_LIST } from "@/components/Header";
 
-const DEFAULT_ADMIN_PASSCODE = "aura2026";
-
-const getAdminPasscode = (): string => {
-  if (typeof window !== "undefined") {
-    const custom = localStorage.getItem("aura_admin_passcode");
-    if (custom && custom.trim().length > 0) return custom.trim();
-  }
-  return process.env.NEXT_PUBLIC_ADMIN_PASSCODE || DEFAULT_ADMIN_PASSCODE;
-};
+// Admin requests are authenticated server-side via signed HttpOnly session cookie
+const getAdminPasscode = (): string => "";
 
 const SAMPLE_PRESET_IMAGES = [
   { label: "Sandalwood Jar", url: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=800&q=80" },
@@ -1467,7 +1460,7 @@ export default function AdminPage() {
               <div className="p-4 bg-neutral-50 rounded-xl border border-[#EAE0D5]/70 text-[11px] text-[#766E65] space-y-1">
                 <p className="font-semibold text-[#452638]">Production Deployment Note:</p>
                 <p>
-                  You can also configure the admin passcode in your production environment (such as Vercel, Netlify, or your host server) by setting the environment variable <code className="bg-white px-1.5 py-0.5 rounded border border-[#EAE0D5] text-[#452638] font-mono">NEXT_PUBLIC_ADMIN_PASSCODE=YourSecurePassword</code>.
+                  Configure your secret admin passcode in your production environment (such as Vercel, Netlify, or server .env) by setting <code className="bg-white px-1.5 py-0.5 rounded border border-[#EAE0D5] text-[#452638] font-mono">ADMIN_PASSCODE=YourSecurePassword</code>. This secret is verified server-side only and is never exposed to the frontend.
                 </p>
               </div>
             </div>
@@ -2267,7 +2260,7 @@ export default function AdminPage() {
                       </p>
                       {selectedOrderForVerification.proof && (
                         <a
-                          href={`/api/orders/${selectedOrderForVerification.orderId}/screenshot?adminPasscode=${getAdminPasscode()}`}
+                          href={`/api/orders/${selectedOrderForVerification.orderId}/screenshot`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[11px] font-semibold text-[#B69A62] hover:underline flex items-center space-x-1"
@@ -2282,7 +2275,7 @@ export default function AdminPage() {
                       <div className="relative border-2 border-[#EAE0D5] rounded-2xl overflow-hidden bg-neutral-900/5 min-h-[300px] flex items-center justify-center p-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={`/api/orders/${selectedOrderForVerification.orderId}/screenshot?adminPasscode=${getAdminPasscode()}`}
+                          src={`/api/orders/${selectedOrderForVerification.orderId}/screenshot`}
                           alt="Submitted Payment Proof"
                           className="max-h-[340px] w-auto object-contain rounded-xl shadow-xs"
                         />

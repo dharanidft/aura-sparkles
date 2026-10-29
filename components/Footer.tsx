@@ -221,8 +221,8 @@ export function Footer() {
 
           <div className="text-center md:text-right text-[11px]">
             <p>© {new Date().getFullYear()} Aura Sparkles. All rights reserved.</p>
-            <p className="text-[10px] text-[#766E65]/70 mt-0.5">
-              Handcrafted in India · Contact: +91 93853 28336
+            <p className="text-[10px] text-[#766E65]/80 mt-0.5">
+              Official Merchant of Record: Aura Sparkles (Chennai, India) · Direct UPI via HDFC Bank &amp; Razorpay
             </p>
           </div>
 

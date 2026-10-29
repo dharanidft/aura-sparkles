@@ -26,9 +26,12 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-serif text-lg font-semibold text-[#452638]">2. Product Information &amp; Pricing</h2>
+            <h2 className="font-serif text-lg font-semibold text-[#452638]">2. Product Information, Pricing &amp; Merchant of Record</h2>
             <p>
-              We endeavor to portray candle fragrances, wax quantities, burn times, and jar finishes accurately. Prices are displayed in Indian Rupees (₹) and are inclusive of taxes. Free shipping applies to merchandise subtotals of ₹499 and above.
+              We endeavor to portray candle fragrances, wax quantities, burn times, and jar finishes accurately. Prices are displayed in Indian Rupees (₹) and are inclusive of applicable taxes. Free shipping applies to merchandise subtotals of ₹499 and above.
+            </p>
+            <p>
+              <strong>Merchant of Record:</strong> Aura Sparkles is the official Merchant of Record for all sales concluded on this storefront. Financial transactions are collected directly via verified Indian UPI (HDFC Bank merchant account: <code className="text-[#452638] font-mono">dharanidft-1@okhdfcbank</code>) and authorized payment aggregators (Razorpay).
             </p>
           </section>
 

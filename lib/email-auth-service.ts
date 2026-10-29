@@ -168,6 +168,7 @@ export async function sendEmailSignInMessage(
         from: `"Aura Sparkles" <${smtpUser}>`,
         to: cleanEmail,
         subject: "Your Secure Sign-In Link — Aura Sparkles",
+        text: `AURA SPARKLES — Pure · Elegant · You\n\nYour Secure Sign-In Link:\n${signInUrl}\n\nClick the link above to sign in to your Aura Sparkles account. This link is valid for 15 minutes.\nIf you did not request this link, you can safely ignore this email.\n\n© ${new Date().getFullYear()} Aura Sparkles · Handcrafted Luxury Scented Candles`,
         html: `
           <div style="font-family: 'Georgia', serif; max-width: 580px; margin: 0 auto; background-color: #FAF7F2; padding: 32px 24px; border-radius: 20px; border: 1px solid #EAE0D5;">
             <div style="text-align: center; margin-bottom: 24px;">

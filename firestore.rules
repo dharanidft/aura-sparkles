@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Row Level Security: Deny direct unauthenticated / broad public reads and writes
+    // All order transactions, payments, and admin actions are processed server-side via Next.js API
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Authenticated users can only read and update their own customer profile
+    match /customers/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // Customer orders: accessible strictly by the verified owner
+    match /orders/{orderId} {
+      allow read: if request.auth != null && resource.data.customerUid == request.auth.uid;
+      allow write: if false; // Created and updated solely via authenticated server APIs
+    }
+  }
+}

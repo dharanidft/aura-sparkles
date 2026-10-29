@@ -9,6 +9,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthModal } from "@/components/AuthModal";
 import { CursorSparkle } from "@/components/CursorSparkle";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aurasparkles.in"),
@@ -127,6 +128,7 @@ export default function RootLayout({
             <CartDrawer />
             <Toast />
             <AuthModal />
+            <CookieConsentBanner />
             <Footer />
           </CartProvider>
         </AuthProvider>
