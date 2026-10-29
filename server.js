@@ -1,3 +1,11 @@
+// Load environment variables (.env, .env.production) immediately for GoDaddy container
+try {
+  const { loadEnvConfig } = require("@next/env");
+  loadEnvConfig(process.cwd());
+} catch (e) {
+  // @next/env fallback if not present
+}
+
 const { createServer } = require("http");
 const { parse } = require("url");
 const next = require("next");
