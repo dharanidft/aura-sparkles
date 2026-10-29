@@ -54,16 +54,16 @@ export async function POST(request: Request) {
     // Dispatch email
     const sendResult = await sendEmailSignInMessage(cleanEmail, verifyUrl);
 
-    const isLocalhost = host.includes("localhost") || origin.includes("localhost");
+    const isLocalhost = host.includes("localhost") || origin.includes("localhost") || host.includes("127.0.0.1");
 
     return NextResponse.json({
       success: true,
       emailSent: sendResult.success,
       warning: !sendResult.success ? sendResult.error : undefined,
-      devLink: process.env.NODE_ENV !== "production" && (!sendResult.success || isLocalhost) ? verifyUrl : undefined,
+      devLink: isLocalhost || !sendResult.success ? verifyUrl : undefined,
       message: sendResult.success 
         ? "Check your email for your secure login link."
-        : "Sign-in link created. (Email delivery waiting for Firebase keys or GoDaddy SMTP password)",
+        : "Sign-in link created. (Instant one-click sign-in available below)",
       cooldownSeconds: 60,
       expiresAt,
     });

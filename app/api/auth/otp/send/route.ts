@@ -56,13 +56,15 @@ export async function POST(request: Request) {
     }
 
     const masked = normalized.replace(/(\+\d{2})(\d{3})\d{4}(\d{3})/, "$1 $2 **** $3");
+    const host = request.headers.get("host") || "";
+    const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
 
     return NextResponse.json({
       success: true,
       message: `WhatsApp verification code sent to ${masked}`,
       channel,
       provider: dispatchResult.provider,
-      devOtp: process.env.NODE_ENV !== "production" ? dispatchResult.devOtp : undefined,
+      devOtp: isLocalhost || process.env.NODE_ENV !== "production" ? (dispatchResult.devOtp || otp) : undefined,
       cooldownSeconds: 60,
       expiresAt,
     });

@@ -1,5 +1,15 @@
 [
   {
+    "uid": "CUST-B3E63964",
+    "email": "dharaniddft@gmail.com",
+    "emailVerified": true,
+    "displayName": "Dharaniddft",
+    "createdAt": "2026-10-29T18:18:46.374Z",
+    "updatedAt": "2026-10-29T18:18:46.374Z",
+    "lastLoginAt": "2026-10-29T18:18:46.374Z",
+    "accountStatus": "ACTIVE"
+  },
+  {
     "uid": "CUST-2FB61034",
     "phoneNumber": "+919500589535",
     "displayName": "sam",
@@ -13,8 +23,8 @@
     "phoneNumber": "+919566725454",
     "displayName": "Dharanivel Aura VIP",
     "createdAt": "2026-10-23T10:18:17.466Z",
-    "updatedAt": "2026-10-29T11:00:45.352Z",
-    "lastLoginAt": "2026-10-29T11:00:45.352Z",
+    "updatedAt": "2026-10-29T18:18:29.074Z",
+    "lastLoginAt": "2026-10-29T18:18:29.073Z",
     "accountStatus": "ACTIVE",
     "defaultAddressId": "ADDR-304c01432e7c",
     "email": "contact@aurasparkles.com"
