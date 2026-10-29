@@ -154,10 +154,14 @@ export async function sendEmailSignInMessage(
 
   if (!isPlaceholderPass) {
     try {
+      const rawPort = process.env.SMTP_PORT;
+      const smtpPort = rawPort ? parseInt(rawPort, 10) : 465;
+      const smtpSecure = process.env.SMTP_SECURE !== undefined ? process.env.SMTP_SECURE === "true" : smtpPort === 465;
+
       const transporter = nodemailer.createTransport({
         host: smtpHost,
-        port: 465,
-        secure: true,
+        port: smtpPort,
+        secure: smtpSecure,
         auth: {
           user: smtpUser,
           pass: smtpPass,
