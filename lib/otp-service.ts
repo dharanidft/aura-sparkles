@@ -233,12 +233,16 @@ export async function dispatchOtpSms(phoneNumber: string, otp: string): Promise<
   }
 
   // 3. Fallback: Log secure dispatch notice
-  console.log(`[Aura Auth OTP Dispatch] Code generated for ${maskedPhone}. (Active valid for 5m)`);
   if (process.env.NODE_ENV !== "production") {
-    console.log(`[DEVELOPMENT ONLY] OTP Code for ${phoneNumber}: ${otp}`);
+    console.log(`[Aura Auth OTP Dispatch] Code generated for ${maskedPhone}: ${otp}`);
+    return { success: true, provider: "system_dispatch" };
   }
 
-  return { success: true, provider: "system_dispatch" };
+  return { 
+    success: false, 
+    provider: "failed_delivery", 
+    error: "No SMS gateway configured on this server." 
+  };
 }
 
 /**
@@ -488,10 +492,17 @@ export async function dispatchOtpWhatsApp(
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
     console.log(`[Aura WhatsApp OTP] Code generated for ${maskedPhone}: ${otp}`);
+    return { 
+      success: true, 
+      provider: "test_mode", 
+      devOtp: otp 
+    };
   }
+
+  console.error(`[Aura WhatsApp Auth] All WhatsApp dispatch providers failed for ${maskedPhone}`);
   return { 
-    success: true, 
-    provider: isDev ? "test_mode" : "failed_delivery", 
-    devOtp: isDev ? otp : undefined 
+    success: false, 
+    provider: "failed_delivery", 
+    error: "WhatsApp gateway unreachable. Please ensure WhatsApp gateway or Meta API credentials are configured in your server environment." 
   };
 }
