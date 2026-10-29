@@ -9,8 +9,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   addresses: CustomerAddress[];
+  orders: any[];
   defaultAddress: CustomerAddress | null;
   refreshCustomer: () => Promise<void>;
+  refreshCustomerData: () => Promise<void>;
   sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devLink?: string; warning?: string }>;
   sendOtp: (phoneNumber: string, countryCode?: string, channel?: "whatsapp" | "sms") => Promise<{ success: boolean; waitSeconds?: number; error?: string; devOtp?: string; message?: string }>;
   verifyOtp: (phoneNumber: string, otpCode: string, displayName?: string, countryCode?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
@@ -30,11 +32,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalRedirect, setAuthModalRedirect] = useState<string | null>(null);
 
   const defaultAddress = addresses.find((a) => a.isDefault) || addresses[0] || null;
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await fetch("/api/customer/orders", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } else {
+        setOrders([]);
+      }
+    } catch (err) {
+      console.error("[Auth Context] Error loading customer orders:", err);
+      setOrders([]);
+    }
+  }, []);
 
   const refreshCustomer = useCallback(async () => {
     try {
@@ -44,22 +62,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (data.authenticated && data.customer) {
           setCustomer(data.customer);
           setAddresses(data.addresses || []);
+          await fetchOrders();
         } else {
           setCustomer(null);
           setAddresses([]);
+          setOrders([]);
         }
       } else {
         setCustomer(null);
         setAddresses([]);
+        setOrders([]);
       }
     } catch (err) {
       console.error("[Auth Context] Error loading customer profile:", err);
       setCustomer(null);
       setAddresses([]);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchOrders]);
 
   useEffect(() => {
     refreshCustomer();
@@ -150,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setCustomer(data.customer);
       setAddresses(data.addresses || []);
+      await fetchOrders();
       setIsAuthModalOpen(false);
       return { success: true, isNewCustomer: data.isNewCustomer };
     } catch (err: any) {
@@ -165,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setCustomer(null);
       setAddresses([]);
+      setOrders([]);
       window.location.href = "/";
     }
   };
@@ -252,8 +276,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!customer,
         addresses,
+        orders,
         defaultAddress,
         refreshCustomer,
+        refreshCustomerData: refreshCustomer,
         sendEmailSignInLink,
         sendOtp,
         verifyOtp,

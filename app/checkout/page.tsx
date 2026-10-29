@@ -20,7 +20,8 @@ import {
   Home,
   Briefcase,
   Building,
-  User
+  User,
+  MessageSquare
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
@@ -431,22 +432,23 @@ export default function CheckoutPage() {
 
                 {/* Unauthenticated Visitor Prompt */}
                 {!isAuthenticated && (
-                  <div className="bg-[#FAF3EE] rounded-2xl p-5 border border-[#E8C9C5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="bg-[#FAF3EE] rounded-2xl p-4 sm:p-5 border border-[#E8C9C5] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <Sparkles className="w-4 h-4 text-[#B69A62]" />
-                        <h3 className="font-serif text-base font-semibold text-[#452638]">Customer Sign In</h3>
+                        <MessageSquare className="w-4 h-4 text-emerald-600" />
+                        <h3 className="font-serif text-base font-semibold text-[#452638]">Returning Customer?</h3>
                       </div>
                       <p className="text-xs text-[#766E65]">
-                        Sign in with your email link to access saved addresses and track live orders.
+                        Sign in via WhatsApp OTP to auto-fill saved addresses and track live orders.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => openAuthModal()}
-                      className="px-5 py-2.5 bg-[#452638] text-white text-xs uppercase tracking-wider font-semibold rounded-xl hover:bg-[#5D354D] transition-colors whitespace-nowrap shadow-xs"
+                      className="min-h-[44px] px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-wider font-semibold rounded-xl transition-all whitespace-nowrap shadow-xs active:scale-[0.99] flex items-center justify-center space-x-2"
                     >
-                      Sign In with Email Link
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-200" />
+                      <span>Sign In with WhatsApp</span>
                     </button>
                   </div>
                 )}

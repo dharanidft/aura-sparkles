@@ -49,8 +49,8 @@ function AccountDashboardContent() {
 
   const {
     customer,
-    addresses,
-    orders,
+    addresses = [],
+    orders = [],
     isAuthenticated,
     isLoading,
     openAuthModal,

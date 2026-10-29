@@ -130,11 +130,19 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    const isAuth = sessionStorage.getItem("aura_admin_auth") === "true";
-    if (isAuth) {
-      setIsAuthenticated(true);
-      loadAdminData();
-    }
+    fetch("/api/admin/auth/check")
+      .then((res) => {
+        if (res.ok) {
+          setIsAuthenticated(true);
+          loadAdminData();
+        } else {
+          window.location.href = "/admin/login?redirect=/admin";
+        }
+      })
+      .catch(() => {
+        window.location.href = "/admin/login?redirect=/admin";
+      });
+
     const savedFont = (localStorage.getItem("aura_font") as AuraFont) || "playfair";
     if (FONT_MAP[savedFont]) {
       setActiveFont(savedFont);
@@ -218,16 +226,24 @@ export default function AdminPage() {
     setTimeout(() => setCopiedUtr(null), 2500);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const activePass = getAdminPasscode();
-    if (passcode === activePass) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("aura_admin_auth", "true");
-      setAuthError("");
-      loadAdminData();
-    } else {
-      setAuthError("Invalid admin access credentials.");
+    try {
+      const res = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+        setAuthError("");
+        loadAdminData();
+      } else {
+        setAuthError(data.error || "Invalid admin access credentials.");
+      }
+    } catch {
+      setAuthError("Network error during login.");
     }
   };
 
@@ -267,10 +283,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("aura_admin_auth");
+  const handleLogout = async () => {
+    await fetch("/api/admin/auth/logout", { method: "POST" }).catch(() => {});
     setIsAuthenticated(false);
-    setPasscode("");
+    window.location.href = "/admin/login";
   };
 
   const handleStatusChange = (orderId: string, status: OrderStatus) => {

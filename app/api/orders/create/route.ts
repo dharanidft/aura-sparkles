@@ -4,18 +4,25 @@ import { calculateOrderTotals } from "@/lib/shipping";
 import { generateAuraOrderId, generateAccessKey, saveStoredOrder } from "@/lib/order-store";
 import { StoredOrder } from "@/lib/upi-types";
 import { ShippingAddress } from "@/lib/types";
-import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
+import { sanitizeText, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
+import { checkRateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(`order-create:${ip}`, "checkout");
+  if (!rl.allowed) {
+    return createRateLimitResponse(rl.limit, rl.resetSeconds, "Too many orders created. Please wait before creating another order.");
+  }
+
   try {
     const session = getAuthenticatedCustomerFromRequest(request);
     const body = await request.json().catch(() => ({}));
-    const { items, couponCode, shippingAddress, customerUid: clientProvidedUid } = body;
+    const { items, couponCode, shippingAddress } = body;
 
-    // Use verified session UID if logged in, fallback to client provided or undefined
-    const authenticatedUid = session?.uid || clientProvidedUid || undefined;
+    // Security: NEVER trust frontend UID. Only use verified session UID.
+    const authenticatedUid = session?.uid || undefined;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Shopping bag is empty." }, { status: 400 });
@@ -85,15 +92,15 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
 
     const addressSnapshot: ShippingAddress = {
-      fullName: shippingAddress.fullName.trim(),
-      email: (shippingAddress.email || "").trim(),
-      phone: shippingAddress.phone.trim(),
-      addressLine1: shippingAddress.addressLine1.trim(),
-      addressLine2: (shippingAddress.addressLine2 || "").trim(),
-      landmark: (shippingAddress.landmark || "").trim(),
-      city: shippingAddress.city.trim(),
-      state: shippingAddress.state.trim(),
-      pincode: shippingAddress.pincode.trim(),
+      fullName: sanitizeText(shippingAddress.fullName, 100),
+      email: sanitizeEmail(shippingAddress.email) || "",
+      phone: sanitizePhone(shippingAddress.phone) || sanitizeText(shippingAddress.phone, 15),
+      addressLine1: sanitizeText(shippingAddress.addressLine1, 200),
+      addressLine2: sanitizeText(shippingAddress.addressLine2, 200),
+      landmark: sanitizeText(shippingAddress.landmark, 150),
+      city: sanitizeText(shippingAddress.city, 100),
+      state: sanitizeText(shippingAddress.state, 100),
+      pincode: (shippingAddress.pincode || "").replace(/\D/g, "").slice(0, 6),
     };
 
     const storedOrder: any = {

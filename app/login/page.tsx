@@ -242,19 +242,21 @@ function LoginPageContent() {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
                     WhatsApp Mobile Number
                   </label>
-                  <div className="relative flex rounded-xl border border-[#EAE0D5] bg-white overflow-hidden focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600">
-                    <span className="px-3.5 py-3 bg-[#FAF7F2] text-[#452638] font-semibold text-xs border-r border-[#EAE0D5] flex items-center">
+                  <div className="relative flex rounded-xl border border-[#EAE0D5] bg-white overflow-hidden focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 min-h-[48px]">
+                    <span className="px-3 sm:px-3.5 py-3 bg-[#FAF7F2] text-[#452638] font-semibold text-xs border-r border-[#EAE0D5] flex items-center whitespace-nowrap">
                       🇮🇳 +91
                     </span>
                     <input
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel-national"
                       required
                       autoFocus
                       maxLength={10}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                       placeholder="Enter 10-digit mobile number"
-                      className="w-full px-3.5 py-3 text-xs sm:text-sm text-[#282522] focus:outline-none"
+                      className="w-full px-3.5 py-3 text-sm text-[#282522] focus:outline-none"
                     />
                   </div>
                   <p className="text-[11px] text-[#766E65]">
@@ -268,17 +270,18 @@ function LoginPageContent() {
                   </label>
                   <input
                     type="text"
+                    autoComplete="name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="e.g. Priya Sharma"
-                    className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs sm:text-sm text-[#282522] focus:outline-none focus:border-[#452638]"
+                    className="w-full px-3.5 py-3 bg-white border border-[#EAE0D5] rounded-xl text-sm text-[#282522] focus:outline-none focus:border-[#452638] min-h-[48px]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading || phone.replace(/\D/g, "").length !== 10}
-                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full min-h-[48px] py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -306,7 +309,7 @@ function LoginPageContent() {
                       <button
                         type="button"
                         onClick={() => setOtpCode(devOtp)}
-                        className="text-[11px] font-semibold text-emerald-700 underline hover:text-emerald-900"
+                        className="text-[11px] font-semibold text-emerald-700 underline hover:text-emerald-900 p-1"
                       >
                         Auto-fill
                       </button>
@@ -325,24 +328,26 @@ function LoginPageContent() {
                         setPhoneStep("phone_input");
                         setOtpCode("");
                       }}
-                      className="text-[11px] text-[#766E65] hover:text-[#452638] underline"
+                      className="text-xs text-[#766E65] hover:text-[#452638] underline py-1"
                     >
                       Change Number
                     </button>
                   </div>
 
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-3.5 pointer-events-none" />
+                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-4 pointer-events-none" />
                     <input
                       type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
                       required
                       autoFocus
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       placeholder="••••••"
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-lg tracking-widest font-mono text-[#282522] focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-xl tracking-[0.3em] font-mono font-bold text-[#282522] focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 min-h-[48px]"
                     />
                   </div>
                 </div>
@@ -350,7 +355,7 @@ function LoginPageContent() {
                 <button
                   type="submit"
                   disabled={isLoading || otpCode.length !== 6}
-                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full min-h-[48px] py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -373,7 +378,7 @@ function LoginPageContent() {
                       type="button"
                       onClick={handleSendWhatsAppOtp}
                       disabled={isLoading}
-                      className="text-xs text-emerald-700 font-semibold hover:underline inline-flex items-center space-x-1"
+                      className="min-h-[40px] px-3 text-xs text-emerald-700 font-semibold hover:underline inline-flex items-center space-x-1"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                       <span>Resend WhatsApp OTP</span>

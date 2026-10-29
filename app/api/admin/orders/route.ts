@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
 import { getAllStoredOrders, getStoredOrderById, saveStoredOrder } from "@/lib/order-store";
 import { OrderPaymentStatus } from "@/lib/upi-types";
+import { verifyAdminRequest } from "@/lib/security";
+import { logAdminAction } from "@/lib/audit-logger";
+import { getClientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
-function checkAdminAuth(request: Request): boolean {
-  const authHeader = request.headers.get("x-admin-passcode");
-  const validPasscode = process.env.ADMIN_PASSCODE || "aura2026";
-  return !!authHeader && authHeader.trim() === validPasscode.trim();
-}
-
 // GET all orders for admin dashboard
 export async function GET(request: Request) {
-  if (!checkAdminAuth(request)) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized. Valid admin credentials required." }, { status: 401 });
   }
 
@@ -25,7 +23,8 @@ export async function GET(request: Request) {
 
 // PATCH to update payment status and verification
 export async function PATCH(request: Request) {
-  if (!checkAdminAuth(request)) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized. Valid admin credentials required." }, { status: 401 });
   }
 
@@ -93,6 +92,14 @@ export async function PATCH(request: Request) {
     });
 
     saveStoredOrder(order);
+
+    logAdminAction({
+      action: `ORDER_PAYMENT_STATUS_${newPaymentStatus}`,
+      adminUser: auth.username,
+      ip: getClientIp(request),
+      targetResource: `order:${orderId}`,
+      details: { previousStatus, newStatus: newPaymentStatus, verificationNote },
+    });
 
     console.log(`[Admin Payment Verification] Order ${orderId} changed from ${previousStatus} -> ${newPaymentStatus} by ${author}`);
 

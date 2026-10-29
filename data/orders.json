@@ -129,11 +129,21 @@
     "totalPaise": 54700,
     "currency": "INR",
     "paymentMethod": "UPI",
-    "paymentStatus": "PENDING_PAYMENT",
-    "orderStatus": "Pending",
+    "paymentStatus": "PAID",
+    "orderStatus": "Confirmed",
     "createdAt": "2026-10-23T09:22:47.452Z",
-    "updatedAt": "2026-10-23T10:18:17.468Z",
+    "updatedAt": "2026-10-29T08:50:26.900Z",
     "accessKey": "563c026ad81912d85a51099220144aa2ece07793770a4426",
-    "customerUid": "CUST-CF789CEF"
+    "customerUid": "CUST-CF789CEF",
+    "adminAuditLog": [
+      {
+        "action": "PAYMENT_STATUS_CHANGED_TO_PAID",
+        "admin": "Authorized Admin",
+        "timestamp": "2026-10-29T08:50:26.900Z",
+        "previousStatus": "PENDING_PAYMENT",
+        "newStatus": "PAID",
+        "reason": "Status updated by Authorized Admin"
+      }
+    ]
   }
 ]

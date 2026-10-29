@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       success: true,
       emailSent: sendResult.success,
       warning: !sendResult.success ? sendResult.error : undefined,
-      devLink: !sendResult.success || isLocalhost ? verifyUrl : undefined,
+      devLink: process.env.NODE_ENV !== "production" && (!sendResult.success || isLocalhost) ? verifyUrl : undefined,
       message: sendResult.success 
         ? "Check your email for your secure login link."
         : "Sign-in link created. (Email delivery waiting for Firebase keys or GoDaddy SMTP password)",

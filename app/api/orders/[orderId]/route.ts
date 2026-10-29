@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getStoredOrderById } from "@/lib/order-store";
 import { getUpiConfig, generateUpiPaymentUri } from "@/lib/upi-config";
+import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
+import { verifyAdminRequest, canAccessOrder } from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -22,11 +24,11 @@ export async function GET(
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    // Require matching accessKey for customer privacy, or admin authorization header
-    const authHeader = request.headers.get("x-admin-passcode");
-    const isAdmin = authHeader && authHeader === (process.env.ADMIN_PASSCODE || "aura2026");
+    // Row-level security check: Stop IDOR attacks
+    const session = getAuthenticatedCustomerFromRequest(request);
+    const adminAuth = verifyAdminRequest(request);
 
-    if (!isAdmin && order.accessKey !== key) {
+    if (!canAccessOrder(order, session, key, adminAuth.authorized)) {
       return NextResponse.json({ error: "Unauthorized access to order." }, { status: 403 });
     }
 

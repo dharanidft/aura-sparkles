@@ -17,7 +17,8 @@ import {
   LogOut,
   Package,
   MapPin,
-  ChevronDown
+  ChevronDown,
+  MessageSquare
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
@@ -432,10 +433,10 @@ export function Header() {
                       setMobileMenuOpen(false);
                       openAuthModal();
                     }}
-                    className="w-full py-2.5 px-4 bg-[#452638] text-white text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center justify-center space-x-2 shadow-xs hover:bg-[#5D354D] transition-colors"
+                    className="w-full min-h-[48px] py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center justify-center space-x-2 shadow-xs active:scale-[0.99] transition-all"
                   >
-                    <Mail className="w-4 h-4" />
-                    <span>Sign In with Email Link</span>
+                    <MessageSquare className="w-4 h-4 text-emerald-200" />
+                    <span>Sign In with WhatsApp OTP</span>
                   </button>
                 )}
 

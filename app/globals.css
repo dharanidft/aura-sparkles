@@ -248,14 +248,14 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
 
 .glass-plum {
   background: rgba(69, 38, 56, 0.92);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .glass-nav {
   background: rgba(250, 247, 242, 0.88);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 
 /* Magnetic button effect — JS sets --tx/--ty via inline style */

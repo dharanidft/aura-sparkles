@@ -14,9 +14,18 @@ export default function ContactPage() {
   const [enquiryId, setEnquiryId] = useState("");
   const [mailtoUrl, setMailtoUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [captchaChallenge, setCaptchaChallenge] = useState<{ token: string; question: string } | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
 
   useEffect(() => {
     document.title = "Contact Us — Aura Sparkles";
+    fetch("/api/contact")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.challenge) setCaptchaChallenge(data.challenge);
+      })
+      .catch(() => {});
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,6 +45,9 @@ export default function ContactPage() {
           phone: phone.trim(),
           subject: subject.trim(),
           message: message.trim(),
+          _website_hp: honeypot,
+          captchaToken: captchaChallenge?.token,
+          captchaAnswer: captchaAnswer.trim(),
         }),
       });
 
@@ -286,6 +298,37 @@ export default function ContactPage() {
                       className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
                     />
                   </div>
+
+                  {/* Honeypot Decoy Field (Invisible to legitimate human users) */}
+                  <div className="hidden" aria-hidden="true" style={{ display: "none", opacity: 0, position: "absolute", left: "-9999px" }}>
+                    <label htmlFor="_website_hp">Do not fill this field</label>
+                    <input
+                      id="_website_hp"
+                      type="text"
+                      name="_website_hp"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Anti-Bot Verification Challenge */}
+                  {captchaChallenge && (
+                    <div className="p-3 bg-[#FAF7F2] border border-[#EAE0D5] rounded-xl space-y-1.5 text-left">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#452638]">
+                        {captchaChallenge.question} *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={captchaAnswer}
+                        onChange={(e) => setCaptchaAnswer(e.target.value)}
+                        placeholder="Enter number"
+                        className="w-32 px-3 py-1.5 bg-white border border-[#EAE0D5] rounded-lg text-xs focus:outline-none focus:border-[#452638]"
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="submit"

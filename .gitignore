@@ -34,3 +34,9 @@ Screenshot*.png
 # Private UPI Payment Proofs & Uploads
 data/payment-proofs/*
 !data/payment-proofs/.gitkeep
+
+# Runtime QR & Audit logs
+data/admin-audit.json
+public/images/openwa-qr.png
+OpenWA-plugins-main/
+app/cover aura.png

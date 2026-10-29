@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       message: `WhatsApp verification code sent to ${masked}`,
       channel,
       provider: dispatchResult.provider,
-      devOtp: dispatchResult.devOtp,
+      devOtp: process.env.NODE_ENV !== "production" ? dispatchResult.devOtp : undefined,
       cooldownSeconds: 60,
       expiresAt,
     });

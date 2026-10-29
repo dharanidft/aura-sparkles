@@ -260,9 +260,11 @@ export async function dispatchOtpWhatsApp(
   const metaToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN;
   const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.META_PHONE_NUMBER_ID;
   const metaTemplateName = process.env.WHATSAPP_TEMPLATE_NAME || "aura_otp_verification";
+  const metaLang = process.env.WHATSAPP_TEMPLATE_LANG || "en_US";
 
   if (metaToken && metaPhoneId) {
     try {
+      // 1A. Attempt standard template dispatch (with copy-code / URL button)
       const res = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
         method: "POST",
         headers: {
@@ -276,7 +278,7 @@ export async function dispatchOtpWhatsApp(
           type: "template",
           template: {
             name: metaTemplateName,
-            language: { code: "en_US" },
+            language: { code: metaLang },
             components: [
               {
                 type: "body",
@@ -297,27 +299,60 @@ export async function dispatchOtpWhatsApp(
       if (res.ok && data.messages) {
         console.log(`[Aura WhatsApp Auth] Meta Cloud API dispatched OTP to ${maskedPhone}`);
         return { success: true, provider: "meta_whatsapp" };
-      } else {
-        console.warn("[Aura WhatsApp Auth] Meta template failed, trying text fallback:", data?.error?.message || data);
-        const textRes = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${metaToken}`,
-            "Content-Type": "application/json",
+      }
+
+      // 1B. Retry without button component (for standard text-only authentication templates)
+      console.warn("[Aura WhatsApp Auth] Template with button failed, retrying with body-only template:", data?.error?.message || data);
+      const bodyOnlyRes = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${metaToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: cleanDigits,
+          type: "template",
+          template: {
+            name: metaTemplateName,
+            language: { code: metaLang },
+            components: [
+              {
+                type: "body",
+                parameters: [{ type: "text", text: otp }],
+              },
+            ],
           },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to: cleanDigits,
-            type: "text",
-            text: {
-              body: `Your Aura Sparkles login verification code is: *${otp}*. Valid for 5 minutes. Do not share this code.`,
-            },
-          }),
-        });
-        const textData = await textRes.json();
-        if (textRes.ok && textData.messages) {
-          return { success: true, provider: "meta_whatsapp_text" };
-        }
+        }),
+      });
+
+      const bodyOnlyData = await bodyOnlyRes.json();
+      if (bodyOnlyRes.ok && bodyOnlyData.messages) {
+        console.log(`[Aura WhatsApp Auth] Meta Cloud API body-only template dispatched OTP to ${maskedPhone}`);
+        return { success: true, provider: "meta_whatsapp_body" };
+      }
+
+      // 1C. Direct text fallback (allowed if user initiated chat in last 24h)
+      console.warn("[Aura WhatsApp Auth] Meta template failed, trying text fallback:", bodyOnlyData?.error?.message || bodyOnlyData);
+      const textRes = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${metaToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: cleanDigits,
+          type: "text",
+          text: {
+            body: `Your Aura Sparkles login verification code is: *${otp}*. Valid for 5 minutes. Do not share this code.`,
+          },
+        }),
+      });
+      const textData = await textRes.json();
+      if (textRes.ok && textData.messages) {
+        return { success: true, provider: "meta_whatsapp_text" };
       }
     } catch (err: any) {
       console.error("[Aura WhatsApp Auth] Meta Cloud API error:", err.message);
@@ -394,11 +429,69 @@ export async function dispatchOtpWhatsApp(
     }
   }
 
-  // 4. Test Mode & Local Fallback
-  console.log(`[Aura WhatsApp OTP] Code generated for ${maskedPhone}: ${otp}`);
+  // 4. OpenWA (Self-Hosted WhatsApp Gateway — 100% Free / Zero Per-Message Fees)
+  const openwaUrl = process.env.OPENWA_BASE_URL || process.env.OPENWA_URL;
+  const openwaKey = process.env.OPENWA_API_KEY;
+  const openwaSessionConfig = process.env.OPENWA_SESSION_ID || "aura";
+
+  if (openwaUrl) {
+    try {
+      const targetChatId = `${cleanDigits}@c.us`;
+      const messageText = `✨ *Aura Sparkles* verification code:\n\n*${otp}*\n\nValid for 5 minutes. Do not share this code.`;
+      const cleanBase = openwaUrl.replace(/\/+$/, "");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (openwaKey) {
+        headers["Authorization"] = `Bearer ${openwaKey}`;
+        headers["X-API-Key"] = openwaKey;
+      }
+
+      // Resolve Session UUID
+      let targetSessionId = openwaSessionConfig;
+      // If sessionConfig is not a UUID (or is default/aura), look up active sessions
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(openwaSessionConfig);
+      if (!isUuid) {
+        try {
+          const listRes = await fetch(`${cleanBase}/api/sessions`, { headers, cache: "no-store" });
+          if (listRes.ok) {
+            const sessions: any[] = await listRes.json();
+            const matched = sessions.find((s) => s.id === openwaSessionConfig || s.name === openwaSessionConfig) || sessions[0];
+            if (matched?.id) {
+              targetSessionId = matched.id;
+            }
+          }
+        } catch (e) {
+          console.warn("[Aura WhatsApp Auth] OpenWA sessions lookup warning:", e);
+        }
+      }
+
+      // POST /api/sessions/:sessionId/messages/send-text
+      const res = await fetch(`${cleanBase}/api/sessions/${targetSessionId}/messages/send-text`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ chatId: targetChatId, text: messageText }),
+      });
+
+      const isDev = process.env.NODE_ENV !== "production";
+      if (res.ok) {
+        console.log(`[Aura WhatsApp Auth] OpenWA dispatched OTP to ${maskedPhone} ${isDev ? `(OTP: ${otp})` : ""}`);
+        return { success: true, provider: "openwa", devOtp: isDev ? otp : undefined };
+      } else {
+        const errData = await res.text();
+        console.warn(`[Aura WhatsApp Auth] OpenWA responded with ${res.status}:`, errData);
+      }
+    } catch (err: any) {
+      console.error("[Aura WhatsApp Auth] OpenWA connection error:", err.message);
+    }
+  }
+
+  // 5. Test Mode & Local Fallback (Non-production only)
+  const isDev = process.env.NODE_ENV !== "production";
+  if (isDev) {
+    console.log(`[Aura WhatsApp OTP] Code generated for ${maskedPhone}: ${otp}`);
+  }
   return { 
     success: true, 
-    provider: "test_mode", 
-    devOtp: otp 
+    provider: isDev ? "test_mode" : "failed_delivery", 
+    devOtp: isDev ? otp : undefined 
   };
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import { getStoredOrderById } from "@/lib/order-store";
+import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
+import { verifyAdminRequest, canAccessOrder } from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -22,13 +24,11 @@ export async function GET(
       return NextResponse.json({ error: "No payment screenshot found for this order." }, { status: 404 });
     }
 
-    // Authorization check: Require customer accessKey or admin passcode (via header or query parameter)
-    const authHeader = request.headers.get("x-admin-passcode");
-    const adminQuery = searchParams.get("adminPasscode");
-    const validAdminPass = process.env.ADMIN_PASSCODE || "aura2026";
-    const isAdmin = (authHeader && authHeader.trim() === validAdminPass) || (adminQuery && adminQuery.trim() === validAdminPass);
+    // Authorization check: Require customer accessKey, customer ownership session, or verified admin
+    const session = getAuthenticatedCustomerFromRequest(request);
+    const adminAuth = verifyAdminRequest(request);
 
-    if (!isAdmin && order.accessKey !== key) {
+    if (!canAccessOrder(order, session, key, adminAuth.authorized)) {
       return NextResponse.json({ error: "Unauthorized access to payment screenshot." }, { status: 403 });
     }
 

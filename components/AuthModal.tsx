@@ -170,30 +170,34 @@ export function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
       <div 
         className="fixed inset-0" 
         onClick={closeAuthModal} 
+        aria-hidden="true"
       />
 
-      <div className="relative bg-white rounded-3xl max-w-md w-full border border-[#EAE0D5] shadow-2xl p-6 sm:p-8 space-y-6 z-10 animate-scale">
+      <div className="relative bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto border-t sm:border border-[#EAE0D5] shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 z-10 animate-slideUp sm:animate-scale pb-8 sm:pb-8">
         
+        {/* Mobile Swipe / Sheet Handle Indicator */}
+        <div className="w-12 h-1.5 bg-[#EAE0D5] rounded-full mx-auto sm:hidden -mt-1 mb-2" aria-hidden="true" />
+
         {/* Close Button */}
         <button
           onClick={closeAuthModal}
-          className="absolute right-5 top-5 p-1.5 text-[#766E65] hover:text-[#452638] rounded-full hover:bg-[#FAF7F2] transition-colors"
+          className="absolute right-4 top-4 sm:right-5 sm:top-5 p-2 text-[#766E65] hover:text-[#452638] rounded-full hover:bg-[#FAF7F2] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Brand Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-1.5 pt-1 sm:pt-0">
           <div className="relative w-12 h-12 rounded-full overflow-hidden bg-white shadow-xs border border-[#B69A62]/30 p-0.5 mx-auto">
-            <Image src="/images/logo.png" alt="Aura Sparkles" fill className="object-contain" />
+            <Image src="/images/logo.png" alt="Aura Sparkles" fill className="object-contain" priority />
           </div>
           <div className="space-y-1">
-            <h2 className="font-serif text-2xl text-[#452638]">
+            <h2 className="font-serif text-xl sm:text-2xl text-[#452638]">
               Customer Sign In
             </h2>
             <p className="text-xs text-[#766E65]">
@@ -203,20 +207,20 @@ export function AuthModal() {
         </div>
 
         {/* Auth Method Selector Tabs */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-[#FAF7F2] rounded-2xl border border-[#EAE0D5]">
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#FAF7F2] rounded-2xl border border-[#EAE0D5]">
           <button
             type="button"
             onClick={() => {
               setAuthMethod("whatsapp");
               setErrorMessage(null);
             }}
-            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
+            className={`min-h-[44px] py-2.5 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
               authMethod === "whatsapp"
                 ? "bg-emerald-600 text-white shadow-xs"
                 : "text-[#766E65] hover:text-[#452638]"
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className="w-4 h-4" />
             <span>WhatsApp OTP</span>
           </button>
 
@@ -226,13 +230,13 @@ export function AuthModal() {
               setAuthMethod("email");
               setErrorMessage(null);
             }}
-            className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
+            className={`min-h-[44px] py-2.5 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
               authMethod === "email"
                 ? "bg-[#452638] text-white shadow-xs"
                 : "text-[#766E65] hover:text-[#452638]"
             }`}
           >
-            <Mail className="w-3.5 h-3.5" />
+            <Mail className="w-4 h-4" />
             <span>Email Link</span>
           </button>
         </div>
@@ -264,19 +268,21 @@ export function AuthModal() {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
                     WhatsApp Mobile Number
                   </label>
-                  <div className="relative flex rounded-xl border border-[#EAE0D5] bg-white overflow-hidden focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600">
-                    <span className="px-3.5 py-3 bg-[#FAF7F2] text-[#452638] font-semibold text-xs border-r border-[#EAE0D5] flex items-center">
+                  <div className="relative flex rounded-xl border border-[#EAE0D5] bg-white overflow-hidden focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 min-h-[48px]">
+                    <span className="px-3 sm:px-3.5 py-3 bg-[#FAF7F2] text-[#452638] font-semibold text-xs border-r border-[#EAE0D5] flex items-center whitespace-nowrap">
                       🇮🇳 +91
                     </span>
                     <input
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel-national"
                       required
                       autoFocus
                       maxLength={10}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                       placeholder="Enter 10-digit mobile number"
-                      className="w-full px-3.5 py-3 text-xs sm:text-sm text-[#282522] focus:outline-none"
+                      className="w-full px-3.5 py-3 text-sm text-[#282522] focus:outline-none"
                     />
                   </div>
                   <p className="text-[11px] text-[#766E65]">
@@ -290,17 +296,18 @@ export function AuthModal() {
                   </label>
                   <input
                     type="text"
+                    autoComplete="name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="e.g. Priya Sharma"
-                    className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs sm:text-sm text-[#282522] focus:outline-none focus:border-[#452638]"
+                    className="w-full px-3.5 py-3 bg-white border border-[#EAE0D5] rounded-xl text-sm text-[#282522] focus:outline-none focus:border-[#452638] min-h-[48px]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading || phone.replace(/\D/g, "").length !== 10}
-                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full min-h-[48px] py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -328,7 +335,7 @@ export function AuthModal() {
                       <button
                         type="button"
                         onClick={() => setOtpCode(devOtp)}
-                        className="text-[11px] font-semibold text-emerald-700 underline hover:text-emerald-900"
+                        className="text-[11px] font-semibold text-emerald-700 underline hover:text-emerald-900 p-1"
                       >
                         Auto-fill
                       </button>
@@ -347,24 +354,26 @@ export function AuthModal() {
                         setPhoneStep("phone_input");
                         setOtpCode("");
                       }}
-                      className="text-[11px] text-[#766E65] hover:text-[#452638] underline"
+                      className="text-xs text-[#766E65] hover:text-[#452638] underline py-1"
                     >
                       Change Number
                     </button>
                   </div>
 
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-3.5 pointer-events-none" />
+                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-4 pointer-events-none" />
                     <input
                       type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
                       required
                       autoFocus
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       placeholder="••••••"
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-lg tracking-widest font-mono text-[#282522] focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-xl tracking-[0.3em] font-mono font-bold text-[#282522] focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 min-h-[48px]"
                     />
                   </div>
                 </div>
@@ -372,7 +381,7 @@ export function AuthModal() {
                 <button
                   type="submit"
                   disabled={isLoading || otpCode.length !== 6}
-                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full min-h-[48px] py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -395,7 +404,7 @@ export function AuthModal() {
                       type="button"
                       onClick={handleSendWhatsAppOtp}
                       disabled={isLoading}
-                      className="text-xs text-emerald-700 font-semibold hover:underline inline-flex items-center space-x-1"
+                      className="min-h-[40px] px-3 text-xs text-emerald-700 font-semibold hover:underline inline-flex items-center space-x-1"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                       <span>Resend WhatsApp OTP</span>
