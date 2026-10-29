@@ -443,7 +443,11 @@ export async function dispatchOtpWhatsApp(
       const targetChatId = `${cleanDigits}@c.us`;
       const messageText = `✨ *Aura Sparkles* verification code:\n\n*${otp}*\n\nValid for 5 minutes. Do not share this code.`;
       const cleanBase = openwaUrl.replace(/\/+$/, "");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = { 
+        "Content-Type": "application/json",
+        "bypass-tunnel-reminder": "true",
+        "ngrok-skip-browser-warning": "69420"
+      };
       if (openwaKey) {
         headers["Authorization"] = `Bearer ${openwaKey}`;
         headers["X-API-Key"] = openwaKey;
