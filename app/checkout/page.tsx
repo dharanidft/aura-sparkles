@@ -266,7 +266,7 @@ export default function CheckoutPage() {
       city: city.trim(),
       state: state.trim(),
       postalCode: pinClean,
-      addressType: "home" as const,
+      addressType: "Home" as const,
       isDefault: addresses.length === 0
     };
 

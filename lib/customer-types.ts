@@ -3,8 +3,8 @@ import { OrderPaymentStatus, PaymentProof } from "./upi-types";
 
 export interface Customer {
   uid: string; // Unique customer ID, e.g. "CUST-XXXXXX" or Firebase UID
-  email: string; // Primary account identifier
-  emailVerified: boolean;
+  email?: string; // Primary account identifier (or optional if signed in via phone OTP)
+  emailVerified?: boolean;
   displayName?: string;
   phoneNumber?: string; // Optional delivery contact mobile number
   defaultAddressId?: string;

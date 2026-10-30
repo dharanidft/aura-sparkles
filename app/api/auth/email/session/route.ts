@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         uid, // Use Firebase UID directly
         email: cleanEmail,
         emailVerified: Boolean(emailVerified),
-        displayName: displayName || cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        displayName: displayName || cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
         createdAt: now,
         updatedAt: now,
         lastLoginAt: now,

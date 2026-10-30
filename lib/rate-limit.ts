@@ -23,13 +23,13 @@ if (process.env.NODE_ENV !== "production") {
 if (typeof setInterval !== "undefined") {
   setInterval(() => {
     const now = Date.now();
-    for (const [key, record] of clientMap.entries()) {
+    clientMap.forEach((record, key) => {
       // Remove records older than 1 hour
-      record.timestamps = record.timestamps.filter((t) => now - t < 60 * 60 * 1000);
+      record.timestamps = record.timestamps.filter((t: number) => now - t < 60 * 60 * 1000);
       if (record.timestamps.length === 0) {
         clientMap.delete(key);
       }
-    }
+    });
   }, 5 * 60 * 1000);
 }
 

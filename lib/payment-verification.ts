@@ -27,7 +27,7 @@ export class ManualPaymentVerificationService implements IPaymentVerificationSer
     return {
       isVerified: false,
       utr,
-      expectedAmountPaise,
+      amountPaise: expectedAmountPaise,
       verificationSource: "MANUAL_ADMIN",
       message: "Order proof received. Awaiting manual reconciliation against HDFC Bank account statement.",
     };

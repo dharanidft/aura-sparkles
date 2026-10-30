@@ -77,7 +77,7 @@ function AccountDashboardContent() {
     city: "",
     state: "Tamil Nadu",
     postalCode: "",
-    addressType: "home" as AddressType,
+    addressType: "Home" as AddressType,
     deliveryInstructions: "",
     isDefault: false
   });
@@ -128,7 +128,7 @@ function AccountDashboardContent() {
       city: "",
       state: "Tamil Nadu",
       postalCode: "",
-      addressType: "home",
+      addressType: "Home",
       deliveryInstructions: "",
       isDefault: addresses.length === 0
     });
@@ -765,9 +765,9 @@ function AccountDashboardContent() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                              {addr.addressType === "home" && <Home className="w-4 h-4 text-[#B69A62]" />}
-                              {addr.addressType === "work" && <Briefcase className="w-4 h-4 text-[#B69A62]" />}
-                              {addr.addressType === "other" && <Building className="w-4 h-4 text-[#B69A62]" />}
+                              {addr.addressType === "Home" && <Home className="w-4 h-4 text-[#B69A62]" />}
+                              {addr.addressType === "Work" && <Briefcase className="w-4 h-4 text-[#B69A62]" />}
+                              {addr.addressType === "Other" && <Building className="w-4 h-4 text-[#B69A62]" />}
                               <span className="text-xs font-bold uppercase tracking-wider text-[#452638]">
                                 {addr.addressType}
                               </span>
@@ -1108,7 +1108,7 @@ function AccountDashboardContent() {
                   Address Type
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(["home", "work", "other"] as AddressType[]).map((type) => (
+                  {(["Home", "Work", "Other"] as AddressType[]).map((type) => (
                     <button
                       key={type}
                       type="button"
@@ -1119,9 +1119,9 @@ function AccountDashboardContent() {
                           : "border-[#EAE0D5] text-[#766E65] hover:bg-[#FAF7F2]"
                       }`}
                     >
-                      {type === "home" && <Home className="w-3.5 h-3.5" />}
-                      {type === "work" && <Briefcase className="w-3.5 h-3.5" />}
-                      {type === "other" && <Building className="w-3.5 h-3.5" />}
+                      {type === "Home" && <Home className="w-3.5 h-3.5" />}
+                      {type === "Work" && <Briefcase className="w-3.5 h-3.5" />}
+                      {type === "Other" && <Building className="w-3.5 h-3.5" />}
                       <span>{type}</span>
                     </button>
                   ))}

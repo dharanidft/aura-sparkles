@@ -24,6 +24,7 @@ export interface PaymentProof {
 
 export interface StoredOrder {
   orderId: string; // Format: AURA-2026-XXXXXX
+  customerUid?: string;
   customerDetails: ShippingAddress;
   items: CartItem[];
   subtotalPaise: number;

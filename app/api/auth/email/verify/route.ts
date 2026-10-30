@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         uid: newUid,
         email: cleanEmail,
         emailVerified: true,
-        displayName: cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        displayName: cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
         createdAt: now,
         updatedAt: now,
         lastLoginAt: now,

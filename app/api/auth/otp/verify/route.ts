@@ -49,10 +49,11 @@ export async function POST(request: Request) {
 
     // 3. Retrieve or create customer profile
     const now = new Date().toISOString();
-    let customer = getCustomerByPhone(targetPhone);
+    const existingCustomer = getCustomerByPhone(targetPhone);
     let isNewCustomer = false;
+    let customer: Customer;
 
-    if (!customer) {
+    if (!existingCustomer) {
       isNewCustomer = true;
       const uid = firebaseUid || generateCustomerUid();
       customer = {
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       saveCustomer(customer);
     } else {
       // Existing customer login
+      customer = existingCustomer;
       customer.lastLoginAt = now;
       if (displayName && (!customer.displayName || customer.displayName === "Aura Customer")) {
         customer.displayName = displayName.trim();
