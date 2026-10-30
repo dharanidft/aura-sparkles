@@ -1736,11 +1736,28 @@ export function getStoreProducts(): Product[] {
 
 export function saveStoreProducts(products: Product[]): void {
   if (typeof window === "undefined") return;
+  const tempKey = "aura_products_temp";
   try {
+    // 1. Serialize first to catch any payload/serialization errors
+    const serialized = JSON.stringify(products);
+
+    // 2. Write to temporary key to guarantee storage space and atomic persistence
+    localStorage.setItem(tempKey, serialized);
+
+    // 3. Persist products to primary key
+    localStorage.setItem("aura_products", serialized);
+
+    // 4. Clean up temporary key
+    localStorage.removeItem(tempKey);
+
+    // 5. Write catalogue version as the final commit marker
     localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
-    localStorage.setItem("aura_products", JSON.stringify(products));
+
     window.dispatchEvent(new Event("aura_products_updated"));
   } catch (err) {
+    try {
+      localStorage.removeItem(tempKey);
+    } catch (_) {}
     console.error("Failed to save store products to storage:", err);
   }
 }
