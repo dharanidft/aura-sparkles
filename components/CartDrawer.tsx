@@ -198,9 +198,9 @@ export function CartDrawer() {
                 <ShoppingBag className="w-8 h-8 opacity-60" />
               </div>
               <div className="space-y-1">
-                <p className="font-serif text-xl text-[#452638]">Your bag is currently empty</p>
+                <p className="font-serif text-xl text-[#452638]">Your shopping bag is empty</p>
                 <p className="text-xs text-[#766E65] max-w-xs leading-relaxed">
-                  Welcome tranquil botanical fragrances and hand-poured soy wax into your home.
+                  Explore our handcrafted soy wax candles, wardrobe wax sachets, and gift hampers starting at ₹160.
                 </p>
               </div>
               <Link
@@ -304,18 +304,22 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <form onSubmit={handleApplyCoupon} className="flex space-x-2">
+                  <label htmlFor="cart-coupon-input" className="sr-only">
+                    Discount coupon code
+                  </label>
                   <input
+                    id="cart-coupon-input"
                     type="text"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="Coupon code (e.g. AURA10)"
+                    placeholder="Discount code (e.g. AURA10)"
                     className="flex-1 px-3 py-2 bg-white border border-[#EAE0D5] rounded-xl text-xs uppercase focus:outline-none focus:border-[#452638] transition-colors"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-[#FAF7F2] hover:bg-[#EAE0D5] active:scale-95 text-[#452638] text-xs font-semibold uppercase tracking-wider rounded-xl transition-all"
+                    className="px-4 py-2 bg-[#FAF7F2] hover:bg-[#EAE0D5] active:scale-95 text-[#452638] text-xs font-semibold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap"
                   >
-                    Apply
+                    Apply Code
                   </button>
                 </form>
               )}

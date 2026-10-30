@@ -15,7 +15,7 @@ export function Newsletter() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setStatus("error");
-      setErrorMessage("Please enter a valid email address.");
+      setErrorMessage("Please enter a complete email address (e.g. name@example.com).");
       return;
     }
 
@@ -46,11 +46,11 @@ export function Newsletter() {
         </div>
 
         <h2 className="font-serif text-3xl sm:text-4xl text-[#452638] font-normal tracking-tight">
-          “A Little More Joy in Your Inbox.”
+          Gentle Scents &amp; Thoughtful Living in Your Inbox
         </h2>
 
         <p className="text-sm text-[#766E65] max-w-lg mx-auto leading-relaxed">
-          Discover new fragrances, thoughtful gifting ideas and the little things that make a space feel like home. Enjoy a welcome voucher on your first order.
+          Be the first to explore limited seasonal candle drops, candle care rituals, and gifting ideas. Enjoy ₹50 off your first handcrafted order.
         </p>
 
         {status === "success" ? (
@@ -64,23 +64,27 @@ export function Newsletter() {
         ) : (
           <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-3">
             <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <label htmlFor="newsletter-email" className="sr-only">
+                Email address
+              </label>
               <input
+                id="newsletter-email"
                 type="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (status === "error") setStatus("idle");
                 }}
-                placeholder="Enter your email address..."
+                placeholder="yourname@example.com"
                 className="flex-1 px-5 py-3.5 bg-white border border-[#E8C9C5] rounded-full text-xs text-[#282522] focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638] shadow-sm"
                 required
               />
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="px-7 py-3.5 bg-[#452638] hover:bg-[#5D354D] text-[#FAF7F2] text-xs font-semibold tracking-luxury uppercase rounded-full shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-60"
+                className="px-7 py-3.5 bg-[#452638] hover:bg-[#5D354D] active:scale-[0.98] text-[#FAF7F2] text-xs font-semibold tracking-luxury uppercase rounded-full shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-60"
               >
-                <span>{status === "loading" ? "Subscribing..." : "SUBSCRIBE"}</span>
+                <span>{status === "loading" ? "Subscribing..." : "Get ₹50 Voucher"}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-[#B69A62]" />
               </button>
             </div>
@@ -90,7 +94,7 @@ export function Newsletter() {
             )}
 
             <p className="text-[11px] text-[#766E65]/80 font-light">
-              By subscribing, you agree to receive email updates and special offers. You can unsubscribe at any time.
+              No spam, ever. Unsubscribe anytime with a single click.
             </p>
           </form>
         )}

@@ -205,14 +205,14 @@ export default function CheckoutPage() {
     setErrorMessage(null);
 
     if (items.length === 0) {
-      setErrorMessage("Your cart is empty.");
+      setErrorMessage("Your shopping bag is empty. Please add items before proceeding to checkout.");
       return;
     }
 
     // Login requirement check (Section 7)
     if (!isAuthenticated) {
       openAuthModal();
-      setErrorMessage("Please sign in with your email link to place your order and track live shipments.");
+      setErrorMessage("Please sign in with WhatsApp OTP or Email to place your order and track live shipments.");
       return;
     }
 
@@ -857,7 +857,7 @@ export default function CheckoutPage() {
                 <div className="p-3 bg-white rounded-xl border border-[#EAE0D5] flex items-center space-x-2 text-[11px] text-[#766E65]">
                   <ShieldCheck className="w-4 h-4 text-[#B69A62] flex-shrink-0" />
                   <span>
-                    Direct UPI transactions are verified before dispatch. No third-party gateway charges.
+                    100% Secure &amp; Zero Convenience Fees. Direct UPI payments are verified instantly before dispatch.
                   </span>
                 </div>
               </div>

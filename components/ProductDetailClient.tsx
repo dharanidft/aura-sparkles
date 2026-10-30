@@ -394,19 +394,23 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                 <span>Estimate Delivery Timeline to Your City</span>
               </div>
               <form onSubmit={handlePincodeCheck} className="flex space-x-2">
+                <label htmlFor="pdp-pincode" className="sr-only">
+                  Delivery PIN code
+                </label>
                 <input
+                  id="pdp-pincode"
                   type="text"
                   maxLength={6}
                   value={pincodeInput}
                   onChange={(e) => setPincodeInput(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Enter 6-digit PIN code"
+                  placeholder="Enter 6-digit PIN code (e.g. 600095)"
                   className="flex-1 px-3 py-2 bg-white border border-[#EAE0D5] rounded-lg text-xs focus:outline-none focus:border-[#452638]"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#F2E9DF] hover:bg-[#E8C9C5] text-[#452638] text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors"
+                  className="px-4 py-2 bg-[#F2E9DF] hover:bg-[#E8C9C5] text-[#452638] text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap"
                 >
-                  Check
+                  Check Delivery
                 </button>
               </form>
 
@@ -584,11 +588,12 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#452638] mb-1">
-                    Your Order ID (Optional for &quot;Verified Purchase&quot; status)
+                  <label htmlFor="review-order-id" className="block text-xs font-medium text-[#452638] mb-1">
+                    Your Order ID (Optional) — Found on your order confirmation email or WhatsApp for Verified Buyer status
                   </label>
                   <div className="flex gap-2">
                     <input
+                      id="review-order-id"
                       type="text"
                       value={reviewOrderId}
                       onChange={(e) => setReviewOrderId(e.target.value)}
@@ -598,7 +603,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                     <button
                       type="button"
                       onClick={handleVerifyOrderInput}
-                      className="px-4 py-2 bg-[#F2E9DF] hover:bg-[#E8C9C5] text-[#452638] text-xs font-semibold rounded-xl transition-colors"
+                      className="px-4 py-2 bg-[#F2E9DF] hover:bg-[#E8C9C5] text-[#452638] text-xs font-semibold rounded-xl transition-colors whitespace-nowrap"
                     >
                       Verify Order
                     </button>
@@ -611,10 +616,11 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#452638] mb-1">
-                    Photo URL (Optional)
+                  <label htmlFor="review-photo-url" className="block text-xs font-medium text-[#452638] mb-1">
+                    Photo Link (Optional)
                   </label>
                   <input
+                    id="review-photo-url"
                     type="url"
                     value={reviewPhotoUrl}
                     onChange={(e) => setReviewPhotoUrl(e.target.value)}
@@ -622,7 +628,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                     className="w-full px-3.5 py-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
                   />
                   <p className="text-[10px] text-[#766E65] mt-0.5">
-                    Provide a public image link if you wish to show your candle setup.
+                    Share an image link (e.g. Imgur or Google Drive) to show your candle setup.
                   </p>
                 </div>
 
