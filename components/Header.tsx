@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -44,6 +44,17 @@ export function Header() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [badgeBump, setBadgeBump] = useState(false);
+  const prevCount = useRef(totalItemsCount);
+
+  useEffect(() => {
+    if (totalItemsCount > prevCount.current) {
+      setBadgeBump(true);
+      const timer = setTimeout(() => setBadgeBump(false), 300);
+      return () => clearTimeout(timer);
+    }
+    prevCount.current = totalItemsCount;
+  }, [totalItemsCount]);
 
   useEffect(() => {
     const applySavedFont = () => {
@@ -286,12 +297,17 @@ export function Header() {
                 type="button"
                 onClick={() => setIsCartOpen(true)}
                 aria-label="View shopping bag"
-                className="p-2 text-[#452638] hover:text-[#B69A62] transition-colors relative flex items-center"
+                className="p-2 text-[#452638] hover:text-[#B69A62] transition-all active:scale-95 relative flex items-center min-w-[44px] min-h-[44px] justify-center"
               >
                 <div className="relative">
-                  <ShoppingBag className="w-5 h-5" />
+                  <ShoppingBag className="w-5 h-5 transition-transform duration-200" />
                   {totalItemsCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-[#452638] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white animate-scale">
+                    <span 
+                      key={totalItemsCount}
+                      className={`absolute -top-1.5 -right-2 bg-[#452638] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white transition-all duration-300 ${
+                        badgeBump ? "animate-cart-bump shadow-[0_0_8px_rgba(182,154,98,0.5)]" : ""
+                      }`}
+                    >
                       {totalItemsCount}
                     </span>
                   )}

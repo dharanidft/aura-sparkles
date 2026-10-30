@@ -191,13 +191,68 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
 }
 .animate-fadeIn { animation: fadeIn 0.3s ease forwards; }
 
-/* Scale badge pop */
-@keyframes scalePop {
-  0%   { transform: scale(0); }
-  70%  { transform: scale(1.2); }
+/* Refined Cart Badge Bump (Calm & Luxury) */
+@keyframes cartBadgeBump {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
-.animate-scale { animation: scalePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-scale, .animate-cart-bump { 
+  animation: cartBadgeBump 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+}
+
+/* Drawer transitions (GPU-composited transforms) */
+@keyframes drawerSlideIn {
+  from { transform: translate3d(100%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+.animate-drawer-in {
+  animation: drawerSlideIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawerSlideOut {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(100%, 0, 0); }
+}
+.animate-drawer-out {
+  animation: drawerSlideOut 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-backdrop-in {
+  animation: backdropFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes backdropFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.animate-backdrop-out {
+  animation: backdropFadeOut 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Elegant Toast slide-up */
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-toast-up {
+  animation: toastSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Free Shipping Unlock Shimmer Sweep */
+@keyframes unlockSweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-unlock-sweep {
+  background: linear-gradient(90deg, #452638 0%, #B69A62 30%, #E8D5A3 50%, #B69A62 70%, #452638 100%);
+  background-size: 200% auto;
+  animation: unlockSweep 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
 
 /* Ticker / marquee scroll */
 @keyframes ticker {
@@ -287,4 +342,14 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
   z-index: 9999;
   width: 100vw;
   height: 100vh;
+}
+
+/* Accessibility: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -203,10 +203,16 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
           {/* Mobile Quick Add */}
           <button
             onClick={handleAdd}
-            className="sm:hidden p-2 rounded-full bg-[#452638] text-white active:scale-95 transition-transform"
-            aria-label="Add to bag"
+            className={`sm:hidden w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-white active:scale-90 transition-all duration-150 shadow-sm ${
+              adding ? "bg-emerald-700" : "bg-[#452638] hover:bg-[#5D354D]"
+            }`}
+            aria-label={`Add ${product.name} to bag`}
           >
-            <ShoppingBag className="w-4 h-4" />
+            {adding ? (
+              <Sparkles className="w-4 h-4 text-[#B69A62] animate-pulse" />
+            ) : (
+              <ShoppingBag className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

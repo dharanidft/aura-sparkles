@@ -139,7 +139,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   };
 
   return (
-    <div className="py-10 md:py-16 bg-white min-h-screen">
+    <div className="pt-10 pb-28 md:py-16 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb */}
@@ -351,7 +351,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
 
                 <button
                   onClick={() => addItem(product, quantity)}
-                  className="flex-1 py-3.5 bg-[#452638] hover:bg-[#5D354D] text-[#FAF7F2] text-xs font-semibold uppercase tracking-luxury rounded-full shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all"
+                  className="flex-1 py-3.5 bg-[#452638] hover:bg-[#5D354D] active:scale-[0.98] text-[#FAF7F2] text-xs font-semibold uppercase tracking-luxury rounded-full shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all duration-150"
                 >
                   <ShoppingBag className="w-4 h-4 text-[#B69A62]" />
                   <span>ADD TO SHOPPING BAG</span>
@@ -784,8 +784,8 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
           </div>
         )}
 
-      {/* Mobile Sticky Add to Cart Bar */}
-      <aside aria-label="Quick purchase actions" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE0D5] px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
+      {/* Mobile Sticky Add to Cart Bar with iOS safe-area support */}
+      <aside aria-label="Quick purchase actions" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE0D5] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
         <div className="flex items-center space-x-3 min-w-0">
           <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#EAE0D5] flex-shrink-0 bg-[#FAF7F2]">
             <Image
@@ -809,9 +809,9 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         <button
           onClick={() => addItem(product, 1)}
           disabled={!product.inStock}
-          className={`flex-shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-luxury flex items-center space-x-2 shadow-md transition-all ${
+          className={`flex-shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-luxury flex items-center space-x-2 shadow-md transition-all duration-150 ${
             product.inStock
-              ? "bg-[#452638] active:bg-[#5D354D] text-[#FAF7F2]"
+              ? "bg-[#452638] active:bg-[#5D354D] active:scale-95 text-[#FAF7F2]"
               : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
           }`}
         >
