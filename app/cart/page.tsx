@@ -92,8 +92,8 @@ export default function CartPage() {
             <span className="text-[#452638] font-medium flex items-center">
               <Sparkles className="w-4 h-4 text-[#B69A62] mr-1.5" />
               {amountNeeded > 0
-                ? `Add ${formatINR(amountNeeded)} more for Free shipping on orders ₹499 and above.`
-                : "You unlocked Free shipping on orders ₹499 and above!"}
+                ? `Add ${formatINR(amountNeeded)} more to unlock FREE Delivery across India!`
+                : "🎉 You unlocked FREE Delivery across India!"}
             </span>
             <span className="text-xs font-bold text-[#B69A62]">{progressPercent}%</span>
           </div>

@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: pageTitle,
       description: product.tagline,
-      url: `https://aurasparkles.in/shop/${product.slug}`,
+      url: `https://www.aurasparkles.com/shop/${product.slug}`,
       siteName: "Aura Sparkles",
       images: [
         {
@@ -53,7 +53,76 @@ export default function ProductDetailPage({ params }: Props) {
     .filter((p) => p.id !== product.id && p.fragranceFamily === product.fragranceFamily)
     .slice(0, 4);
 
+  const productJsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.name,
+    image: product.images,
+    description: product.description || product.tagline,
+    sku: product.id,
+    brand: {
+      "@type": "Brand",
+      name: "Aura Sparkles",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `https://www.aurasparkles.com/shop/${product.slug}`,
+      priceCurrency: "INR",
+      price: product.price,
+      itemCondition: "https://schema.org/NewCondition",
+      availability: product.inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      seller: {
+        "@type": "Organization",
+        name: "Aura Sparkles",
+      },
+    },
+    ...(product.rating ? {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: product.rating,
+        reviewCount: product.reviewCount || 1,
+      },
+    } : {}),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://www.aurasparkles.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: "https://www.aurasparkles.com/shop",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.name,
+        item: `https://www.aurasparkles.com/shop/${product.slug}`,
+      },
+    ],
+  };
+
   return (
-    <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+    </>
   );
 }

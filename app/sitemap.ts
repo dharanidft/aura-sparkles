@@ -2,11 +2,12 @@ import { MetadataRoute } from "next";
 import { INITIAL_PRODUCTS } from "@/lib/products-data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aurasparkles.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.aurasparkles.com";
 
   const staticPages = [
     "",
     "/shop",
+    "/corporate-gifting",
     "/story",
     "/contact",
     "/faq",

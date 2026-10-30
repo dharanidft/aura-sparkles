@@ -136,8 +136,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#452638] transition-colors">
-                  Corporate &amp; Event Gifting
+                <Link href="/corporate-gifting" className="hover:text-[#452638] transition-colors">
+                  Corporate Gifting &amp; Wholesale
                 </Link>
               </li>
               <li>

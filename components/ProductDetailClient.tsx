@@ -784,6 +784,42 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
           </div>
         )}
 
+      {/* Mobile Sticky Add to Cart Bar */}
+      <aside aria-label="Quick purchase actions" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE0D5] px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#EAE0D5] flex-shrink-0 bg-[#FAF7F2]">
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-[#452638] truncate">{product.name}</p>
+            <div className="flex items-baseline space-x-1.5">
+              <span className="text-sm font-bold text-[#452638]">{formatINR(product.price)}</span>
+              {product.mrp > product.price && (
+                <span className="text-[10px] text-[#766E65] line-through">{formatINR(product.mrp)}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => addItem(product, 1)}
+          disabled={!product.inStock}
+          className={`flex-shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-luxury flex items-center space-x-2 shadow-md transition-all ${
+            product.inStock
+              ? "bg-[#452638] active:bg-[#5D354D] text-[#FAF7F2]"
+              : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+          }`}
+        >
+          <ShoppingBag className="w-3.5 h-3.5 text-[#B69A62]" />
+          <span>{product.inStock ? "Add to Bag" : "Out of Stock"}</span>
+        </button>
+      </aside>
+
       </div>
     </div>
   );

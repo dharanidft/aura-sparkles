@@ -80,6 +80,7 @@ export function Header() {
     { label: "Wax Sachets", href: "/shop?category=Wax+Sachets" },
     { label: "Casting Decor", href: "/shop?category=Casting+Decor" },
     { label: "Pop Art Kits", href: "/shop?category=Pop+Art+Kits" },
+    { label: "Corporate Gifting", href: "/corporate-gifting" },
     { label: "Our Story", href: "/story" },
     { label: "Contact", href: "/contact" },
   ];
