@@ -34,6 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ],
       type: "website",
     },
+    alternates: {
+      canonical: `https://www.aurasparkles.com/shop/${product.slug}`,
+    },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,

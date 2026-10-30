@@ -11,8 +11,11 @@ import { InstagramGallery } from "@/components/InstagramGallery";
 import { Newsletter } from "@/components/Newsletter";
 
 export const metadata: Metadata = {
-  title: "Aura Sparkles — Pure · Elegant · You",
-  description: "Indian home-fragrance studio dedicated to hand-poured 100% natural soy wax candles, botanical wax sachets, casting decor, and kids creative kits. Tea lights from ₹160, jar candles from ₹249. Free shipping on orders ₹499 and above.",
+  title: "Aura Sparkles — Handcrafted Soy Wax Candles & Home Fragrances India",
+  description: "Indian home-fragrance studio dedicated to hand-poured 100% natural soy wax candles, botanical wax sachets, casting decor, and curated gifting. Tea lights from ₹160, signature jars from ₹249. Free shipping across India on orders ₹499+.",
+  alternates: {
+    canonical: "https://www.aurasparkles.com",
+  },
 };
 
 export default function HomePage() {

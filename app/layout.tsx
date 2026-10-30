@@ -12,26 +12,31 @@ import { CursorSparkle } from "@/components/CursorSparkle";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://aurasparkles.in"),
+  metadataBase: new URL("https://www.aurasparkles.com"),
+  alternates: {
+    canonical: "https://www.aurasparkles.com",
+  },
   title: {
     template: "%s",
-    default: "Aura Sparkles — Handcrafted Scented Soy Candles & Home Fragrance",
+    default: "Aura Sparkles — Handcrafted Scented Soy Candles & Home Fragrance India",
   },
-  description: "Indian home-fragrance studio specialising in hand-poured 100% natural soy wax candles, frosted-glass jars, and botanical aromas. Affordable luxury starting at ₹199.",
+  description: "Indian home-fragrance studio specialising in hand-poured 100% natural soy wax candles, frosted-glass jars, and botanical aromas. Affordable luxury starting at ₹160.",
   keywords: [
     "Aura Sparkles",
     "scented candles India",
     "soy wax candles",
-    "home fragrance",
+    "home fragrance India",
+    "handcrafted candles Chennai",
     "Mysore Sandalwood candle",
     "Damask Rose candle",
     "luxury candles India",
-    "candle gift sets"
+    "candle gift sets India",
+    "wax sachets for wardrobe"
   ],
   authors: [{ name: "Aura Sparkles" }],
   openGraph: {
-    title: "Aura Sparkles — Pure · Elegant · You",
-    description: "Handcrafted 100% soy wax candles, botanical wax sachets, casting decor, and kids creative kits. Pure · Elegant · You.",
+    title: "Aura Sparkles — Handcrafted Soy Wax Candles & Home Fragrances India",
+    description: "Handcrafted 100% natural soy wax candles, botanical wax sachets, casting decor, and kids creative kits. Pure · Elegant · You.",
     url: "https://www.aurasparkles.com",
     siteName: "Aura Sparkles",
     images: [
@@ -54,33 +59,83 @@ export default function RootLayout({
 }) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Aura Sparkles",
-    "url": "https://www.aurasparkles.com",
-    "logo": "https://www.aurasparkles.com/images/logo.png",
-    "description": "Indian home-fragrance studio specialising in scented soy wax candles, botanical wax sachets, ceramic casting decor, and kids creative kits.",
-    "slogan": "Pure · Elegant · You",
-    "telephone": "+919385328336",
-    "contactPoint": [
+    "@graph": [
       {
-        "@type": "ContactPoint",
+        "@type": "Organization",
+        "@id": "https://www.aurasparkles.com/#organization",
+        "name": "Aura Sparkles",
+        "url": "https://www.aurasparkles.com",
+        "logo": "https://www.aurasparkles.com/images/logo.png",
+        "description": "Indian home-fragrance studio specialising in scented soy wax candles, botanical wax sachets, ceramic casting decor, and kids creative kits.",
+        "slogan": "Pure · Elegant · You",
         "telephone": "+919385328336",
-        "contactType": "customer service",
-        "areaServed": "IN",
-        "availableLanguage": ["English", "Hindi"]
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+919385328336",
+            "contactType": "customer service",
+            "areaServed": "IN",
+            "availableLanguage": ["English", "Hindi", "Tamil"]
+          }
+        ],
+        "sameAs": [
+          "https://www.instagram.com/aurasparklesofficial/"
+        ],
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Ayanambakkam, Vadanoombal",
+          "addressLocality": "Chennai",
+          "addressRegion": "Tamil Nadu",
+          "postalCode": "600095",
+          "addressCountry": "India"
+        }
+      },
+      {
+        "@type": ["LocalBusiness", "Store"],
+        "@id": "https://www.aurasparkles.com/#localbusiness",
+        "name": "Aura Sparkles Studio",
+        "image": "https://www.aurasparkles.com/images/logo.png",
+        "url": "https://www.aurasparkles.com",
+        "telephone": "+919385328336",
+        "priceRange": "₹160 - ₹2499",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Ayanambakkam, Vadanoombal",
+          "addressLocality": "Chennai",
+          "addressRegion": "Tamil Nadu",
+          "postalCode": "600095",
+          "addressCountry": "India"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 13.0642,
+          "longitude": 80.1418
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "opens": "09:30",
+            "closes": "19:00"
+          }
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.aurasparkles.com/#website",
+        "url": "https://www.aurasparkles.com",
+        "name": "Aura Sparkles",
+        "description": "Handcrafted Scented Soy Candles & Home Fragrances India",
+        "publisher": {
+          "@id": "https://www.aurasparkles.com/#organization"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://www.aurasparkles.com/shop?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
       }
-    ],
-    "sameAs": [
-      "https://www.instagram.com/aurasparklesofficial/"
-    ],
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Ayanambakkam, Vadanoombal",
-      "addressLocality": "Chennai",
-      "addressRegion": "Tamil Nadu",
-      "postalCode": "600095",
-      "addressCountry": "India"
-    }
+    ]
   };
 
   return (

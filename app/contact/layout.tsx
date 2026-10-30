@@ -1,14 +1,31 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact Us & Concierge Support — Aura Sparkles",
-  description: "Connect with Aura Sparkles studio in Chennai for candle enquiries, bespoke wedding favors, corporate gifting, or order support.",
+  title: "Contact Us & Studio Location (Chennai) — Aura Sparkles",
+  description: "Get in touch with Aura Sparkles home fragrance studio in Chennai. Enquire about custom orders, corporate gifts, wedding favors, or track your delivery.",
+  keywords: [
+    "contact Aura Sparkles",
+    "candle studio Chennai",
+    "Ayanambakkam candle studio",
+    "Aura Sparkles phone number",
+    "custom candle order Chennai"
+  ],
+  alternates: {
+    canonical: "https://www.aurasparkles.com/contact",
+  },
   openGraph: {
-    title: "Contact Us — Aura Sparkles Concierge",
-    description: "Get in touch with the Aura Sparkles home fragrance team for artisan candle enquiries and support.",
+    title: "Contact Aura Sparkles — Chennai Studio & Customer Support",
+    description: "Get in touch for orders, custom fragrance requests, wedding favors, and corporate gifting. WhatsApp: +91 93853 28336.",
+    url: "https://www.aurasparkles.com/contact",
+    siteName: "Aura Sparkles",
+    type: "website",
   },
 };
 
-export default function ContactLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default function ContactLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
 }
