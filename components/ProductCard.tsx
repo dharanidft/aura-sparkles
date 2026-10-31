@@ -18,6 +18,7 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   const { addItem, toggleWishlist, isWishlisted } = useCart();
   const wishlisted = isWishlisted(product.id);
   const [adding, setAdding] = useState(false);
+  const [imgSrc, setImgSrc] = useState(product.images[0] || "/images/logo.png");
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Requirement 4: Calculate rating strictly from real stored review data
@@ -57,8 +58,6 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
     const el = cardRef.current;
     if (el) el.style.transform = "perspective(700px) rotateX(0) rotateY(0) translateY(0)";
   };
-
-  const [imgSrc, setImgSrc] = useState(product.images[0] || "/images/logo.png");
 
   return (
     <div

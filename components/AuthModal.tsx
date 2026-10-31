@@ -50,6 +50,15 @@ export function AuthModal() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
+  // Apple Direct Manipulation: 1:1 Gesture Drag & Momentum Dismissal
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef(0);
+  const currentDragY = useRef(0);
+  const lastMoveY = useRef(0);
+  const lastMoveTime = useRef(0);
+  const velocityY = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (cooldown > 0) {
@@ -73,8 +82,6 @@ export function AuthModal() {
       setOtpCode("");
     }
   }, [isAuthModalOpen]);
-
-  if (!isAuthModalOpen) return null;
 
   // ---------------------------------------------------------------------------
   // WhatsApp OTP Handlers
@@ -171,14 +178,6 @@ export function AuthModal() {
 
   // ---------------------------------------------------------------------------
   // Apple Direct Manipulation: 1:1 Gesture Drag & Momentum Dismissal
-  // ---------------------------------------------------------------------------
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const dragStartY = useRef(0);
-  const currentDragY = useRef(0);
-  const lastMoveY = useRef(0);
-  const lastMoveTime = useRef(0);
-  const velocityY = useRef(0);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Apple WWDC 2018 Rubberband Resistance Formula:
   // (overshoot * dimension * 0.55) / (dimension + 0.55 * Math.abs(overshoot))
@@ -247,6 +246,8 @@ export function AuthModal() {
     }
     currentDragY.current = 0;
   };
+
+  if (!isAuthModalOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">

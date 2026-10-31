@@ -42,6 +42,16 @@ export function CartDrawer() {
   const [shouldRender, setShouldRender] = useState(isCartOpen);
   const [isClosing, setIsClosing] = useState(false);
 
+  // Apple Direct Manipulation: 1:1 Swipe & Momentum Dismissal
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const dragStartX = useRef(0);
+  const currentDragX = useRef(0);
+  const lastMoveX = useRef(0);
+  const lastMoveTime = useRef(0);
+  const velocityX = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+
   useEffect(() => {
     if (isCartOpen) {
       setShouldRender(true);
@@ -78,8 +88,6 @@ export function CartDrawer() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [shouldRender, handleClose]);
 
-  if (!shouldRender) return null;
-
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError(null);
@@ -98,18 +106,8 @@ export function CartDrawer() {
   const amountNeeded = Math.max(0, FREE_SHIPPING_THRESHOLD - netSubtotal);
   const isUnlocked = amountNeeded === 0;
 
-  // ---------------------------------------------------------------------------
   // Apple Direct Manipulation: 1:1 Swipe & Momentum Dismissal
   // ---------------------------------------------------------------------------
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const dragStartX = useRef(0);
-  const currentDragX = useRef(0);
-  const lastMoveX = useRef(0);
-  const lastMoveTime = useRef(0);
-  const velocityX = useRef(0);
-  const [isDragging, setIsDragging] = useState(false);
-
   // Apple WWDC 2018 Rubberband Formula
   const calculateRubberbandX = (overshoot: number, dimension = 400) => {
     return (overshoot * dimension * 0.55) / (dimension + 0.55 * Math.abs(overshoot));
@@ -191,6 +189,8 @@ export function CartDrawer() {
     }
     currentDragX.current = 0;
   };
+
+  if (!shouldRender) return null;
 
   return (
     <div 
