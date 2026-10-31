@@ -113,9 +113,9 @@ export function CartDrawer() {
         onClick={handleClose}
       />
 
-      {/* Drawer Container with GPU-accelerated slide in/out */}
+      {/* Drawer Container with GPU-accelerated slide in/out & 100dvh */}
       <div 
-        className={`relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-10 ${
+        className={`relative w-full max-w-md bg-white h-[100dvh] shadow-2xl flex flex-col z-10 ${
           isClosing ? "animate-drawer-out" : "animate-drawer-in"
         }`}
         style={{ willChange: "transform" }}
@@ -190,8 +190,8 @@ export function CartDrawer() {
           </div>
         </div>
 
-        {/* Cart Item List */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
+        {/* Cart Item List with contained overscroll to prevent rubberband chaining */}
+        <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-3.5">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
               <div className="w-16 h-16 rounded-full bg-[#FAF7F2] border border-[#EAE0D5] flex items-center justify-center text-[#B69A62]">
@@ -236,11 +236,11 @@ export function CartDrawer() {
                     {item.product.netWeight} · {item.product.fragranceFamily}
                   </p>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-semibold text-[#452638]">
+                    <span className="text-sm font-semibold text-[#452638] tabular-nums">
                       {formatINR(item.product.price)}
                     </span>
                     {item.product.mrp > item.product.price && (
-                      <span className="text-xs text-[#766E65] line-through">
+                      <span className="text-xs text-[#766E65] line-through tabular-nums">
                         {formatINR(item.product.mrp)}
                       </span>
                     )}
@@ -282,16 +282,16 @@ export function CartDrawer() {
           )}
         </div>
 
-        {/* Footer & Checkout Area */}
+        {/* Footer & Checkout Area with safe-area support */}
         {items.length > 0 && (
-          <div className="p-5 border-t border-[#EAE0D5] bg-white space-y-4 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+          <div className="p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] border-t border-[#EAE0D5] bg-white space-y-4 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
             {/* Promo Code Input */}
             <div>
               {appliedCoupon ? (
                 <div className="flex items-center justify-between p-2.5 bg-[#FAF7F2] rounded-xl border border-[#B69A62]/30 text-xs text-[#452638] animate-fadeIn">
                   <div className="flex items-center space-x-2">
                     <Tag className="w-4 h-4 text-[#B69A62]" />
-                    <span className="font-semibold uppercase tracking-wider">
+                    <span className="font-semibold uppercase tracking-wider tabular-nums">
                       {appliedCoupon.code} applied ({formatINR(discount)} saved)
                     </span>
                   </div>
@@ -330,23 +330,23 @@ export function CartDrawer() {
             <div className="space-y-1.5 text-xs text-[#766E65] pt-2 border-t border-[#EAE0D5]">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="text-[#452638] font-medium">{formatINR(subtotal)}</span>
+                <span className="text-[#452638] font-medium tabular-nums">{formatINR(subtotal)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-700">
                   <span>Coupon Discount</span>
-                  <span>-{formatINR(discount)}</span>
+                  <span className="tabular-nums">-{formatINR(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span>Shipping Fee</span>
-                <span className={shippingFee === 0 ? "text-emerald-700 font-semibold" : ""}>
+                <span className={`tabular-nums ${shippingFee === 0 ? "text-emerald-700 font-semibold" : ""}`}>
                   {shippingFee === 0 ? "FREE" : formatINR(shippingFee)}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-semibold text-[#452638] pt-2 border-t border-[#EAE0D5]">
                 <span>Total Amount</span>
-                <span className="font-serif text-base">{formatINR(finalTotal)}</span>
+                <span className="font-serif text-base tabular-nums">{formatINR(finalTotal)}</span>
               </div>
             </div>
 

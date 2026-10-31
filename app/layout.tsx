@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Header } from "@/components/Header";
@@ -10,6 +10,16 @@ import { AuthProvider } from "@/lib/auth-context";
 import { AuthModal } from "@/components/AuthModal";
 import { CursorSparkle } from "@/components/CursorSparkle";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#452638" },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.aurasparkles.com"),

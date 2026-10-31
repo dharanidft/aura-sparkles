@@ -177,7 +177,7 @@ export function AuthModal() {
         aria-hidden="true"
       />
 
-      <div className="relative bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto border-t sm:border border-[#EAE0D5] shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 z-10 animate-slideUp sm:animate-scale pb-8 sm:pb-8">
+      <div className="relative bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full max-h-[90dvh] overflow-y-auto overscroll-contain border-t sm:border border-[#EAE0D5] shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 z-10 animate-sheet-in sm:animate-modal-in pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
         
         {/* Mobile Swipe / Sheet Handle Indicator */}
         <div className="w-12 h-1.5 bg-[#EAE0D5] rounded-full mx-auto sm:hidden -mt-1 mb-2" aria-hidden="true" />

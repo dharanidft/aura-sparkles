@@ -43,8 +43,9 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
     setTimeout(() => setAdding(false), 900);
   };
 
-  // 3D tilt on hover
+  // 3D tilt on hover (gated strictly to fine pointer / mouse devices to prevent sticky tilt on touch)
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (typeof window !== "undefined" && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const el = cardRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -128,14 +129,14 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
           <Heart className={`w-4 h-4 transition-transform ${wishlisted ? "fill-current" : ""}`} />
         </button>
 
-        {/* Quick Add Overlay — slides up */}
-        <div className="absolute inset-x-3 bottom-3 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400 z-10 hidden sm:block">
+        {/* Quick Add Overlay — slides up (crisp 200ms ease-out per Emil Kowalski rule) */}
+        <div className="absolute inset-x-3 bottom-3 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200 ease-out z-10 hidden sm:block">
           <button
             onClick={handleAdd}
-            className={`w-full py-2.5 text-[#FAF7F2] text-xs font-semibold uppercase tracking-[0.12em] rounded-lg shadow-md backdrop-blur-sm flex items-center justify-center space-x-2 transition-all ${
+            className={`w-full py-2.5 text-[#FAF7F2] text-xs font-semibold uppercase tracking-[0.12em] rounded-lg shadow-md backdrop-blur-sm flex items-center justify-center space-x-2 active:scale-[0.97] transition-all duration-150 ${
               adding
                 ? "bg-emerald-700 scale-95"
-                : "bg-[#452638]/95 hover:bg-[#452638] hover:scale-[1.02]"
+                : "bg-[#452638]/95 hover:bg-[#452638]"
             }`}
           >
             {adding ? (
@@ -188,11 +189,11 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
         <div className="pt-2 border-t border-[#EAE0D5]/60 flex items-center justify-between">
           <div>
             <div className="flex items-baseline space-x-2">
-              <span className="font-serif text-lg font-bold text-[#452638]">
+              <span className="font-serif text-lg font-bold text-[#452638] tabular-nums">
                 {formatINR(product.price)}
               </span>
               {product.mrp > product.price && (
-                <span className="text-xs text-[#766E65] line-through font-light">
+                <span className="text-xs text-[#766E65] line-through font-light tabular-nums">
                   {formatINR(product.mrp)}
                 </span>
               )}

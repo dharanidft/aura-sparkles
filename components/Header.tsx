@@ -229,7 +229,7 @@ export function Header() {
                     </button>
 
                     {accountMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#EAE0D5] py-2 z-50 animate-fadeIn">
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#EAE0D5] py-2 z-50 animate-popover-in">
                         <div className="px-4 py-3 border-b border-[#EAE0D5]/60 bg-[#FBF8F3]/60 rounded-t-2xl">
                           <p className="text-[10px] uppercase tracking-wider text-[#B69A62] font-semibold">Signed in as</p>
                           <p className="text-sm font-semibold text-[#452638] truncate">{customer?.displayName || customer?.email || "Aura Customer"}</p>
@@ -351,7 +351,7 @@ export function Header() {
             onClick={() => setMobileMenuOpen(false)} 
           />
 
-          <div className="relative w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 animate-slideRight">
+          <div className="relative w-4/5 max-w-sm bg-white h-[100dvh] shadow-2xl flex flex-col z-10 animate-slideRight overscroll-contain pb-[env(safe-area-inset-bottom,0px)]">
             <div className="p-6 border-b border-[#EAE0D5] flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden bg-white shadow-xs border border-[#B69A62]/40 p-0.5">

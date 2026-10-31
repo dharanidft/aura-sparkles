@@ -892,7 +892,7 @@ export default function CheckoutPage() {
                           Qty: {item.quantity} · {item.product.netWeight.split("/")[0]}
                         </p>
                       </div>
-                      <span className="font-semibold text-[#452638]">
+                      <span className="font-semibold text-[#452638] tabular-nums">
                         {formatINR(item.product.price * item.quantity)}
                       </span>
                     </div>
@@ -940,24 +940,24 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-xs text-[#766E65] pt-3 border-t border-[#EAE0D5]">
                   <div className="flex justify-between">
                     <span>Merchandise Subtotal</span>
-                    <span className="text-[#452638] font-medium">{formatINR(subtotal)}</span>
+                    <span className="text-[#452638] font-medium tabular-nums">{formatINR(subtotal)}</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-emerald-700">
                       <span>Discount</span>
-                      <span>-{formatINR(discount)}</span>
+                      <span className="tabular-nums">-{formatINR(discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span>Shipping Fee</span>
-                    <span>{shippingFee === 0 ? "Free" : formatINR(shippingFee)}</span>
+                    <span className="tabular-nums">{shippingFee === 0 ? "Free" : formatINR(shippingFee)}</span>
                   </div>
                   <p className="text-[10px] text-[#766E65]/80">
                     Free shipping on orders ₹499 and above.
                   </p>
                   <div className="flex justify-between text-base font-semibold text-[#452638] pt-2 border-t border-[#EAE0D5]">
                     <span>Total Payable</span>
-                    <span className="font-serif text-xl">{formatINR(finalTotal)}</span>
+                    <span className="font-serif text-xl tabular-nums">{formatINR(finalTotal)}</span>
                   </div>
                 </div>
 

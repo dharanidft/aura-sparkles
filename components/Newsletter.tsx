@@ -70,6 +70,10 @@ export function Newsletter() {
               <input
                 id="newsletter-email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                enterKeyHint="send"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);

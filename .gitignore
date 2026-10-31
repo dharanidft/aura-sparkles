@@ -38,5 +38,6 @@ data/payment-proofs/*
 # Runtime QR & Audit logs
 data/admin-audit.json
 public/images/openwa-qr.png
+skills-main/
 OpenWA-plugins-main/
 app/cover aura.png

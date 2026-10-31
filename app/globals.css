@@ -15,6 +15,11 @@
   --color-gold: #B69A62;
   --color-charcoal: #282522;
   --color-white: #FFFFFF;
+
+  /* Emil Kowalski Design Engineering Easing Tokens */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Dynamic font theme support — applied to both root and body */
@@ -34,6 +39,11 @@
   --font-heading: 'Playfair Display', Georgia, serif;
 }
 
+/* Mobile-Native Platform Foundations */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 html, body {
   background-color: #FFFFFF !important;
   color: var(--color-charcoal);
@@ -41,6 +51,40 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* Elimination of 300ms tap delay & long-press selection on interactive controls */
+button, a, [role="button"], .tappable {
+  touch-action: manipulation;
+}
+
+button, [role="button"], .tab, .chip, .drag-handle {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Responsive button press tactile feel (instant feedback on press) */
+button:not(:disabled):active, 
+[role="button"]:not([aria-disabled="true"]):active,
+.btn-press:active {
+  transform: scale(0.97);
+  transition: transform 120ms var(--ease-out);
+}
+
+/* Prevent iOS Safari 16px input focus auto-zoom */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), 
+  textarea, 
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Tabular numerals for monetary values, counters, and stock numbers */
+.tabular-nums, [data-tabular] {
+  font-variant-numeric: tabular-nums;
 }
 
 h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
@@ -201,13 +245,41 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
   animation: cartBadgeBump 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
 }
 
-/* Drawer transitions (GPU-composited transforms) */
+/* Modal & Bottom Sheet (Emil Kowalski Recipe: never scale(0), centered modal, iOS sheet curve) */
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-modal-in {
+  transform-origin: center;
+  animation: modalIn 0.24s var(--ease-out) forwards;
+}
+
+@keyframes sheetIn {
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+.animate-sheet-in {
+  animation: sheetIn 0.36s var(--ease-drawer) forwards;
+}
+
+/* Origin-aware Popover / Dropdown Menu (under 200ms, ease-out, scale 0.95) */
+@keyframes popoverIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-popover-in {
+  transform-origin: top right;
+  animation: popoverIn 0.18s var(--ease-out) forwards;
+}
+
+/* Drawer transitions (Asymmetric: ease-drawer on enter, snappy ease-out on exit) */
 @keyframes drawerSlideIn {
   from { transform: translate3d(100%, 0, 0); }
   to   { transform: translate3d(0, 0, 0); }
 }
 .animate-drawer-in {
-  animation: drawerSlideIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: drawerSlideIn 0.38s var(--ease-drawer) forwards;
 }
 
 @keyframes drawerSlideOut {
@@ -215,7 +287,7 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
   to   { transform: translate3d(100%, 0, 0); }
 }
 .animate-drawer-out {
-  animation: drawerSlideOut 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: drawerSlideOut 0.26s var(--ease-out) forwards;
 }
 
 @keyframes backdropFadeIn {
@@ -223,7 +295,7 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
   to   { opacity: 1; }
 }
 .animate-backdrop-in {
-  animation: backdropFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: backdropFadeIn 0.28s var(--ease-out) forwards;
 }
 
 @keyframes backdropFadeOut {
@@ -231,16 +303,16 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
   to   { opacity: 0; }
 }
 .animate-backdrop-out {
-  animation: backdropFadeOut 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: backdropFadeOut 0.22s var(--ease-out) forwards;
 }
 
 /* Elegant Toast slide-up */
 @keyframes toastSlideUp {
-  from { opacity: 0; transform: translate3d(0, 16px, 0); }
-  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.96); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 .animate-toast-up {
-  animation: toastSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: toastSlideUp 0.28s var(--ease-out) forwards;
 }
 
 /* Free Shipping Unlock Shimmer Sweep */
@@ -251,7 +323,7 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
 .animate-unlock-sweep {
   background: linear-gradient(90deg, #452638 0%, #B69A62 30%, #E8D5A3 50%, #B69A62 70%, #452638 100%);
   background-size: 200% auto;
-  animation: unlockSweep 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: unlockSweep 2.4s var(--ease-out) infinite;
 }
 
 /* Ticker / marquee scroll */
@@ -269,7 +341,7 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
 .word-reveal {
   display: inline-block;
   opacity: 0;
-  animation: wordReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: wordReveal 0.7s var(--ease-out) forwards;
 }
 
 /* Candle flame flicker */
@@ -294,7 +366,7 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
    INTERACTIVE & GLASS UTILITIES
    ============================================ */
 .transition-editorial {
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 220ms var(--ease-out), opacity 220ms var(--ease-out);
 }
 
 .luxury-gradient {

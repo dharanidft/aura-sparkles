@@ -188,7 +188,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all p-1 bg-white ${
+                    className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all p-1 bg-white ${
                       activeImageIndex === idx
                         ? "border-[#452638] shadow-sm"
                         : "border-[#EAE0D5] hover:border-[#B69A62]"
@@ -265,12 +265,12 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
 
             {/* Pricing Section */}
             <div className="flex items-baseline space-x-3">
-              <span className="font-serif text-3xl font-semibold text-[#452638]">
+              <span className="font-serif text-3xl font-semibold text-[#452638] tabular-nums">
                 {formatINR(product.price)}
               </span>
               {product.mrp > product.price && (
                 <>
-                  <span className="text-sm text-[#766E65] line-through">
+                  <span className="text-sm text-[#766E65] line-through tabular-nums">
                     MRP {formatINR(product.mrp)}
                   </span>
                   <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
@@ -804,9 +804,9 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
           <div className="min-w-0">
             <p className="text-xs font-semibold text-[#452638] truncate">{product.name}</p>
             <div className="flex items-baseline space-x-1.5">
-              <span className="text-sm font-bold text-[#452638]">{formatINR(product.price)}</span>
+              <span className="text-sm font-bold text-[#452638] tabular-nums">{formatINR(product.price)}</span>
               {product.mrp > product.price && (
-                <span className="text-[10px] text-[#766E65] line-through">{formatINR(product.mrp)}</span>
+                <span className="text-[10px] text-[#766E65] line-through tabular-nums">{formatINR(product.mrp)}</span>
               )}
             </div>
           </div>
