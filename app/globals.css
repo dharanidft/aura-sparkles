@@ -65,12 +65,18 @@ button, [role="button"], .tab, .chip, .drag-handle {
   -webkit-touch-callout: none;
 }
 
-/* Responsive button press tactile feel (instant feedback on press) */
+/* Apple Responsive Press Feedback (Instant highlight on pointer-down) */
 button:not(:disabled):active, 
 [role="button"]:not([aria-disabled="true"]):active,
 .btn-press:active {
   transform: scale(0.97);
-  transition: transform 120ms var(--ease-out);
+  filter: brightness(0.95);
+  transition: transform 100ms var(--ease-out), filter 100ms var(--ease-out);
+}
+
+/* Apple Typography: Optical Sizing & Negative Tracking on Display Heads */
+h1, h2, .display-heading {
+  letter-spacing: -0.022em;
 }
 
 /* Prevent iOS Safari 16px input focus auto-zoom */
@@ -380,9 +386,18 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
 }
 
 .glass-nav {
-  background: rgba(250, 247, 242, 0.88);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.82) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(234, 224, 213, 0.7) !important;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-nav {
+    background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 /* Magnetic button effect — JS sets --tx/--ty via inline style */

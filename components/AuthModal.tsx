@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { 
   X, 
@@ -169,6 +169,85 @@ export function AuthModal() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Apple Direct Manipulation: 1:1 Gesture Drag & Momentum Dismissal
+  // ---------------------------------------------------------------------------
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef(0);
+  const currentDragY = useRef(0);
+  const lastMoveY = useRef(0);
+  const lastMoveTime = useRef(0);
+  const velocityY = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Apple WWDC 2018 Rubberband Resistance Formula:
+  // (overshoot * dimension * 0.55) / (dimension + 0.55 * Math.abs(overshoot))
+  const calculateRubberband = (overshoot: number, dimension = 400) => {
+    return (overshoot * dimension * 0.55) / (dimension + 0.55 * Math.abs(overshoot));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (window.innerWidth >= 640) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    sheet.setPointerCapture(e.pointerId);
+    dragStartY.current = e.clientY;
+    lastMoveY.current = e.clientY;
+    lastMoveTime.current = performance.now();
+    velocityY.current = 0;
+    setIsDragging(true);
+    sheet.style.transition = "none";
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    const now = performance.now();
+    const dt = Math.max(1, now - lastMoveTime.current);
+    const dy = e.clientY - lastMoveY.current;
+    velocityY.current = dy / dt; // px/ms
+    lastMoveY.current = e.clientY;
+    lastMoveTime.current = now;
+
+    const rawDelta = e.clientY - dragStartY.current;
+    // 1:1 tracking down, rubberband upward
+    const finalY = rawDelta > 0 ? rawDelta : calculateRubberband(rawDelta);
+    currentDragY.current = finalY;
+    sheet.style.transform = `translate3d(0, ${finalY}px, 0)`;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    try {
+      sheet.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const deltaY = currentDragY.current;
+    const v = velocityY.current;
+    // Dismiss if dragged down > 110px OR flicked with velocity > 0.35
+    const shouldDismiss = deltaY > 110 || v > 0.35;
+
+    if (shouldDismiss) {
+      sheet.style.transition = "transform 0.24s cubic-bezier(0.23, 1, 0.32, 1)";
+      sheet.style.transform = "translate3d(0, 100%, 0)";
+      setTimeout(() => {
+        closeAuthModal();
+      }, 240);
+    } else {
+      // Critically damped spring back to resting position
+      sheet.style.transition = "transform 0.34s cubic-bezier(0.32, 0.72, 0, 1)";
+      sheet.style.transform = "translate3d(0, 0, 0)";
+    }
+    currentDragY.current = 0;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
       <div 
@@ -177,10 +256,22 @@ export function AuthModal() {
         aria-hidden="true"
       />
 
-      <div className="relative bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full max-h-[90dvh] overflow-y-auto overscroll-contain border-t sm:border border-[#EAE0D5] shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 z-10 animate-sheet-in sm:animate-modal-in pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
+      <div 
+        ref={sheetRef}
+        className="relative bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full max-h-[90dvh] overflow-y-auto overscroll-contain border-t sm:border border-[#EAE0D5] shadow-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 z-10 animate-sheet-in sm:animate-modal-in pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8 touch-pan-y"
+      >
         
-        {/* Mobile Swipe / Sheet Handle Indicator */}
-        <div className="w-12 h-1.5 bg-[#EAE0D5] rounded-full mx-auto sm:hidden -mt-1 mb-2" aria-hidden="true" />
+        {/* Apple Direct Manipulation Sheet Handle (Interactive Drag Surface) */}
+        <div 
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="cursor-grab active:cursor-grabbing touch-none select-none py-2 -mt-2 -mx-4 flex flex-col items-center sm:hidden"
+          aria-label="Drag down to dismiss modal"
+        >
+          <div className="w-12 h-1.5 bg-[#EAE0D5] hover:bg-[#B69A62] rounded-full mx-auto transition-colors" />
+        </div>
 
         {/* Close Button */}
         <button

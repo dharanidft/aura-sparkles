@@ -65,6 +65,32 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
 
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
 
+  // Apple Direct Manipulation: Image Swipe Gesture Tracking
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const diff = touchStartX.current - touchEndX.current;
+    if (diff > 40 && product.images.length > 1) {
+      // Swiped Left -> Next Image
+      setActiveImageIndex((prev) => (prev + 1) % product.images.length);
+    } else if (diff < -40 && product.images.length > 1) {
+      // Swiped Right -> Previous Image
+      setActiveImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    }
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
   // Sync title and reviews on mount
   useEffect(() => {
     const sizeStr = product.sizeVariant || product.netWeight.split("/")[0].trim();
@@ -160,14 +186,20 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
           
           {/* Left Column: Image Gallery (5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden border border-[#EAE0D5] shadow-card flex items-center justify-center p-3">
+            <div 
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden border border-[#EAE0D5] shadow-card flex items-center justify-center p-3 select-none touch-pan-y"
+              aria-label="Swipe to change image"
+            >
               <Image
                 src={product.images[activeImageIndex] || "/images/logo.png"}
                 alt={`${product.name} - ${product.sizeVariant || "View"}`}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-contain p-2"
+                className="object-contain p-2 transition-transform duration-300 ease-out"
               />
 
               {/* Brand watermark */}
@@ -179,6 +211,22 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                   AURA SPARKLES
                 </span>
               </div>
+
+              {/* Mobile pagination dots */}
+              {product.images.length > 1 && (
+                <div className="absolute bottom-3 inset-x-0 flex justify-center space-x-1.5 z-10 sm:hidden">
+                  {product.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImageIndex(i)}
+                      aria-label={`Show image ${i + 1}`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        activeImageIndex === i ? "w-5 bg-[#452638]" : "w-1.5 bg-[#EAE0D5]"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Thumbnail selector */}

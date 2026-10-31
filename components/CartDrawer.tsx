@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -98,6 +98,100 @@ export function CartDrawer() {
   const amountNeeded = Math.max(0, FREE_SHIPPING_THRESHOLD - netSubtotal);
   const isUnlocked = amountNeeded === 0;
 
+  // ---------------------------------------------------------------------------
+  // Apple Direct Manipulation: 1:1 Swipe & Momentum Dismissal
+  // ---------------------------------------------------------------------------
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const dragStartX = useRef(0);
+  const currentDragX = useRef(0);
+  const lastMoveX = useRef(0);
+  const lastMoveTime = useRef(0);
+  const velocityX = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Apple WWDC 2018 Rubberband Formula
+  const calculateRubberbandX = (overshoot: number, dimension = 400) => {
+    return (overshoot * dimension * 0.55) / (dimension + 0.55 * Math.abs(overshoot));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    drawer.setPointerCapture(e.pointerId);
+    dragStartX.current = e.clientX;
+    lastMoveX.current = e.clientX;
+    lastMoveTime.current = performance.now();
+    velocityX.current = 0;
+    setIsDragging(true);
+    drawer.style.transition = "none";
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const now = performance.now();
+    const dt = Math.max(1, now - lastMoveTime.current);
+    const dx = e.clientX - lastMoveX.current;
+    velocityX.current = dx / dt;
+    lastMoveX.current = e.clientX;
+    lastMoveTime.current = now;
+
+    const rawDelta = e.clientX - dragStartX.current;
+    // Dragging right: 1:1 tracking
+    // Dragging left: rubberband resistance
+    const finalX = rawDelta > 0 ? rawDelta : calculateRubberbandX(rawDelta);
+    currentDragX.current = finalX;
+    drawer.style.transform = `translate3d(${finalX}px, 0, 0)`;
+
+    if (backdropRef.current && finalX > 0) {
+      const opacity = Math.max(0, 0.5 * (1 - finalX / 400));
+      backdropRef.current.style.opacity = `${opacity}`;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    try {
+      drawer.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const deltaX = currentDragX.current;
+    const v = velocityX.current;
+    // Dismiss if dragged right > 100px OR flicked with velocity > 0.35
+    const shouldDismiss = deltaX > 100 || v > 0.35;
+
+    if (shouldDismiss) {
+      drawer.style.transition = "transform 0.24s cubic-bezier(0.23, 1, 0.32, 1)";
+      drawer.style.transform = "translate3d(100%, 0, 0)";
+      if (backdropRef.current) {
+        backdropRef.current.style.transition = "opacity 0.22s var(--ease-out)";
+        backdropRef.current.style.opacity = "0";
+      }
+      setTimeout(() => {
+        setIsCartOpen(false);
+        setShouldRender(false);
+        setIsClosing(false);
+      }, 240);
+    } else {
+      // Spring smoothly back to rest (0)
+      drawer.style.transition = "transform 0.34s cubic-bezier(0.32, 0.72, 0, 1)";
+      drawer.style.transform = "translate3d(0, 0, 0)";
+      if (backdropRef.current) {
+        backdropRef.current.style.transition = "opacity 0.28s var(--ease-out)";
+        backdropRef.current.style.opacity = "1";
+      }
+    }
+    currentDragX.current = 0;
+  };
+
   return (
     <div 
       className="fixed inset-0 z-50 flex justify-end"
@@ -107,6 +201,7 @@ export function CartDrawer() {
     >
       {/* Backdrop with smooth cubic-bezier fade in/out */}
       <div
+        ref={backdropRef}
         className={`fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity ${
           isClosing ? "animate-backdrop-out" : "animate-backdrop-in"
         }`}
@@ -115,13 +210,21 @@ export function CartDrawer() {
 
       {/* Drawer Container with GPU-accelerated slide in/out & 100dvh */}
       <div 
+        ref={drawerRef}
         className={`relative w-full max-w-md bg-white h-[100dvh] shadow-2xl flex flex-col z-10 ${
           isClosing ? "animate-drawer-out" : "animate-drawer-in"
         }`}
         style={{ willChange: "transform" }}
       >
-        {/* Header */}
-        <div className="p-5 border-b border-[#EAE0D5] flex items-center justify-between bg-white">
+        {/* Apple Direct Manipulation Drag Surface on Header */}
+        <div 
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="p-5 border-b border-[#EAE0D5] flex items-center justify-between bg-white cursor-grab active:cursor-grabbing select-none touch-pan-y"
+          aria-label="Drag right to dismiss shopping bag"
+        >
           <div className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center text-[#452638]">
               <ShoppingBag className="w-4 h-4" />
