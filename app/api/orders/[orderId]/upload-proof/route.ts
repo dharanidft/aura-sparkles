@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { getStoredOrderById, saveStoredOrder, getUploadsDirectory, sanitizeFileName } from "@/lib/order-store";
 import { PaymentProof } from "@/lib/upi-types";
+import { dispatchOrderWhatsAppNotification } from "@/lib/whatsapp-notifications";
 
 export const runtime = "nodejs";
 
@@ -127,6 +128,11 @@ export async function POST(
     });
 
     saveStoredOrder(order);
+
+    // Asynchronously trigger PAYMENT_PROOF_SUBMITTED WhatsApp notification
+    dispatchOrderWhatsAppNotification("PAYMENT_PROOF_SUBMITTED", order).catch((err) => {
+      console.warn("[Aura Orders] Background WhatsApp PAYMENT_PROOF_SUBMITTED failed:", err.message);
+    });
 
     console.log(`[Aura Orders] Payment proof submitted for ${orderId}: UTR=${utr}, Status changed to PAYMENT_REVIEW`);
 

@@ -7,6 +7,7 @@ import { ShippingAddress } from "@/lib/types";
 import { sanitizeText, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
 import { checkRateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
+import { dispatchOrderWhatsAppNotification } from "@/lib/whatsapp-notifications";
 
 export const runtime = "nodejs";
 
@@ -124,6 +125,11 @@ export async function POST(request: Request) {
     };
 
     saveStoredOrder(storedOrder);
+
+    // Asynchronously trigger ORDER_PLACED WhatsApp notification
+    dispatchOrderWhatsAppNotification("ORDER_PLACED", storedOrder).catch((err) => {
+      console.warn("[Aura Orders] Background WhatsApp ORDER_PLACED notification failed:", err.message);
+    });
 
     console.log(`[Aura Orders] New Order Created: ${orderId} (Total: ₹${orderTotals.finalTotal}, Status: PENDING_PAYMENT)`);
 

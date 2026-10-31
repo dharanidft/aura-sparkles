@@ -35,7 +35,13 @@ import {
   Copy,
   CheckCircle2,
   FileText,
-  QrCode
+  QrCode,
+  Users,
+  Truck,
+  MessageSquare,
+  Send,
+  Smartphone,
+  PlusCircle
 } from "lucide-react";
 import { getAllOrders, updateOrderStatusInStorage } from "@/lib/orders";
 import { 
@@ -67,7 +73,7 @@ export default function AdminPage() {
   const [passcode, setPasscode] = useState("");
   const [authError, setAuthError] = useState("");
 
-  const [activeTab, setActiveTab] = useState<"orders" | "upi" | "products" | "coupons" | "settings">("upi");
+  const [activeTab, setActiveTab] = useState<"upi" | "orders" | "customers" | "whatsapp_logs" | "products" | "coupons" | "settings">("upi");
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [coupons, setCoupons] = useState<DiscountCoupon[]>(AVAILABLE_COUPONS);
@@ -82,6 +88,38 @@ export default function AdminPage() {
   const [verificationNoteInput, setVerificationNoteInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [copiedUtr, setCopiedUtr] = useState<string | null>(null);
+
+  // Shipment Dispatch State in Verification Modal
+  const [shipmentCourierInput, setShipmentCourierInput] = useState("Shiprocket Express");
+  const [shipmentAwbInput, setShipmentAwbInput] = useState("");
+  const [shipmentTrackingUrlInput, setShipmentTrackingUrlInput] = useState("");
+
+  // Customers CRM State
+  const [crmCustomers, setCrmCustomers] = useState<any[]>([]);
+  const [crmLoading, setCrmLoading] = useState(false);
+  const [crmSearch, setCrmSearch] = useState("");
+
+  // Outbound WhatsApp Notification Logs State
+  const [whatsappLogs, setWhatsappLogs] = useState<any[]>([]);
+  const [whatsappLogsLoading, setWhatsappLogsLoading] = useState(false);
+
+  // Manual Order Creation Modal State
+  const [isManualOrderOpen, setIsManualOrderOpen] = useState(false);
+  const [manualCustomerName, setManualCustomerName] = useState("");
+  const [manualCustomerPhone, setManualCustomerPhone] = useState("");
+  const [manualCustomerEmail, setManualCustomerEmail] = useState("");
+  const [manualAddressLine, setManualAddressLine] = useState("");
+  const [manualCity, setManualCity] = useState("Chennai");
+  const [manualState, setManualState] = useState("Tamil Nadu");
+  const [manualPincode, setManualPincode] = useState("600095");
+  const [manualSource, setManualSource] = useState<"INSTAGRAM" | "WHATSAPP" | "STUDIO_WALKIN">("INSTAGRAM");
+  const [manualPaymentMethod, setManualPaymentMethod] = useState<"UPI" | "COD" | "CASH">("UPI");
+  const [manualPaymentStatus, setManualPaymentStatus] = useState<"CONFIRMED" | "PENDING_PAYMENT">("CONFIRMED");
+  const [manualSelectedProductId, setManualSelectedProductId] = useState(INITIAL_PRODUCTS[0]?.id || "");
+  const [manualQuantity, setManualQuantity] = useState(1);
+  const [manualNotes, setManualNotes] = useState("");
+  const [manualSendWhatsApp, setManualSendWhatsApp] = useState(true);
+  const [isCreatingManualOrder, setIsCreatingManualOrder] = useState(false);
 
   // Font Management
   const [activeFont, setActiveFont] = useState<AuraFont>("playfair");
@@ -159,10 +197,86 @@ export default function AdminPage() {
     }
   };
 
+  const fetchCrmCustomers = async () => {
+    setCrmLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders?type=customers");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customers) setCrmCustomers(data.customers);
+      }
+    } catch (err) {
+      console.error("Failed to load CRM customers", err);
+    } finally {
+      setCrmLoading(false);
+    }
+  };
+
+  const fetchWhatsappLogs = async () => {
+    setWhatsappLogsLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders?type=whatsapp_messages");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.messages) setWhatsappLogs(data.messages);
+      }
+    } catch (err) {
+      console.error("Failed to load WhatsApp logs", err);
+    } finally {
+      setWhatsappLogsLoading(false);
+    }
+  };
+
   const loadAdminData = () => {
     setOrders(getAllOrders());
     setProducts(getStoreProducts());
     fetchStoredOrders();
+    fetchCrmCustomers();
+    fetchWhatsappLogs();
+  };
+
+  const handleUpdateOrderLifecycle = async (
+    orderId: string,
+    params: {
+      newPaymentStatus?: OrderPaymentStatus;
+      newOrderStatus?: string;
+      verificationNote?: string;
+      shipment?: { courierName: string; awbNumber: string; trackingUrl: string };
+    }
+  ) => {
+    setIsVerifying(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          ...params,
+          verificationNote: params.verificationNote !== undefined ? params.verificationNote : verificationNoteInput.trim(),
+          adminName: "Authorized Admin",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to update order status.");
+      }
+
+      const statusDesc = params.newOrderStatus || params.newPaymentStatus || "updated";
+      showToast(`Order ${orderId} marked as ${statusDesc}`);
+      await fetchStoredOrders();
+      if (data.order) {
+        setSelectedOrderForVerification(data.order);
+      }
+      setVerificationNoteInput("");
+      setShipmentAwbInput("");
+      setShipmentTrackingUrlInput("");
+      fetchWhatsappLogs();
+    } catch (err: any) {
+      alert(err.message || "Failed to update order status.");
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleUpdatePaymentStatus = async (
@@ -179,37 +293,71 @@ export default function AdminPage() {
 
     if (!window.confirm(confirmationText)) return;
 
-    setIsVerifying(true);
+    await handleUpdateOrderLifecycle(orderId, {
+      newPaymentStatus: newStatus,
+      verificationNote: note,
+    });
+  };
+
+  const handleCreateManualOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualCustomerName.trim() || !manualCustomerPhone.trim()) {
+      alert("Customer Name and Phone number are required.");
+      return;
+    }
+    const chosenProduct = products.find((p) => p.id === manualSelectedProductId) || products[0];
+    setIsCreatingManualOrder(true);
     try {
       const res = await fetch("/api/admin/orders", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-passcode": getAdminPasscode(),
-        },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderId,
-          newPaymentStatus: newStatus,
-          verificationNote: note !== undefined ? note : verificationNoteInput.trim(),
-          adminName: "Authorized Admin",
+          customerDetails: {
+            fullName: manualCustomerName.trim(),
+            phone: manualCustomerPhone.trim(),
+            email: manualCustomerEmail.trim(),
+            addressLine1: manualAddressLine.trim() || "Studio Direct Pickup / Chennai",
+            city: manualCity.trim(),
+            state: manualState.trim(),
+            pincode: manualPincode.trim(),
+          },
+          items: [
+            {
+              productId: chosenProduct.id,
+              name: chosenProduct.name,
+              unitPrice: chosenProduct.price,
+              quantity: manualQuantity,
+              selectedVariant: chosenProduct.sizeVariant || "Standard",
+            },
+          ],
+          source: manualSource,
+          paymentMethod: manualPaymentMethod,
+          paymentStatus: manualPaymentStatus,
+          orderStatus: manualPaymentStatus === "CONFIRMED" ? "CONFIRMED" : "PENDING_PAYMENT",
+          notes: manualNotes.trim(),
+          sendWhatsAppNotification: manualSendWhatsApp,
         }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to update payment status.");
+        throw new Error(data.error || "Failed to create manual order.");
       }
 
-      showToast(`Order ${orderId} updated to ${newStatus}`);
+      showToast(`Manual order ${data.order?.orderId} created successfully!`);
+      setIsManualOrderOpen(false);
+      setManualCustomerName("");
+      setManualCustomerPhone("");
+      setManualCustomerEmail("");
+      setManualAddressLine("");
+      setManualNotes("");
       await fetchStoredOrders();
-      if (data.order) {
-        setSelectedOrderForVerification(data.order);
-      }
-      setVerificationNoteInput("");
+      fetchCrmCustomers();
+      if (manualSendWhatsApp) fetchWhatsappLogs();
     } catch (err: any) {
-      alert(err.message || "Failed to update payment status.");
+      alert(err.message || "Failed to create manual order.");
     } finally {
-      setIsVerifying(false);
+      setIsCreatingManualOrder(false);
     }
   };
 
@@ -618,6 +766,14 @@ export default function AdminPage() {
 
           <div className="flex items-center space-x-3">
             <Link
+              href="/admin/whatsapp"
+              className="px-3.5 py-2 border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-semibold rounded-lg flex items-center space-x-1.5 hover:bg-emerald-100 transition-colors"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-emerald-700" />
+              <span>WhatsApp Gateway</span>
+            </Link>
+
+            <Link
               href="/"
               target="_blank"
               className="px-3.5 py-2 border border-[#EAE0D5] text-[#452638] text-xs font-semibold rounded-lg flex items-center space-x-1.5 hover:bg-neutral-50 transition-colors"
@@ -625,6 +781,14 @@ export default function AdminPage() {
               <ExternalLink className="w-3.5 h-3.5" />
               <span>View Storefront</span>
             </Link>
+
+            <button
+              onClick={() => setIsManualOrderOpen(true)}
+              className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold uppercase tracking-wider rounded-lg flex items-center space-x-1.5 transition-colors shadow-xs"
+            >
+              <PlusCircle className="w-3.5 h-3.5 text-emerald-200" />
+              <span>+ Manual Order</span>
+            </button>
 
             <button
               onClick={handleExportCSV}
@@ -645,7 +809,7 @@ export default function AdminPage() {
         </div>
 
         {/* Analytics KPI Tiles */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-2">
             <div className="flex items-center justify-between text-[#766E65]">
               <span className="text-xs font-medium uppercase tracking-wider">Gross Revenue</span>
@@ -684,20 +848,34 @@ export default function AdminPage() {
             <p className="font-serif text-2xl font-bold text-[#452638]">
               {orders.length + storedOrders.length}
             </p>
-            <p className="text-[11px] text-[#766E65]">Stored across database</p>
+            <p className="text-[11px] text-[#766E65]">Website &amp; Manual Orders</p>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-2">
             <div className="flex items-center justify-between text-[#766E65]">
-              <span className="text-xs font-medium uppercase tracking-wider">Catalogue Items</span>
-              <Package className="w-4 h-4 text-[#B69A62]" />
+              <span className="text-xs font-medium uppercase tracking-wider">Customer CRM</span>
+              <Users className="w-4 h-4 text-[#B69A62]" />
             </div>
-            <p className="font-serif text-2xl font-bold text-[#452638]">{products.length}</p>
+            <p className="font-serif text-2xl font-bold text-[#452638]">{crmCustomers.length}</p>
             <button
-              onClick={() => setActiveTab("products")}
-              className="text-[11px] text-[#B69A62] hover:underline font-semibold"
+              onClick={() => { setActiveTab("customers"); fetchCrmCustomers(); }}
+              className="text-[11px] text-[#B69A62] hover:underline font-semibold block"
             >
-              Manage Products →
+              View Customers →
+            </button>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-2">
+            <div className="flex items-center justify-between text-[#766E65]">
+              <span className="text-xs font-medium uppercase tracking-wider">WhatsApp Alerts</span>
+              <MessageSquare className="w-4 h-4 text-[#B69A62]" />
+            </div>
+            <p className="font-serif text-2xl font-bold text-[#452638]">{whatsappLogs.length}</p>
+            <button
+              onClick={() => { setActiveTab("whatsapp_logs"); fetchWhatsappLogs(); }}
+              className="text-[11px] text-[#B69A62] hover:underline font-semibold block"
+            >
+              Notification Logs →
             </button>
           </div>
         </div>
@@ -724,12 +902,39 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab("orders")}
-            className={`pb-3 transition-colors relative whitespace-nowrap ${
+            className={`pb-3 transition-colors relative whitespace-nowrap flex items-center space-x-1.5 ${
               activeTab === "orders" ? "text-[#452638]" : "text-[#766E65] hover:text-[#452638]"
             }`}
           >
-            Orders &amp; Shipments ({orders.length})
+            <Truck className="w-3.5 h-3.5 text-[#B69A62]" />
+            <span>Orders &amp; Shipments ({orders.length})</span>
             {activeTab === "orders" && (
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#452638]" />
+            )}
+          </button>
+
+          <button
+            onClick={() => { setActiveTab("customers"); fetchCrmCustomers(); }}
+            className={`pb-3 transition-colors relative whitespace-nowrap flex items-center space-x-1.5 ${
+              activeTab === "customers" ? "text-[#452638]" : "text-[#766E65] hover:text-[#452638]"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5 text-[#B69A62]" />
+            <span>Customer CRM ({crmCustomers.length})</span>
+            {activeTab === "customers" && (
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#452638]" />
+            )}
+          </button>
+
+          <button
+            onClick={() => { setActiveTab("whatsapp_logs"); fetchWhatsappLogs(); }}
+            className={`pb-3 transition-colors relative whitespace-nowrap flex items-center space-x-1.5 ${
+              activeTab === "whatsapp_logs" ? "text-[#452638]" : "text-[#766E65] hover:text-[#452638]"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-[#B69A62]" />
+            <span>WhatsApp Messages ({whatsappLogs.length})</span>
+            {activeTab === "whatsapp_logs" && (
               <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#452638]" />
             )}
           </button>
@@ -1110,6 +1315,204 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB: Customer CRM ─── */}
+        {activeTab === "customers" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-2xl border border-[#EAE0D5] gap-3">
+              <div>
+                <p className="text-xs font-semibold text-[#452638]">Customer Relationship Management (CRM)</p>
+                <p className="text-[11px] text-[#766E65]">
+                  Track customer lifetime spend, purchase history, delivery phone numbers, and engagement.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#766E65]" />
+                  <input
+                    type="text"
+                    value={crmSearch}
+                    onChange={(e) => setCrmSearch(e.target.value)}
+                    placeholder="Search name, phone, email..."
+                    className="w-full pl-8 pr-3 py-1.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs focus:outline-none focus:border-[#452638]"
+                  />
+                </div>
+                <button
+                  onClick={fetchCrmCustomers}
+                  className="p-2 border border-[#EAE0D5] rounded-xl hover:bg-neutral-50 text-[#766E65]"
+                  title="Refresh customers"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${crmLoading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#EAE0D5] overflow-hidden shadow-subtle">
+              {crmLoading ? (
+                <div className="p-8 text-center text-xs text-[#766E65]">Loading customer directory...</div>
+              ) : crmCustomers.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#766E65]">No customer records found yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-neutral-50/75 border-b border-[#EAE0D5] text-[10px] uppercase font-semibold text-[#766E65] tracking-wider">
+                        <th className="py-3 px-4">Customer</th>
+                        <th className="py-3 px-4">Contact</th>
+                        <th className="py-3 px-4 text-center">Orders</th>
+                        <th className="py-3 px-4 text-right">Lifetime Spend</th>
+                        <th className="py-3 px-4">Last Active</th>
+                        <th className="py-3 px-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EAE0D5]">
+                      {crmCustomers
+                        .filter((c) => {
+                          if (!crmSearch) return true;
+                          const q = crmSearch.toLowerCase();
+                          return (
+                            c.displayName?.toLowerCase().includes(q) ||
+                            c.email?.toLowerCase().includes(q) ||
+                            c.phoneNumber?.includes(q)
+                          );
+                        })
+                        .map((c) => (
+                          <tr key={c.uid} className="hover:bg-neutral-50/50 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <p className="font-semibold text-[#452638]">{c.displayName || "Aura Customer"}</p>
+                              <p className="text-[10px] text-[#766E65] font-mono">{c.uid}</p>
+                            </td>
+                            <td className="py-3.5 px-4 space-y-0.5">
+                              <p className="font-mono text-[#282522]">{c.phoneNumber || "No phone"}</p>
+                              {c.email && <p className="text-[11px] text-[#766E65]">{c.email}</p>}
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8C9C5]/30 text-[#452638]">
+                                {c.orderCount || 0} order(s)
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-serif font-bold text-[#452638]">
+                              {formatINR(Math.round((c.totalSpentPaise || 0) / 100))}
+                            </td>
+                            <td className="py-3.5 px-4 text-[#766E65] text-[11px]">
+                              {new Date(c.lastOrderAt || c.createdAt).toLocaleDateString("en-IN", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              {c.phoneNumber && (
+                                <a
+                                  href={`https://wa.me/${c.phoneNumber.replace(/\D/g, "")}?text=Hi%20${encodeURIComponent(c.displayName || "there")},%20greetings%20from%20Aura%20Sparkles!`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                                >
+                                  <MessageSquare className="w-3 h-3 text-emerald-600" />
+                                  <span>WhatsApp</span>
+                                </a>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB: WhatsApp Message Logs ─── */}
+        {activeTab === "whatsapp_logs" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-2xl border border-[#EAE0D5] gap-3">
+              <div>
+                <p className="text-xs font-semibold text-[#452638]">WhatsApp Notification Dispatch Log</p>
+                <p className="text-[11px] text-[#766E65]">
+                  Automated customer notifications sent via Meta WhatsApp Cloud API and OpenWA Gateway.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Link
+                  href="/admin/whatsapp"
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Gateway Status</span>
+                </Link>
+                <button
+                  onClick={fetchWhatsappLogs}
+                  className="p-2 border border-[#EAE0D5] rounded-xl hover:bg-neutral-50 text-[#766E65]"
+                  title="Refresh logs"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${whatsappLogsLoading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#EAE0D5] overflow-hidden shadow-subtle">
+              {whatsappLogsLoading ? (
+                <div className="p-8 text-center text-xs text-[#766E65]">Loading notification records...</div>
+              ) : whatsappLogs.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#766E65]">
+                  No outbound WhatsApp notifications recorded yet. Create an order or verify a payment to see automated dispatches.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-neutral-50/75 border-b border-[#EAE0D5] text-[10px] uppercase font-semibold text-[#766E65] tracking-wider">
+                        <th className="py-3 px-4">Timestamp</th>
+                        <th className="py-3 px-4">Order &amp; Customer</th>
+                        <th className="py-3 px-4">Milestone Event</th>
+                        <th className="py-3 px-4">Provider</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Message Preview</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EAE0D5]">
+                      {whatsappLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-neutral-50/50 transition-colors">
+                          <td className="py-3 px-4 font-mono text-[11px] text-[#766E65] whitespace-nowrap">
+                            {new Date(log.timestamp).toLocaleString("en-IN")}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <p className="font-semibold text-[#452638]">{log.orderId}</p>
+                            <p className="text-[10px] text-[#766E65]">{log.recipientName} ({log.recipientPhone})</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF7F2] border border-[#EAE0D5] text-[#452638]">
+                              {log.notificationType}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-[10px] text-[#766E65]">
+                            {log.provider}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              log.status === "SENT" || log.status === "DELIVERED"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-rose-100 text-rose-800"
+                            }`}>
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-[#766E65] text-[11px] max-w-xs truncate" title={log.messageText}>
+                            {log.messageText.replace(/\n+/g, " ")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
@@ -2315,6 +2718,120 @@ export default function AdminPage() {
                     />
                   </div>
 
+                  {/* ─── 10-STAGE ORDER LIFECYCLE CONTROLS ─── */}
+                  <div className="p-4 rounded-2xl border border-[#EAE0D5] bg-neutral-50/50 space-y-3 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-[#452638] uppercase tracking-wider text-[11px] flex items-center space-x-1.5">
+                        <Truck className="w-3.5 h-3.5 text-[#B69A62]" />
+                        <span>Fulfillment &amp; Lifecycle Progress</span>
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#452638] text-white">
+                        Current: {selectedOrderForVerification.orderStatus || "PENDING_PAYMENT"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                      <button
+                        type="button"
+                        disabled={isVerifying}
+                        onClick={() => handleUpdateOrderLifecycle(selectedOrderForVerification.orderId, { newOrderStatus: "PROCESSING" })}
+                        className="py-2 px-2.5 bg-white border border-[#EAE0D5] rounded-xl hover:bg-neutral-100 text-[#452638] font-semibold text-[10px] uppercase transition-colors"
+                      >
+                        1. Studio Pouring
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isVerifying}
+                        onClick={() => handleUpdateOrderLifecycle(selectedOrderForVerification.orderId, { newOrderStatus: "PACKED" })}
+                        className="py-2 px-2.5 bg-white border border-[#EAE0D5] rounded-xl hover:bg-neutral-100 text-[#452638] font-semibold text-[10px] uppercase transition-colors"
+                      >
+                        2. Mark Packed
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isVerifying}
+                        onClick={() => handleUpdateOrderLifecycle(selectedOrderForVerification.orderId, { newOrderStatus: "OUT_FOR_DELIVERY" })}
+                        className="py-2 px-2.5 bg-white border border-[#EAE0D5] rounded-xl hover:bg-neutral-100 text-[#452638] font-semibold text-[10px] uppercase transition-colors"
+                      >
+                        3. Out for Delivery
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isVerifying}
+                        onClick={() => handleUpdateOrderLifecycle(selectedOrderForVerification.orderId, { newOrderStatus: "DELIVERED" })}
+                        className="py-2 px-2.5 bg-emerald-50 border border-emerald-300 rounded-xl hover:bg-emerald-100 text-emerald-800 font-semibold text-[10px] uppercase transition-colors"
+                      >
+                        4. Mark Delivered
+                      </button>
+                    </div>
+
+                    {/* Courier Dispatch Section */}
+                    <div className="pt-3 border-t border-[#EAE0D5] space-y-2">
+                      <p className="font-semibold text-[#452638] text-[11px] uppercase tracking-wider">
+                        Courier Dispatch (Shiprocket / Tracking)
+                      </p>
+                      {selectedOrderForVerification.shipment?.awbNumber ? (
+                        <div className="bg-white p-3 rounded-xl border border-emerald-200 text-xs space-y-1">
+                          <p className="font-semibold text-emerald-900">
+                            Courier: {selectedOrderForVerification.shipment.courierName}
+                          </p>
+                          <p className="font-mono text-[#452638]">
+                            AWB: {selectedOrderForVerification.shipment.awbNumber}
+                          </p>
+                          {selectedOrderForVerification.shipment.trackingUrl && (
+                            <a
+                              href={selectedOrderForVerification.shipment.trackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-[#B69A62] hover:underline flex items-center space-x-1"
+                            >
+                              <span>Track Package Link</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            value={shipmentCourierInput}
+                            onChange={(e) => setShipmentCourierInput(e.target.value)}
+                            placeholder="Courier (e.g. Shiprocket, BlueDart)"
+                            className="p-2 bg-white border border-[#EAE0D5] rounded-xl text-xs"
+                          />
+                          <input
+                            type="text"
+                            value={shipmentAwbInput}
+                            onChange={(e) => setShipmentAwbInput(e.target.value)}
+                            placeholder="AWB / Tracking Number"
+                            className="p-2 bg-white border border-[#EAE0D5] rounded-xl text-xs font-mono"
+                          />
+                          <button
+                            type="button"
+                            disabled={isVerifying || !shipmentAwbInput.trim()}
+                            onClick={() =>
+                              handleUpdateOrderLifecycle(selectedOrderForVerification.orderId, {
+                                newOrderStatus: "SHIPPED",
+                                shipment: {
+                                  courierName: shipmentCourierInput.trim() || "Shiprocket Express",
+                                  awbNumber: shipmentAwbInput.trim(),
+                                  trackingUrl: shipmentTrackingUrlInput.trim() || `https://shiprocket.co/tracking/${shipmentAwbInput.trim()}`,
+                                },
+                              })
+                            }
+                            className="py-2 px-3 bg-[#452638] hover:bg-[#5D354D] text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-1.5 disabled:opacity-40"
+                          >
+                            <Send className="w-3.5 h-3.5 text-[#B69A62]" />
+                            <span>Dispatch &amp; WhatsApp AWB</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Decision Buttons */}
                   <div className="space-y-2 pt-2">
                     <div className="grid grid-cols-2 gap-3">
@@ -2325,7 +2842,7 @@ export default function AdminPage() {
                         className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 transition-colors shadow-sm disabled:opacity-50"
                       >
                         <CheckCircle className="w-4 h-4" />
-                        <span>Verify &amp; Mark Paid</span>
+                        <span>Verify &amp; Confirm Payment</span>
                       </button>
 
                       <button
@@ -2430,6 +2947,225 @@ export default function AdminPage() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: Manual Order Creation ─── */}
+      {isManualOrderOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-[#EAE0D5] animate-scale">
+            <div className="p-5 border-b border-[#EAE0D5] flex items-center justify-between bg-neutral-50 flex-shrink-0">
+              <div className="flex items-center space-x-2.5">
+                <PlusCircle className="w-5 h-5 text-[#B69A62]" />
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-[#452638]">Create Manual Order</h3>
+                  <p className="text-xs text-[#766E65]">For Instagram DM, WhatsApp, or Studio walk-in customers</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsManualOrderOpen(false)}
+                className="p-2 text-[#766E65] hover:text-[#452638] rounded-full hover:bg-neutral-200/50 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateManualOrder} className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">Customer Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={manualCustomerName}
+                    onChange={(e) => setManualCustomerName(e.target.value)}
+                    placeholder="e.g. Priyadarshini Sundaram"
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">WhatsApp Mobile Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={manualCustomerPhone}
+                    onChange={(e) => setManualCustomerPhone(e.target.value)}
+                    placeholder="10-digit mobile, e.g. 9876543210"
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">Email Address (Optional)</label>
+                  <input
+                    type="email"
+                    value={manualCustomerEmail}
+                    onChange={(e) => setManualCustomerEmail(e.target.value)}
+                    placeholder="customer@gmail.com"
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">Order Channel / Source</label>
+                  <select
+                    value={manualSource}
+                    onChange={(e: any) => setManualSource(e.target.value)}
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  >
+                    <option value="INSTAGRAM">Instagram DM</option>
+                    <option value="WHATSAPP">WhatsApp Direct Chat</option>
+                    <option value="STUDIO_WALKIN">Studio Walk-in (Chennai)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-[#452638]">Delivery Address Line</label>
+                <input
+                  type="text"
+                  value={manualAddressLine}
+                  onChange={(e) => setManualAddressLine(e.target.value)}
+                  placeholder="Door No, Street name, Locality"
+                  className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">City</label>
+                  <input
+                    type="text"
+                    value={manualCity}
+                    onChange={(e) => setManualCity(e.target.value)}
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">State</label>
+                  <input
+                    type="text"
+                    value={manualState}
+                    onChange={(e) => setManualState(e.target.value)}
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">PIN Code</label>
+                  <input
+                    type="text"
+                    value={manualPincode}
+                    onChange={(e) => setManualPincode(e.target.value)}
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-neutral-50 rounded-2xl border border-[#EAE0D5] space-y-3">
+                <label className="font-semibold text-[#452638] uppercase tracking-wider text-[11px] block">
+                  Select Product &amp; Quantity
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <select
+                      value={manualSelectedProductId}
+                      onChange={(e) => setManualSelectedProductId(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs"
+                    >
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {formatINR(p.price)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={manualQuantity}
+                      onChange={(e) => setManualQuantity(parseInt(e.target.value, 10) || 1)}
+                      className="w-full p-2.5 bg-white border border-[#EAE0D5] rounded-xl text-xs text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">Payment Method</label>
+                  <select
+                    value={manualPaymentMethod}
+                    onChange={(e: any) => setManualPaymentMethod(e.target.value)}
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  >
+                    <option value="UPI">Direct UPI (HDFC)</option>
+                    <option value="CASH">Cash on Hand / Walk-in</option>
+                    <option value="COD">Cash on Delivery</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-[#452638]">Initial Payment Status</label>
+                  <select
+                    value={manualPaymentStatus}
+                    onChange={(e: any) => setManualPaymentStatus(e.target.value)}
+                    className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                  >
+                    <option value="CONFIRMED">Verified &amp; Paid (Advance)</option>
+                    <option value="PENDING_PAYMENT">Pending (Send UPI Link)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-[#452638]">Order Notes</label>
+                <textarea
+                  rows={2}
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                  placeholder="e.g. Customer requested gold gift bow and personal gift note."
+                  className="w-full p-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="sendWhatsApp"
+                  checked={manualSendWhatsApp}
+                  onChange={(e) => setManualSendWhatsApp(e.target.checked)}
+                  className="rounded border-[#EAE0D5] text-[#452638] focus:ring-[#452638]"
+                />
+                <label htmlFor="sendWhatsApp" className="text-xs text-[#452638] font-medium cursor-pointer">
+                  Send instant order confirmation &amp; tracking link to customer via WhatsApp
+                </label>
+              </div>
+
+              <div className="pt-3 border-t border-[#EAE0D5] flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setIsManualOrderOpen(false)}
+                  className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-[#452638] rounded-xl text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingManualOrder}
+                  className="px-5 py-2 bg-[#452638] hover:bg-[#5D354D] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 shadow-sm disabled:opacity-50"
+                >
+                  <PlusCircle className="w-3.5 h-3.5 text-[#B69A62]" />
+                  <span>{isCreatingManualOrder ? "Creating..." : "Confirm & Create Order"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
