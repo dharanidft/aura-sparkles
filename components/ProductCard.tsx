@@ -82,9 +82,11 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            unoptimized={!imgSrc.startsWith("/uploads/") && !imgSrc.startsWith("/images/")}
             onError={() => setImgSrc("/images/logo.png")}
             className="object-contain p-2.5 group-hover:scale-105 transition-transform duration-500 ease-out drop-shadow-sm"
           />
+
           {/* shimmer overlay on hover */}
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
         </Link>

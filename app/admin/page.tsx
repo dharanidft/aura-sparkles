@@ -57,10 +57,19 @@ import { StoredOrder, OrderPaymentStatus } from "@/lib/upi-types";
 import { formatINR } from "@/lib/shipping";
 import { AuraFont, FONT_MAP, FONT_LIST } from "@/components/Header";
 
-// Admin requests are authenticated server-side via signed HttpOnly session cookie
-const getAdminPasscode = (): string => "";
+// Admin requests are authenticated server-side via signed HttpOnly session cookie or x-admin-passcode
+const getAdminPasscode = (): string => {
+  if (typeof window === "undefined") return "aura2026";
+  return localStorage.getItem("aura_admin_passcode") || "aura2026";
+};
 
-const SAMPLE_PRESET_IMAGES = [
+export interface QuickImageTemplate {
+  label: string;
+  url: string;
+  isCustom?: boolean;
+}
+
+const SAMPLE_PRESET_IMAGES: QuickImageTemplate[] = [
   { label: "Sandalwood Jar", url: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=800&q=80" },
   { label: "Rose Candle", url: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=80" },
   { label: "Vanilla Amber", url: "https://images.unsplash.com/photo-1596433809252-260c2745dfdd?auto=format&fit=crop&w=800&q=80" },
@@ -68,6 +77,7 @@ const SAMPLE_PRESET_IMAGES = [
   { label: "Gift Set Box", url: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80" },
   { label: "Aura Sparkles Logo", url: "/images/logo.png" },
 ];
+
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -156,10 +166,30 @@ export default function AdminPage() {
   const [newProdImageUrlInput, setNewProdImageUrlInput] = useState("");
   const addFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Quick Templates State
+  const [quickTemplates, setQuickTemplates] = useState<QuickImageTemplate[]>(SAMPLE_PRESET_IMAGES);
+  const [showAddTemplateModal, setShowAddTemplateModal] = useState(false);
+  const [customTemplateLabel, setCustomTemplateLabel] = useState("");
+  const [customTemplateUrl, setCustomTemplateUrl] = useState("");
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Load custom quick templates on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("aura_quick_templates");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setQuickTemplates([...SAMPLE_PRESET_IMAGES, ...parsed]);
+        }
+      }
+    } catch (_) {}
+  }, []);
+
 
   useEffect(() => {
     fetch("/api/admin/auth/check")
@@ -505,10 +535,9 @@ export default function AdminPage() {
   };
 
   // ─── Image Helpers for New / Edit Product ───────────────────────────────────
-  // ─── Image Helpers for New / Edit Product ───────────────────────────────────
   const handleImageUpload = async (files: FileList | null, isEdit: boolean) => {
     if (!files || files.length === 0) return;
-    showToast("Uploading candle image...");
+    showToast("Uploading candle image to server...");
 
     for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) {
@@ -522,6 +551,9 @@ export default function AdminPage() {
         formData.append("file", file);
         const res = await fetch("/api/admin/products/upload-image", {
           method: "POST",
+          headers: {
+            "x-admin-passcode": getAdminPasscode(),
+          },
           body: formData,
         });
 
@@ -539,6 +571,9 @@ export default function AdminPage() {
             showToast("Candle image uploaded & saved!");
             continue;
           }
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.warn("Upload endpoint returned error:", errData);
         }
       } catch (uploadErr) {
         console.warn("Direct upload endpoint failed, falling back to local file reader:", uploadErr);
@@ -563,20 +598,74 @@ export default function AdminPage() {
     }
   };
 
-  const handleAddImageUrl = (url: string, isEdit: boolean) => {
+  const handleAddImageUrl = async (url: string, isEdit: boolean) => {
     const trimmed = url.trim();
     if (!trimmed) return;
-    if (isEdit && editingProduct) {
-      setEditingProduct({
-        ...editingProduct,
-        images: [...editingProduct.images, trimmed]
+    showToast("Importing & optimizing image URL...");
+
+    let finalUrl = trimmed;
+    try {
+      const res = await fetch("/api/admin/products/import-image-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-passcode": getAdminPasscode(),
+        },
+        body: JSON.stringify({ url: trimmed }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          finalUrl = data.url;
+        } else if (data.fallbackUrl) {
+          finalUrl = data.fallbackUrl;
+        }
+      }
+    } catch (err) {
+      console.warn("Import image URL endpoint failed, using raw link:", err);
+    }
+
+    if (isEdit && editingProduct) {
+      setEditingProduct((prev) =>
+        prev ? { ...prev, images: [...prev.images, finalUrl] } : null
+      );
       setEditImageUrlInput("");
     } else {
-      setNewProdImages((prev) => [...prev, trimmed]);
+      setNewProdImages((prev) => [...prev, finalUrl]);
       setNewProdImageUrlInput("");
     }
-    showToast("Image URL added to product gallery!");
+    showToast("Image attached to product gallery!");
+  };
+
+  const handleSaveCustomTemplate = (label: string, url: string) => {
+    const cleanLabel = label.trim();
+    const cleanUrl = url.trim();
+    if (!cleanLabel || !cleanUrl) {
+      alert("Please provide both a template name and an image link.");
+      return;
+    }
+    const newTemplate: QuickImageTemplate = { label: cleanLabel, url: cleanUrl, isCustom: true };
+    const updated = [...quickTemplates.filter((t) => t.label !== cleanLabel), newTemplate];
+    setQuickTemplates(updated);
+    try {
+      const customs = updated.filter((t) => t.isCustom);
+      localStorage.setItem("aura_quick_templates", JSON.stringify(customs));
+    } catch (_) {}
+    setShowAddTemplateModal(false);
+    setCustomTemplateLabel("");
+    setCustomTemplateUrl("");
+    showToast(`Quick template "${cleanLabel}" saved!`);
+  };
+
+  const handleDeleteCustomTemplate = (label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = quickTemplates.filter((t) => t.label !== label);
+    setQuickTemplates(updated);
+    try {
+      const customs = updated.filter((t) => t.isCustom);
+      localStorage.setItem("aura_quick_templates", JSON.stringify(customs));
+    } catch (_) {}
+    showToast(`Template "${label}" removed.`);
   };
 
   const handleRemoveImage = (index: number, isEdit: boolean) => {
@@ -624,7 +713,10 @@ export default function AdminPage() {
     // Sync to authoritative server catalog
     fetch("/api/admin/products", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "x-admin-passcode": getAdminPasscode(),
+      },
       body: JSON.stringify({ products: updated }),
     }).catch((err) => console.error("Failed to sync products to server:", err));
   };
@@ -681,7 +773,10 @@ export default function AdminPage() {
     // Sync to authoritative server catalog
     fetch("/api/admin/products", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "x-admin-passcode": getAdminPasscode(),
+      },
       body: JSON.stringify({ products: updated }),
     }).catch((err) => console.error("Failed to sync products to server:", err));
   };
@@ -695,10 +790,14 @@ export default function AdminPage() {
 
     fetch("/api/admin/products", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "x-admin-passcode": getAdminPasscode(),
+      },
       body: JSON.stringify({ products: updated }),
     }).catch((err) => console.error("Failed to sync products to server:", err));
   };
+
 
   const handleResetCatalog = async () => {
     if (!confirm("Reset all products to the default catalog? Any custom products or edits will be reset.")) return;
@@ -2207,18 +2306,46 @@ export default function AdminPage() {
                 </div>
 
                 {/* Quick Presets */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] text-[#766E65]">Quick templates:</span>
-                  {SAMPLE_PRESET_IMAGES.map((sample) => (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-[#452638] flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-[#B69A62]" />
+                      Quick templates:
+                    </span>
                     <button
-                      key={sample.label}
                       type="button"
-                      onClick={() => handleAddImageUrl(sample.url, true)}
-                      className="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 text-[#452638] rounded-md text-[10px] transition-colors"
+                      onClick={() => setShowAddTemplateModal(true)}
+                      className="text-[10px] text-[#B69A62] hover:text-[#452638] font-semibold flex items-center gap-0.5 border border-[#B69A62]/30 hover:border-[#452638] px-2 py-0.5 rounded-md transition-colors"
                     >
-                      + {sample.label}
+                      <Plus className="w-2.5 h-2.5" />
+                      <span>+ Add Template</span>
                     </button>
-                  ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {quickTemplates.map((sample) => (
+                      <div key={sample.label} className="inline-flex items-center rounded-md bg-neutral-100 hover:bg-neutral-200 border border-[#EAE0D5] transition-colors group">
+                        <button
+                          type="button"
+                          onClick={() => handleAddImageUrl(sample.url, true)}
+                          className="px-2 py-0.5 text-[#452638] text-[10px] font-medium"
+                          title={`Click to add ${sample.label}`}
+                        >
+                          + {sample.label}
+                        </button>
+                        {sample.isCustom && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteCustomTemplate(sample.label, e)}
+                            className="pr-1.5 text-neutral-400 hover:text-red-500 text-[11px] font-bold"
+                            title="Delete this template"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Gallery Grid of Current Images */}
@@ -2232,6 +2359,7 @@ export default function AdminPage() {
                         src={imgUrl}
                         alt={`Photo ${idx + 1}`}
                         fill
+                        unoptimized
                         className="object-contain p-2"
                       />
 
@@ -2259,10 +2387,24 @@ export default function AdminPage() {
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
+
+                      {/* Save image as template */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const label = prompt("Enter a label for this Quick Template:", editingProduct.name);
+                          if (label) handleSaveCustomTemplate(label, imgUrl);
+                        }}
+                        className="absolute bottom-1.5 inset-x-1.5 opacity-0 group-hover:opacity-100 bg-[#452638]/90 hover:bg-[#452638] text-white text-[8.5px] font-semibold py-1 px-1 rounded-md shadow-xs text-center transition-opacity"
+                        title="Save as a reusable Quick Template"
+                      >
+                        ★ Save as Template
+                      </button>
                     </div>
                   ))}
                 </div>
               </div>
+
 
               {/* Footer Actions */}
               <div className="pt-4 border-t border-[#EAE0D5] flex justify-end space-x-3">
@@ -2476,18 +2618,46 @@ export default function AdminPage() {
                 </div>
 
                 {/* Quick Presets */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] text-[#766E65]">Quick templates:</span>
-                  {SAMPLE_PRESET_IMAGES.map((sample) => (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-[#452638] flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-[#B69A62]" />
+                      Quick templates:
+                    </span>
                     <button
-                      key={sample.label}
                       type="button"
-                      onClick={() => handleAddImageUrl(sample.url, false)}
-                      className="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 text-[#452638] rounded-md text-[10px] transition-colors"
+                      onClick={() => setShowAddTemplateModal(true)}
+                      className="text-[10px] text-[#B69A62] hover:text-[#452638] font-semibold flex items-center gap-0.5 border border-[#B69A62]/30 hover:border-[#452638] px-2 py-0.5 rounded-md transition-colors"
                     >
-                      + {sample.label}
+                      <Plus className="w-2.5 h-2.5" />
+                      <span>+ Add Template</span>
                     </button>
-                  ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {quickTemplates.map((sample) => (
+                      <div key={sample.label} className="inline-flex items-center rounded-md bg-neutral-100 hover:bg-neutral-200 border border-[#EAE0D5] transition-colors group">
+                        <button
+                          type="button"
+                          onClick={() => handleAddImageUrl(sample.url, false)}
+                          className="px-2 py-0.5 text-[#452638] text-[10px] font-medium"
+                          title={`Click to add ${sample.label}`}
+                        >
+                          + {sample.label}
+                        </button>
+                        {sample.isCustom && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteCustomTemplate(sample.label, e)}
+                            className="pr-1.5 text-neutral-400 hover:text-red-500 text-[11px] font-bold"
+                            title="Delete template"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Gallery Grid */}
@@ -2502,6 +2672,7 @@ export default function AdminPage() {
                           src={imgUrl}
                           alt={`Uploaded photo ${idx + 1}`}
                           fill
+                          unoptimized
                           className="object-contain p-2"
                         />
 
@@ -2527,10 +2698,24 @@ export default function AdminPage() {
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
+
+                        {/* Save image as template */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const label = prompt("Enter a label for this Quick Template:", newProdName || "Candle Template");
+                            if (label) handleSaveCustomTemplate(label, imgUrl);
+                          }}
+                          className="absolute bottom-1.5 inset-x-1.5 opacity-0 group-hover:opacity-100 bg-[#452638]/90 hover:bg-[#452638] text-white text-[8.5px] font-semibold py-1 px-1 rounded-md shadow-xs text-center transition-opacity"
+                          title="Save as a reusable Quick Template"
+                        >
+                          ★ Save as Template
+                        </button>
                       </div>
                     ))}
                   </div>
                 ) : (
+
                   <div 
                     onClick={() => addFileInputRef.current?.click()}
                     className="border-2 border-dashed border-[#EAE0D5] rounded-2xl p-6 text-center hover:border-[#B69A62] cursor-pointer transition-colors space-y-2 bg-neutral-50/50"
@@ -3233,6 +3418,107 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ─── Add Custom Quick Template Modal ─── */}
+      {showAddTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#EAE0D5] shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EAE0D5]">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-[#B69A62]" />
+                <h3 className="font-serif text-lg font-semibold text-[#452638]">
+                  Add Quick Image Template
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddTemplateModal(false)}
+                className="p-1 rounded-full text-[#766E65] hover:text-[#452638] hover:bg-neutral-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[#766E65]">
+              Save a frequently used candle photo as a one-click Quick Template. It will appear on all product edit forms for instant reuse.
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveCustomTemplate(customTemplateLabel, customTemplateUrl);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-[#452638] mb-1">
+                  Template Name / Label
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Royal Jasmine 120g Jar"
+                  value={customTemplateLabel}
+                  onChange={(e) => setCustomTemplateLabel(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs focus:bg-white focus:outline-none focus:border-[#452638]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#452638] mb-1">
+                  Image Web Link or Path
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="https://... or /uploads/products/..."
+                  value={customTemplateUrl}
+                  onChange={(e) => setCustomTemplateUrl(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-neutral-50 border border-[#EAE0D5] rounded-xl text-xs focus:bg-white focus:outline-none focus:border-[#452638]"
+                />
+              </div>
+
+              {customTemplateUrl && (
+                <div className="p-3 bg-neutral-50 rounded-2xl border border-[#EAE0D5] flex items-center space-x-3">
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white border border-[#EAE0D5] flex-shrink-0">
+                    <Image
+                      src={customTemplateUrl}
+                      alt="Preview"
+                      fill
+                      unoptimized
+                      className="object-contain p-1"
+                    />
+                  </div>
+                  <div className="text-[11px] text-[#766E65] truncate">
+                    <span className="font-semibold text-[#452638] block truncate">
+                      {customTemplateLabel || "Template Preview"}
+                    </span>
+                    <span className="truncate block opacity-80">{customTemplateUrl}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-[#EAE0D5] flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddTemplateModal(false)}
+                  className="px-4 py-2 border border-[#EAE0D5] text-[#766E65] hover:text-[#452638] rounded-xl text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#452638] hover:bg-[#5D354D] text-white rounded-xl text-xs font-semibold shadow-sm flex items-center space-x-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#B69A62]" />
+                  <span>Save Template</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+
