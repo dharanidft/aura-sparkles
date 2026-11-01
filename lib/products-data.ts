@@ -1829,25 +1829,43 @@ export const CURATED_COLLECTIONS = [
 ];
 
 // ─── Store Products Storage & Sync Helpers ─────────────────────────────────────
-export const STORE_CATALOGUE_VERSION = "2.2.0-catalogue-nov2026";
+export const STORE_CATALOGUE_VERSION = "2.3.0-catalogue-nov2026";
 
 export function getStoreProducts(): Product[] {
   if (typeof window === "undefined") return INITIAL_PRODUCTS;
   try {
-    const currentVer = localStorage.getItem("aura_catalogue_version");
-    if (currentVer !== STORE_CATALOGUE_VERSION) {
-      localStorage.removeItem("aura_products");
-      localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
-      return INITIAL_PRODUCTS;
-    }
     const raw = localStorage.getItem("aura_products");
-    if (!raw) return INITIAL_PRODUCTS;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch (err) {
     console.warn("Failed to load store products from storage:", err);
   }
   return INITIAL_PRODUCTS;
+}
+
+export async function fetchStoreProducts(): Promise<Product[]> {
+  if (typeof window === "undefined") return INITIAL_PRODUCTS;
+  try {
+    const res = await fetch("/api/products", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.products) && data.products.length > 0) {
+        try {
+          localStorage.setItem("aura_products", JSON.stringify(data.products));
+          localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
+          window.dispatchEvent(new Event("aura_products_updated"));
+        } catch (storageErr) {
+          console.warn("Could not cache products to localStorage:", storageErr);
+        }
+        return data.products;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to fetch fresh products from /api/products:", err);
+  }
+  return getStoreProducts();
 }
 
 export function saveStoreProducts(products: Product[]): void {
@@ -1885,3 +1903,4 @@ export function resetStoreProducts(): Product[] {
   }
   return INITIAL_PRODUCTS;
 }
+

@@ -1,14 +1,17 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { INITIAL_PRODUCTS } from "@/lib/products-data";
+import { getAuthoritativeProducts } from "@/lib/product-store";
 import { ProductDetailClient } from "@/components/ProductDetailClient";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: { slug: string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = INITIAL_PRODUCTS.find((p) => p.slug === params.slug);
+  const products = getAuthoritativeProducts();
+  const product = products.find((p) => p.slug === params.slug);
   if (!product) {
     return {
       title: "Product Not Found — Aura Sparkles",
@@ -47,12 +50,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function ProductDetailPage({ params }: Props) {
-  const product = INITIAL_PRODUCTS.find((p) => p.slug === params.slug);
+  const products = getAuthoritativeProducts();
+  const product = products.find((p) => p.slug === params.slug);
   if (!product) {
     notFound();
   }
 
-  const relatedProducts = INITIAL_PRODUCTS
+  const relatedProducts = products
     .filter((p) => p.id !== product.id && p.fragranceFamily === product.fragranceFamily)
     .slice(0, 4);
 

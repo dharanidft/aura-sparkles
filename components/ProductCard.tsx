@@ -18,8 +18,13 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   const { addItem, toggleWishlist, isWishlisted } = useCart();
   const wishlisted = isWishlisted(product.id);
   const [adding, setAdding] = useState(false);
-  const [imgSrc, setImgSrc] = useState(product.images[0] || "/images/logo.png");
+  const primaryImage = product.images?.[0] || "/images/logo.png";
+  const [imgSrc, setImgSrc] = useState(primaryImage);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setImgSrc(product.images?.[0] || "/images/logo.png");
+  }, [product.images]);
 
   // Requirement 4: Calculate rating strictly from real stored review data
   const [reviewStats, setReviewStats] = useState<{ count: number; averageRating: number | null }>({

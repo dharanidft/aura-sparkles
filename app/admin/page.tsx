@@ -48,6 +48,7 @@ import {
   INITIAL_PRODUCTS, 
   AVAILABLE_COUPONS, 
   getStoreProducts, 
+  fetchStoreProducts,
   saveStoreProducts, 
   resetStoreProducts 
 } from "@/lib/products-data";
@@ -230,6 +231,9 @@ export default function AdminPage() {
   const loadAdminData = () => {
     setOrders(getAllOrders());
     setProducts(getStoreProducts());
+    fetchStoreProducts().then((fresh) => {
+      if (fresh && fresh.length > 0) setProducts(fresh);
+    });
     fetchStoredOrders();
     fetchCrmCustomers();
     fetchWhatsappLogs();
@@ -501,13 +505,46 @@ export default function AdminPage() {
   };
 
   // ─── Image Helpers for New / Edit Product ───────────────────────────────────
-  const handleImageUpload = (files: FileList | null, isEdit: boolean) => {
+  // ─── Image Helpers for New / Edit Product ───────────────────────────────────
+  const handleImageUpload = async (files: FileList | null, isEdit: boolean) => {
     if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
+    showToast("Uploading candle image...");
+
+    for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) {
         alert("Please select a valid image file (PNG, JPG, WebP, GIF).");
-        return;
+        continue;
       }
+
+      let uploadedUrl = "";
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/admin/products/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            uploadedUrl = data.url;
+            if (isEdit) {
+              setEditingProduct((prev) =>
+                prev ? { ...prev, images: [...prev.images, uploadedUrl] } : null
+              );
+            } else {
+              setNewProdImages((prev) => [...prev, uploadedUrl]);
+            }
+            showToast("Candle image uploaded & saved!");
+            continue;
+          }
+        }
+      } catch (uploadErr) {
+        console.warn("Direct upload endpoint failed, falling back to local file reader:", uploadErr);
+      }
+
+      // Safe local fallback if server upload endpoint fails
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
@@ -519,11 +556,11 @@ export default function AdminPage() {
           } else {
             setNewProdImages((prev) => [...prev, dataUrl]);
           }
+          showToast("Image loaded from device!");
         }
       };
       reader.readAsDataURL(file);
-    });
-    showToast("Image(s) loaded successfully!");
+    }
   };
 
   const handleAddImageUrl = (url: string, isEdit: boolean) => {
@@ -583,6 +620,13 @@ export default function AdminPage() {
     saveStoreProducts(updated);
     setEditingProduct(null);
     showToast(`Product "${updatedProduct.name}" updated successfully!`);
+
+    // Sync to authoritative server catalog
+    fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: updated }),
+    }).catch((err) => console.error("Failed to sync products to server:", err));
   };
 
   // ─── Add New Product ────────────────────────────────────────────────────────
@@ -633,6 +677,13 @@ export default function AdminPage() {
     setNewProdName("");
     setNewProdImages([]);
     showToast(`New product "${newProd.name}" published to store catalogue!`);
+
+    // Sync to authoritative server catalog
+    fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: updated }),
+    }).catch((err) => console.error("Failed to sync products to server:", err));
   };
 
   const handleDeleteProduct = (productId: string, productName: string) => {
@@ -641,14 +692,26 @@ export default function AdminPage() {
     setProducts(updated);
     saveStoreProducts(updated);
     showToast(`Product "${productName}" removed from catalogue.`);
+
+    fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: updated }),
+    }).catch((err) => console.error("Failed to sync products to server:", err));
   };
 
-  const handleResetCatalog = () => {
+  const handleResetCatalog = async () => {
     if (!confirm("Reset all products to the default catalog? Any custom products or edits will be reset.")) return;
     const defaults = resetStoreProducts();
     setProducts(defaults);
+    try {
+      await fetch("/api/admin/products", { method: "DELETE" });
+    } catch (e) {
+      console.error("Failed to reset server catalog:", e);
+    }
     showToast("Catalogue restored to official default products.");
   };
+
 
   // Filtered orders
   const filteredOrders = orders.filter((o) => {

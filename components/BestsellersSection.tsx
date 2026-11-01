@@ -1,16 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { ProductCard } from "./ProductCard";
-import { INITIAL_PRODUCTS } from "@/lib/products-data";
+import { INITIAL_PRODUCTS, getStoreProducts, fetchStoreProducts } from "@/lib/products-data";
+import { Product } from "@/lib/types";
 import { useRevealContainer } from "@/lib/useScrollReveal";
 
 export function BestsellersSection() {
-  const bestsellers = INITIAL_PRODUCTS.filter((p) => p.isBestseller).slice(0, 4);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const headerRef = useRevealContainer<HTMLDivElement>(0.2);
   const gridRef = useRevealContainer<HTMLDivElement>(0.08);
+
+  useEffect(() => {
+    setProducts(getStoreProducts());
+    fetchStoreProducts().then((fresh) => {
+      if (fresh && fresh.length > 0) setProducts(fresh);
+    });
+
+    const handleUpdate = () => setProducts(getStoreProducts());
+    window.addEventListener("aura_products_updated", handleUpdate);
+    return () => window.removeEventListener("aura_products_updated", handleUpdate);
+  }, []);
+
+  const bestsellers = products.filter((p) => p.isBestseller).slice(0, 4);
 
   return (
     <section className="py-16 md:py-24 bg-white border-y border-[#EAE0D5]/60 overflow-hidden">

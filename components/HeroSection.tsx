@@ -4,8 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { INITIAL_PRODUCTS } from "@/lib/products-data";
+import { INITIAL_PRODUCTS, getStoreProducts, fetchStoreProducts } from "@/lib/products-data";
 import { formatINR } from "@/lib/shipping";
+import { Product } from "@/lib/types";
 
 // Floating candle particles
 function FloatingParticles() {
@@ -80,15 +81,27 @@ function MagneticButton({
 export function HeroSection() {
   const [visible, setVisible] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+
+  useEffect(() => {
+    setProducts(getStoreProducts());
+    fetchStoreProducts().then((fresh) => {
+      if (fresh && fresh.length > 0) setProducts(fresh);
+    });
+
+    const handleUpdate = () => setProducts(getStoreProducts());
+    window.addEventListener("aura_products_updated", handleUpdate);
+    return () => window.removeEventListener("aura_products_updated", handleUpdate);
+  }, []);
 
   // Authoritative catalogue data derivation
   const featuredProduct =
-    INITIAL_PRODUCTS.find((p) => p.id === "jar-80-sandalwood") ||
-    INITIAL_PRODUCTS.find((p) => p.slug === "mysore-sandalwood-candle-80g") ||
-    INITIAL_PRODUCTS[0];
+    products.find((p) => p.id === "jar-80-sandalwood") ||
+    products.find((p) => p.slug === "mysore-sandalwood-candle-80g") ||
+    products[0];
 
   const tealightProduct =
-    INITIAL_PRODUCTS.find((p) => p.category === "Tea-Light Candles") || { price: 160 };
+    products.find((p) => p.category === "Tea-Light Candles") || { price: 160 };
 
   const STATS = [
     { value: "100%", label: "Pure Soy Wax" },

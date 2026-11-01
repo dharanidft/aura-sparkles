@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, Filter, X, SlidersHorizontal, Sparkles, Heart } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
-import { INITIAL_PRODUCTS, getStoreProducts } from "@/lib/products-data";
+import { INITIAL_PRODUCTS, getStoreProducts, fetchStoreProducts } from "@/lib/products-data";
 import { FragranceFamily, ProductCategory, Product } from "@/lib/types";
 import { useCart } from "@/lib/cart-context";
 
@@ -22,6 +22,9 @@ function ShopContent() {
   // Load custom products and listen for updates
   useEffect(() => {
     setProducts(getStoreProducts());
+    fetchStoreProducts().then((fresh) => {
+      if (fresh && fresh.length > 0) setProducts(fresh);
+    });
     const handleUpdate = () => setProducts(getStoreProducts());
     window.addEventListener("aura_products_updated", handleUpdate);
     return () => window.removeEventListener("aura_products_updated", handleUpdate);
