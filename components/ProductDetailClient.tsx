@@ -32,6 +32,7 @@ import {
   verifyQualifyingOrder,
   Review 
 } from "@/lib/reviews";
+import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 
 interface ProductDetailClientProps {
   product: Product;
@@ -65,6 +66,10 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
 
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    trackViewItem(product);
+  }, [product.id]);
+
   // Apple Direct Manipulation: Image Swipe Gesture Tracking
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -80,12 +85,13 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const handleTouchEnd = () => {
     if (!touchStartX.current || !touchEndX.current) return;
     const diff = touchStartX.current - touchEndX.current;
-    if (diff > 40 && product.images.length > 1) {
+    const imgLen = product.images?.length || 0;
+    if (diff > 40 && imgLen > 1) {
       // Swiped Left -> Next Image
-      setActiveImageIndex((prev) => (prev + 1) % product.images.length);
-    } else if (diff < -40 && product.images.length > 1) {
+      setActiveImageIndex((prev) => (prev + 1) % imgLen);
+    } else if (diff < -40 && imgLen > 1) {
       // Swiped Right -> Previous Image
-      setActiveImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+      setActiveImageIndex((prev) => (prev - 1 + imgLen) % imgLen);
     }
     touchStartX.current = 0;
     touchEndX.current = 0;
@@ -401,7 +407,10 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                 </div>
 
                 <button
-                  onClick={() => addItem(product, quantity)}
+                  onClick={() => {
+                    addItem(product, quantity);
+                    trackAddToCart(product, quantity, product.sizeVariant);
+                  }}
                   className="flex-1 py-3.5 bg-[#452638] hover:bg-[#5D354D] active:scale-[0.98] text-[#FAF7F2] text-xs font-semibold uppercase tracking-luxury rounded-full shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all duration-150"
                 >
                   <ShoppingBag className="w-4 h-4 text-[#B69A62]" />
@@ -532,7 +541,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                       <strong>Dispatches in 24 Hours:</strong> Orders placed before 2 PM IST are packaged same day.
                     </p>
                     <p>
-                      <strong>Hassle-Free Replacement:</strong> If damaged in transit, notify us within 48 hours with a photo at contact@aurasparkles.com or WhatsApp (+91 93853 28336) for immediate replacement.
+                      <strong>Hassle-Free Replacement:</strong> If damaged in transit, notify us within 48 hours with a photo at contact@aurasparkles.com or WhatsApp (+91 98400 22902) for immediate replacement.
                     </p>
                   </div>
                 )}
@@ -846,8 +855,8 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         <div className="flex items-center space-x-3 min-w-0">
           <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#EAE0D5] flex-shrink-0 bg-[#FAF7F2]">
             <Image
-              src={product.images[0]}
-              alt={product.name}
+              src={product.images?.[0] || "/images/logo.png"}
+              alt={product.imageAlts?.[0] || product.name}
               fill
               className="object-cover"
             />
@@ -864,7 +873,10 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         </div>
 
         <button
-          onClick={() => addItem(product, 1)}
+          onClick={() => {
+            addItem(product, 1);
+            trackAddToCart(product, 1, product.sizeVariant);
+          }}
           disabled={!product.inStock}
           className={`flex-shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-luxury flex items-center space-x-2 shadow-md transition-all duration-150 ${
             product.inStock

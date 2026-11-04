@@ -114,8 +114,8 @@ export function HeroSection() {
     return () => clearTimeout(t);
   }, []);
 
-  const words = ["Make", "Every", "Moment"];
-  const italic = ["Feel", "Special."];
+  const words = ["Handcrafted", "Candles", "&"];
+  const italic = ["Thoughtful", "Gifts."];
 
   return (
     <section className="relative overflow-hidden bg-white py-12 md:py-20 lg:py-24 border-b border-[#EAE0D5]/60">

@@ -37,27 +37,27 @@ test("Requirement 1: Official contact mailbox contact@aurasparkles.com is active
   assert(refundPage.includes("contact@aurasparkles.com"), "Refund policy missing contact@aurasparkles.com");
 });
 
-test("Requirement 1: Official phone +91 93853 28336 and tel:+919385328336 are present", () => {
+test("Requirement 1: Official phone +91 98400 22902 and tel:+919840022902 are present", () => {
   const contactPage = fs.readFileSync(path.join(root, "app/contact/page.tsx"), "utf8");
-  assert(contactPage.includes("+91 93853 28336"), "Contact page missing +91 93853 28336");
-  assert(contactPage.includes("tel:+919385328336"), "Contact page missing tel:+919385328336");
+  assert(contactPage.includes("+91 98400 22902"), "Contact page missing +91 98400 22902");
+  assert(contactPage.includes("tel:+919840022902"), "Contact page missing tel:+919840022902");
 
   const footer = fs.readFileSync(path.join(root, "components/Footer.tsx"), "utf8");
-  assert(footer.includes("+91 93853 28336"), "Footer missing +91 93853 28336");
-  assert(footer.includes("tel:+919385328336"), "Footer missing tel:+919385328336");
+  assert(footer.includes("+91 98400 22902"), "Footer missing +91 98400 22902");
+  assert(footer.includes("tel:+919840022902"), "Footer missing tel:+919840022902");
 });
 
-test("Requirement 1: WhatsApp link uses 919385328336 and preserves enquiry message", () => {
+test("Requirement 1: WhatsApp link uses 919840022902 and preserves enquiry message", () => {
   const contactPage = fs.readFileSync(path.join(root, "app/contact/page.tsx"), "utf8");
   assert(
-    contactPage.includes("https://wa.me/919385328336?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20enquiry%20regarding%20fragrances"),
+    contactPage.includes("https://wa.me/919840022902?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20enquiry%20regarding%20fragrances"),
     "WhatsApp link or enquiry message missing or altered in Contact page"
   );
 });
 
 test("Requirement 1: Layout schema.org structured data contains telephone and customer service point", () => {
   const layout = fs.readFileSync(path.join(root, "app/layout.tsx"), "utf8");
-  assert(layout.includes("+919385328336"), "Schema.org missing telephone");
+  assert(layout.includes("+919840022902"), "Schema.org missing telephone");
   assert(layout.includes("customer service"), "Schema.org missing customer service contact point");
   assert(layout.includes("600095"), "Schema.org missing updated postal code 600095");
   assert(layout.includes("Tamil Nadu"), "Schema.org missing updated state Tamil Nadu");

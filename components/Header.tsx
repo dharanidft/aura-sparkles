@@ -87,10 +87,11 @@ export function Header() {
 
   const desktopNavLinks = [
     { label: "Shop All", href: "/shop" },
-    { label: "Candles", href: "/shop?category=Scented+Candles" },
-    { label: "Wax Sachets", href: "/shop?category=Wax+Sachets" },
-    { label: "Casting Decor", href: "/shop?category=Casting+Decor" },
-    { label: "Pop Art Kits", href: "/shop?category=Pop+Art+Kits" },
+    { label: "Candles", href: "/collections/candles" },
+    { label: "Wax Sachets", href: "/collections/wax-sachets" },
+    { label: "Home Décor", href: "/collections/home-decor" },
+    { label: "Gifting", href: "/collections/gifts" },
+    { label: "Journal", href: "/blog" },
     { label: "Corporate Gifting", href: "/corporate-gifting" },
     { label: "Our Story", href: "/story" },
     { label: "Contact", href: "/contact" },

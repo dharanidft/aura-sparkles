@@ -33,6 +33,7 @@ import {
 } from "@/lib/shipping";
 import { ShippingAddress, Order } from "@/lib/types";
 import { saveOrderToStorage } from "@/lib/orders";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -114,6 +115,9 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     document.title = "Checkout — Aura Sparkles";
+    if (items.length > 0) {
+      trackBeginCheckout(items, subtotal);
+    }
   }, []);
 
   // Handle 6-digit Indian PIN code input with async backend lookup

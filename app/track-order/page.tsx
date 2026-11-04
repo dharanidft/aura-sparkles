@@ -106,7 +106,7 @@ export default function TrackOrderPage() {
                 <span>No matching order found in this browser's recent purchases.</span>
               </div>
               <p className="text-[11px] text-amber-800 leading-relaxed">
-                If you placed this order from a different device or private browser window, please verify the exact Order ID printed in your order confirmation, or contact our customer team directly on WhatsApp (+91 93853 28336) with your details.
+                If you placed this order from a different device or private browser window, please verify the exact Order ID printed in your order confirmation, or contact our customer team directly on WhatsApp (+91 98400 22902) with your details.
               </p>
             </div>
           )}
@@ -293,7 +293,7 @@ export default function TrackOrderPage() {
           </div>
           <div className="flex items-center space-x-4 flex-shrink-0">
             <a
-              href="https://wa.me/919385328336?text=Hi%20Aura%20Sparkles,%20I%20would%20like%20to%20check%20the%20status%20of%20my%20order"
+              href="https://wa.me/919840022902?text=Hi%20Aura%20Sparkles,%20I%20would%20like%20to%20check%20the%20status%20of%20my%20order"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center space-x-1.5 text-[#452638] font-semibold hover:underline"

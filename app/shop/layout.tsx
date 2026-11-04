@@ -3,9 +3,15 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Shop Handcrafted Scented Soy Candles & Home Fragrance — Aura Sparkles",
   description: "Browse our complete collection of hand-poured 100% soy wax candles, frosted glass jars, and botanical wax tablets. Pure, clean burning aromas crafted in India.",
+  alternates: {
+    canonical: "https://www.aurasparkles.com/shop",
+  },
   openGraph: {
     title: "Shop Handcrafted Scented Soy Candles — Aura Sparkles",
     description: "Handcrafted 100% natural soy wax candles and botanical aromas. Affordable everyday luxury starting from ₹160.",
+    url: "https://www.aurasparkles.com/shop",
+    siteName: "Aura Sparkles",
+    type: "website",
   },
 };
 

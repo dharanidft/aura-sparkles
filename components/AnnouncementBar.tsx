@@ -12,7 +12,7 @@ const ITEMS = [
   "✦",
   "Tea lights from ₹160 · Signature jar candles from ₹249",
   "✦",
-  "Handcrafted with love in India · Direct customer care: +91 93853 28336",
+  "Handcrafted with love in India · Direct customer care: +91 98400 22902",
   "✦",
 ];
 

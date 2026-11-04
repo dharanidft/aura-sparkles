@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, CheckCircle2, MessageCircle, Loader2, ExternalLink } from "lucide-react";
+import { trackContactSubmit, trackWhatsAppClick } from "@/lib/analytics";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -60,6 +61,7 @@ export default function ContactPage() {
       setEnquiryId(data.enquiryId || `ENQ-${Date.now().toString().slice(-6)}`);
       setMailtoUrl(targetMailto);
       setSubmitted(true);
+      trackContactSubmit(subject);
 
       // Auto-trigger customer email app to send directly to contact@aurasparkles.com
       try {
@@ -124,8 +126,8 @@ export default function ContactPage() {
                   <Phone className="w-4 h-4 text-[#B69A62] mt-0.5" />
                   <div>
                     <p className="font-semibold text-[#452638]">Concierge Helpline &amp; Telephone</p>
-                    <a href="tel:+919385328336" className="text-sm font-semibold text-[#452638] hover:underline">
-                      +91 93853 28336
+                    <a href="tel:+919840022902" className="text-sm font-semibold text-[#452638] hover:underline">
+                      +91 98400 22902
                     </a>
                     <p className="text-[10px] text-[#766E65]/80">Mon – Sat: 10:00 AM – 7:00 PM IST</p>
                   </div>
@@ -144,13 +146,14 @@ export default function ContactPage() {
               {/* Requirement 1: Official WhatsApp link with preserved message */}
               <div className="pt-2">
                 <a
-                  href="https://wa.me/919385328336?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20enquiry%20regarding%20fragrances"
+                  href="https://wa.me/919840022902?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20enquiry%20regarding%20fragrances"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackWhatsAppClick("contact_page_direct")}
                   className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 transition-colors shadow-xs"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Chat on WhatsApp (+91 93853 28336)</span>
+                  <span>Chat on WhatsApp (+91 98400 22902)</span>
                 </a>
               </div>
             </div>
@@ -195,9 +198,10 @@ export default function ContactPage() {
                       </a>
                     )}
                     <a
-                      href={`https://wa.me/919385328336?text=${encodeURIComponent(`Hi AURA SPARKLES, I submitted an enquiry (${enquiryId}):\nName: ${name}\nSubject: ${subject}\nMessage: ${message}`)}`}
+                      href={`https://wa.me/919840022902?text=${encodeURIComponent(`Hi AURA SPARKLES, I submitted an enquiry (${enquiryId}):\nName: ${name}\nSubject: ${subject}\nMessage: ${message}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackWhatsAppClick("contact_page_enquiry_dispatch", enquiryId)}
                       className="w-full sm:w-auto px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-full flex items-center justify-center space-x-2 transition-colors shadow-sm"
                     >
                       <MessageCircle className="w-3.5 h-3.5 text-white" />

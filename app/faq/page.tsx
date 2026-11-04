@@ -23,7 +23,7 @@ const FAQS: FAQItem[] = [
   {
     category: "Orders & Shipping",
     q: "What happens if a glass candle jar arrives damaged in transit?",
-    a: "We take extreme care with multi-layered protective cushioning. However, if transit damage occurs, notify us within 48 hours of receipt at contact@aurasparkles.com or via WhatsApp (+91 93853 28336) with a photo of the package, and we will dispatch a brand-new free replacement immediately."
+    a: "We take extreme care with multi-layered protective cushioning. However, if transit damage occurs, notify us within 48 hours of receipt at contact@aurasparkles.com or via WhatsApp (+91 98400 22902) with a photo of the package, and we will dispatch a brand-new free replacement immediately."
   },
   {
     category: "Orders & Shipping",
@@ -131,15 +131,15 @@ export default function FAQPage() {
           </p>
           <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold">
             <a
-              href="https://wa.me/919385328336?text=Hi%20Aura%20Sparkles,%20I%20have%20a%20question"
+              href="https://wa.me/919840022902?text=Hi%20Aura%20Sparkles,%20I%20have%20a%20question"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-full transition-colors flex items-center space-x-2"
             >
-              <span>WhatsApp Us (+91 93853 28336)</span>
+              <span>WhatsApp Us (+91 98400 22902)</span>
             </a>
             <a
-              href="tel:+919385328336"
+              href="tel:+919840022902"
               className="px-6 py-2.5 bg-white border border-[#452638] text-[#452638] hover:bg-[#452638] hover:text-white rounded-full transition-colors"
             >
               Call Helpline

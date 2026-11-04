@@ -65,6 +65,20 @@ export interface Product {
   sizeVariant?: string;
   /** For combos — what's inside */
   comboContents?: string;
+  /** Stock Keeping Unit / barcode */
+  sku?: string;
+  /** Concise summary for SERP snippet & previews */
+  shortDescription?: string;
+  /** Dedicated SEO title tag */
+  seoTitle?: string;
+  /** Dedicated meta description */
+  metaDescription?: string;
+  /** Explicit canonical URL */
+  canonicalUrl?: string;
+  /** Publishing status */
+  status?: "published" | "draft";
+  /** Contextual alt texts for product gallery images */
+  imageAlts?: string[];
 }
 
 export interface CartItem {

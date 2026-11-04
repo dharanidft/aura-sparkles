@@ -56,8 +56,8 @@ export default function ShippingPolicyPage() {
                 Track Your Order page
               </a>{" "}
               or reach out to customer care via telephone at{" "}
-              <a href="tel:+919385328336" className="text-[#452638] font-semibold underline">
-                +91 93853 28336
+              <a href="tel:+919840022902" className="text-[#452638] font-semibold underline">
+                +91 98400 22902
               </a>{" "}
               or WhatsApp.
             </p>

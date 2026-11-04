@@ -10,6 +10,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { AuthModal } from "@/components/AuthModal";
 import { CursorSparkle } from "@/components/CursorSparkle";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -59,7 +60,15 @@ export const metadata: Metadata = {
     ],
     locale: "en_IN",
     type: "website"
-  }
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+    other: {
+      ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+        ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+        : {}),
+    },
+  },
 };
 
 export default function RootLayout({
@@ -78,11 +87,11 @@ export default function RootLayout({
         "logo": "https://www.aurasparkles.com/images/logo.png",
         "description": "Indian home-fragrance studio specialising in scented soy wax candles, botanical wax sachets, ceramic casting decor, and kids creative kits.",
         "slogan": "Pure · Elegant · You",
-        "telephone": "+919385328336",
+        "telephone": "+919840022902",
         "contactPoint": [
           {
             "@type": "ContactPoint",
-            "telephone": "+919385328336",
+            "telephone": "+919840022902",
             "contactType": "customer service",
             "areaServed": "IN",
             "availableLanguage": ["English", "Hindi", "Tamil"]
@@ -106,7 +115,7 @@ export default function RootLayout({
         "name": "Aura Sparkles Studio",
         "image": "https://www.aurasparkles.com/images/logo.png",
         "url": "https://www.aurasparkles.com",
-        "telephone": "+919385328336",
+        "telephone": "+919840022902",
         "priceRange": "₹160 - ₹2499",
         "address": {
           "@type": "PostalAddress",
@@ -186,6 +195,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-white text-[#282522] selection:bg-[#E8C9C5] selection:text-[#452638]">
         <AuthProvider>
           <CartProvider>
+            <AnalyticsProvider />
             <CursorSparkle />
             <AnnouncementBar />
             <Header />

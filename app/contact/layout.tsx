@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Contact Aura Sparkles — Chennai Studio & Customer Support",
-    description: "Get in touch for orders, custom fragrance requests, wedding favors, and corporate gifting. WhatsApp: +91 93853 28336.",
+    description: "Get in touch for orders, custom fragrance requests, wedding favors, and corporate gifting. WhatsApp: +91 98400 22902.",
     url: "https://www.aurasparkles.com/contact",
     siteName: "Aura Sparkles",
     type: "website",

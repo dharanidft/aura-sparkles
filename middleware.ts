@@ -54,13 +54,42 @@ export async function middleware(request: NextRequest) {
   const isProd = process.env.NODE_ENV === "production";
 
   // ---------------------------------------------------------------------------
-  // 1. Force HTTPS in Production
+  // 1. Force Canonical Domain (www.aurasparkles.com) & HTTPS in Production
   // ---------------------------------------------------------------------------
+  const host = request.headers.get("host") || "";
   const proto = request.headers.get("x-forwarded-proto");
+
+  // Redirect apex non-www domain (aurasparkles.com) to preferred canonical www.aurasparkles.com
+  if (isProd && (host === "aurasparkles.com" || host.startsWith("aurasparkles.com:"))) {
+    const canonicalUrl = new URL(request.url);
+    canonicalUrl.protocol = "https:";
+    canonicalUrl.host = "www.aurasparkles.com";
+    return NextResponse.redirect(canonicalUrl, 301);
+  }
+
+  // Force HTTPS in Production
   if (isProd && proto === "http") {
     const httpsUrl = request.nextUrl.clone();
     httpsUrl.protocol = "https:";
     return NextResponse.redirect(httpsUrl, 301);
+  }
+
+  // Normalise trailing slash (except root) to avoid duplicate content
+  if (pathname !== "/" && pathname.endsWith("/") && !pathname.startsWith("/api/")) {
+    const cleanUrl = request.nextUrl.clone();
+    cleanUrl.pathname = pathname.slice(0, -1);
+    return NextResponse.redirect(cleanUrl, 301);
+  }
+
+  // Normalise uppercase URLs to lowercase for public pages
+  if (
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/_next/") &&
+    /[A-Z]/.test(pathname)
+  ) {
+    const lowerUrl = request.nextUrl.clone();
+    lowerUrl.pathname = pathname.toLowerCase();
+    return NextResponse.redirect(lowerUrl, 301);
   }
 
   // ---------------------------------------------------------------------------
@@ -141,15 +170,15 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // Modern Content-Security-Policy
+  // Modern Content-Security-Policy (supporting Analytics, Razorpay & Fonts)
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.jsdelivr.net",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://connect.facebook.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
-    "img-src 'self' data: blob: https://images.unsplash.com https://api.razorpay.com https://raw.githubusercontent.com",
+    "img-src 'self' data: blob: https://images.unsplash.com https://api.razorpay.com https://raw.githubusercontent.com https://www.google-analytics.com https://*.google-analytics.com https://www.facebook.com",
     "media-src 'self' data: blob:",
-    "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://raw.githubusercontent.com http://localhost:2785 ws://localhost:2785",
+    "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://raw.githubusercontent.com http://localhost:2785 ws://localhost:2785 https://www.google-analytics.com https://analytics.google.com https://*.googletagmanager.com https://www.facebook.com",
     "frame-src 'self' https://api.razorpay.com",
     "object-src 'none'",
     "base-uri 'self'",

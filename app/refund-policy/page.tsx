@@ -29,17 +29,17 @@ export default function RefundPolicyPage() {
                 contact@aurasparkles.com
               </a>
               , call{" "}
-              <a href="tel:+919385328336" className="text-[#452638] font-semibold hover:underline">
-                +91 93853 28336
+              <a href="tel:+919840022902" className="text-[#452638] font-semibold hover:underline">
+                +91 98400 22902
               </a>
               , or message us on WhatsApp (
               <a
-                href="https://wa.me/919385328336?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20issue%20with%20my%20order"
+                href="https://wa.me/919840022902?text=Hi%20AURA%20SPARKLES,%20I%20have%20an%20issue%20with%20my%20order"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#452638] font-semibold hover:underline"
               >
-                +91 93853 28336
+                +91 98400 22902
               </a>
               ).
             </p>

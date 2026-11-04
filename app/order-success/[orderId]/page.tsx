@@ -19,6 +19,7 @@ import {
 import { getOrderById } from "@/lib/orders";
 import { Order } from "@/lib/types";
 import { formatINR } from "@/lib/shipping";
+import { trackPurchase } from "@/lib/analytics";
 
 export default function OrderSuccessPage() {
   const params = useParams();
@@ -41,6 +42,7 @@ export default function OrderSuccessPage() {
     const found = getOrderById(orderId);
     if (found) {
       setOrder(found);
+      trackPurchase(found);
     }
   }, [orderId]);
 

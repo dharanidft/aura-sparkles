@@ -8,6 +8,7 @@ import { Product } from "@/lib/types";
 import { useCart } from "@/lib/cart-context";
 import { formatINR } from "@/lib/shipping";
 import { getProductReviewStats } from "@/lib/reviews";
+import { trackAddToCart, trackSelectItem } from "@/lib/analytics";
 
 interface ProductCardProps {
   product: Product;
@@ -46,6 +47,7 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
     if (adding) return;
     setAdding(true);
     addItem(product, 1);
+    trackAddToCart(product, 1, product.sizeVariant);
     setTimeout(() => setAdding(false), 900);
   };
 
@@ -76,10 +78,14 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
     >
       {/* Image container with uncropped object-contain display on pure white */}
       <div className="relative aspect-[4/5] bg-white overflow-hidden flex items-center justify-center p-2 border-b border-[#EAE0D5]/40">
-        <Link href={`/shop/${product.slug}`} className="block w-full h-full relative">
+        <Link 
+          href={`/shop/${product.slug}`} 
+          onClick={() => trackSelectItem(product)}
+          className="block w-full h-full relative"
+        >
           <Image
             src={imgSrc}
-            alt={product.name}
+            alt={product.imageAlts?.[0] || `${product.name} - Handcrafted Scented Candle by Aura Sparkles`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             unoptimized={!imgSrc.startsWith("/uploads/") && !imgSrc.startsWith("/images/")}

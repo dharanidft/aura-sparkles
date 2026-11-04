@@ -18,7 +18,8 @@ export function ensureProductStoreDirectories(): void {
 
 /**
  * Returns authoritative list of products.
- * Reads from data/products.json if available; falls back to INITIAL_PRODUCTS.
+ * Reads from data/products.json if available; merges with INITIAL_PRODUCTS to guarantee
+ * all official items and SEO attributes are preserved.
  */
 export function getAuthoritativeProducts(): Product[] {
   ensureProductStoreDirectories();
@@ -27,6 +28,14 @@ export function getAuthoritativeProducts(): Product[] {
       const raw = fs.readFileSync(PRODUCTS_FILE, "utf8");
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge missing initial products if any were newly defined
+        const existingSlugs = new Set(parsed.map((p: Product) => p.slug));
+        const missingInitial = INITIAL_PRODUCTS.filter((ip) => !existingSlugs.has(ip.slug));
+        if (missingInitial.length > 0) {
+          const merged = [...parsed, ...missingInitial];
+          fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(merged, null, 2), "utf8");
+          return merged;
+        }
         return parsed as Product[];
       }
     }

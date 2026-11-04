@@ -67,7 +67,7 @@ export default function CorporateGiftingPage() {
     const text = encodeURIComponent(
       `Hello Aura Sparkles Team! I am interested in bulk / corporate gifting.\n\nName: ${formData.name || "Client"}\nCompany/Event: ${formData.companyName || "N/A"}\nType: ${formData.giftingType}\nEst. Quantity: ${formData.quantity}\nCity: ${formData.city || "India"}`
     );
-    window.open(`https://wa.me/919385328336?text=${text}`, "_blank");
+    window.open(`https://wa.me/919840022902?text=${text}`, "_blank");
   };
 
   return (

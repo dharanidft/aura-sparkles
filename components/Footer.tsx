@@ -45,11 +45,11 @@ export function Footer() {
             <div className="space-y-2 text-xs text-[#766E65] pt-1">
               <div className="flex items-center space-x-3">
                 <a
-                  href="tel:+919385328336"
+                  href="tel:+919840022902"
                   className="flex items-center space-x-1.5 hover:text-[#452638] transition-colors"
                 >
                   <Phone className="w-3.5 h-3.5 text-[#B69A62]" />
-                  <span>+91 93853 28336</span>
+                  <span>+91 98400 22902</span>
                 </a>
                 <span>•</span>
                 <a
@@ -92,28 +92,28 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=Scented+Candles" className="hover:text-[#452638] transition-colors">
-                  Candles (From ₹160)
+                <Link href="/collections/candles" className="hover:text-[#452638] transition-colors">
+                  Scented &amp; Decorative Candles
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=Wax+Sachets" className="hover:text-[#452638] transition-colors">
-                  Wax Sachets (From ₹249)
+                <Link href="/collections/wax-sachets" className="hover:text-[#452638] transition-colors">
+                  Perfumed Wax Sachets
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=Casting+Decor" className="hover:text-[#452638] transition-colors">
-                  Casting Decor (From ₹199)
+                <Link href="/collections/home-decor" className="hover:text-[#452638] transition-colors">
+                  Handmade Home Décor
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=Pop+Art+Kits" className="hover:text-[#452638] transition-colors">
-                  Pop Art Kits for Kids (From ₹299)
+                <Link href="/collections/gifts" className="hover:text-[#452638] transition-colors">
+                  Handmade Gifts &amp; Boxes
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=Combo+Offers" className="hover:text-[#452638] transition-colors">
-                  Combo Offers
+                <Link href="/shop" className="hover:text-[#452638] transition-colors">
+                  Complete Catalogue
                 </Link>
               </li>
             </ul>
@@ -128,6 +128,11 @@ export function Footer() {
               <li>
                 <Link href="/story" className="hover:text-[#452638] transition-colors">
                   Our Story &amp; Philosophy
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="hover:text-[#452638] transition-colors font-medium">
+                  Journal &amp; Gifting Guides
                 </Link>
               </li>
               <li>
