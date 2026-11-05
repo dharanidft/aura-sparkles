@@ -67,8 +67,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(canonicalUrl, 301);
   }
 
-  // Force HTTPS in Production
-  if (isProd && proto === "http") {
+  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
+
+  // Force HTTPS in Production (excluding local testing)
+  if (isProd && !isLocalhost && proto === "http") {
     const httpsUrl = request.nextUrl.clone();
     httpsUrl.protocol = "https:";
     return NextResponse.redirect(httpsUrl, 301);
