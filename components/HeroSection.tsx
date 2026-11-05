@@ -190,7 +190,7 @@ export function HeroSection() {
                 transition: "opacity 0.7s ease 0.9s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.9s",
               }}
             >
-              Thoughtfully chosen fragrances to bring warmth, calm, and everyday elegance into your sanctuary. Handcrafted with 100% natural soy wax, frosted glass, and pure Indian botanicals.
+              Thoughtfully chosen fragrances to bring warmth, calm, and everyday elegance into your home. Handcrafted with 100% natural soy wax, frosted glass, and pure Indian botanicals.
             </p>
 
             {/* CTAs */}

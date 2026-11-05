@@ -44,7 +44,7 @@ export function GiftingSection() {
               </h2>
 
               <p className="reveal delay-200 text-sm sm:text-base text-[#766E65] leading-relaxed max-w-xl">
-                Whether celebrating a housewarming, festive gathering, or expressing heartfelt gratitude—a warm candle gift speaks directly to the senses. Every gift bundle is presented with satin ribbons, rigid keepsake boxes, and handwritten note options.
+                For housewarmings, festive celebrations, or a simple thank-you, a hand-poured candle is a gift people actually use. Every set comes packed with satin ribbon, a sturdy keepsake box, and an optional handwritten note card.
               </p>
 
               {/* Animated checklist */}

@@ -97,7 +97,7 @@ export default function ContactPage() {
             Contact Aura Sparkles
           </h1>
           <p className="text-sm text-[#766E65]">
-            Whether you have a question regarding an ongoing order, fragrance recommendation, or bespoke wedding/corporate gifting, our team is here to assist. All responses are monitored at <span className="font-medium text-[#452638]">contact@aurasparkles.com</span>.
+            Have a question about an order, need a fragrance recommendation, or planning custom wedding gifts? We are glad to help. Write to us anytime at <span className="font-medium text-[#452638]">contact@aurasparkles.com</span>.
           </p>
         </div>
 

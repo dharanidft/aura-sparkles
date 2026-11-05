@@ -88,7 +88,7 @@ export default function CorporateGiftingPage() {
             </h1>
 
             <p className="mt-4 text-sm sm:text-base text-[#766E65] leading-relaxed">
-              Elevate your corporate gifting, wedding return favors, and boutique hotel amenities with hand-poured 100% soy wax candles, botanical wax sachets, and artisanal ceramic casting decor. Custom packaging, gold foil logo sleeves, and GST invoicing provided.
+              We create custom corporate gift hampers, wedding return favors, and boutique hotel guest gifts using hand-poured 100% soy wax candles, botanical wax sachets, and ceramic trays. Custom packaging, gold-foil sleeves, and GST invoicing included.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4 items-center">

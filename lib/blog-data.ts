@@ -32,7 +32,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "A complete guide to choosing the best scented candle for your living space, bedroom, and study based on wax purity, room size, and scent throw.",
     excerpt:
-      "Finding the right fragrance is about more than just personal taste — room dimensions, airflow, and wax formulation dictate how a scent develops.",
+      "Finding the right candle is about more than scent preferences. Room size, ventilation, and the type of wax all shape how the fragrance carries.",
     author: {
       name: "Aura Sparkles Fragrance Atelier",
       role: "Studio Artisan & Chandler",
@@ -50,10 +50,10 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
       "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Aura Sparkles hand-poured soy wax scented candle in frosted glass jar",
     content: [
-      "Selecting the ideal scented candle involves understanding the balance between your living space and the fragrance throw. In spacious living rooms with open airflow, deeper notes like Mysore sandalwood, amber, and cedarwood project evenly without overpowering the room.",
-      "For intimate spaces such as bedrooms and study alcoves, lighter floral and gourmand bouquets like Madagascar vanilla bean and gentle French lavender create a cozy, relaxing sanctuary without causing olfactory fatigue.",
-      "Always look for 100% natural soy wax instead of paraffin. Soy wax burns cleaner, produces zero toxic soot, and maintains a lower melting point, meaning your candle lasts up to 50% longer than commercial petroleum-derived alternatives.",
-      "To get the most out of your candle, always allow the initial burn to liquefy the entire top surface from edge to edge of the glass container. This prevents 'tunneling' and guarantees a smooth, even melt pool for the lifetime of your jar.",
+      "The right scented candle depends on the room you put it in. In an open living room with steady airflow, deeper notes like Mysore sandalwood, amber, and cedarwood carry well across the room without feeling heavy.",
+      "In smaller spaces like bedrooms or a study, lighter scents like Madagascar vanilla or French lavender keep the room calm and gentle without overwhelming your senses.",
+      "Check the wax before buying. Pure soy wax burns clean with zero black soot, and its lower melting point helps a jar burn up to 50% longer than paraffin.",
+      "On your first burn, let the candle stay lit until the melted wax reaches every edge of the glass. That simple step prevents tunneling and makes sure you get every hour out of your candle.",
     ],
   },
   {
@@ -64,7 +64,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Learn how to use botanical perfumed wax sachets to keep clothes, linen closets, and dressers naturally scented for 60 to 90 days flameless.",
     excerpt:
-      "Discover the subtle art of flameless home fragrance with botanical soy wax tablets designed for enclosed spaces and luxury wardrobes.",
+      "Keep clothes, wardrobes, and drawers fresh for months with flameless botanical soy wax tablets.",
     author: {
       name: "Aura Sparkles Fragrance Atelier",
       role: "Studio Artisan & Chandler",
@@ -83,10 +83,10 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
       "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Botanical perfumed wax sachet with pressed flower petals and grosgrain ribbon",
     content: [
-      "Perfumed wax sachets — also known as wax fragrance bars or closet tablets — are handcrafted botanical soy wax slabs infused with concentrated essential oils and decorated with real dried petals.",
-      "Unlike traditional burning candles, wax sachets require no flame, wick, or electric warmer. They are formulated to gently release aromatics through ambient air circulation in enclosed spaces such as wardrobes, dresser drawers, linen shelves, and suitcase interiors.",
-      "To protect delicate silk, satin, or lace clothing, hang the sachet using its pre-attached grosgrain ribbon from a hanger hook, or slip it inside a light muslin pouch before tucking it into a drawer.",
-      "A quality soy wax sachet will maintain its vibrant scent for 60 to 90 days. When the surface scent begins to soften, simply buff the wax face gently with a soft dry cotton cloth to re-expose fragrant essential oils.",
+      "Perfumed wax sachets are solid bars of soy wax infused with botanical oils and finished with pressed flowers. They give off a steady, gentle scent without any flame, heat, or plugs.",
+      "Hang them in a closet or tuck them between folded linens, dresser drawers, or travel bags. The wax slowly diffuses fragrance through the airflow of an enclosed space.",
+      "If you are storing them with delicate fabrics like silk or lace, hang the sachet by its ribbon from a coat hanger or slide it into a small cotton pouch.",
+      "Each sachet keeps its scent for about 60 to 90 days. Once the fragrance starts to fade, gently buff the surface with a clean cloth to bring the oils back to life.",
     ],
   },
   {
@@ -97,7 +97,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Explore thoughtful handmade candle gift ideas from celebration trio boxes to bespoke return gifts and wedding favor hampers by Aura Sparkles.",
     excerpt:
-      "Whether celebrating a wedding, milestone birthday, or housewarming, artisanal candles offer an enduring, sensory expression of warmth.",
+      "For weddings, birthdays, or housewarmings, handcrafted candles make a warm and lasting gift.",
     author: {
       name: "Aura Sparkles Gifting Atelier",
       role: "Bespoke Gifting Specialist",
@@ -115,10 +115,10 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
       "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Luxury candle gift box with gold foil lettering and handwritten gift card",
     content: [
-      "A hand-poured candle is one of the few gifts that engages sight, touch, and scent simultaneously. Because scent is closely tethered to memory, lighting a gifted candle reconnects the recipient to the celebratory moment long after the occasion has passed.",
-      "For housewarmings and family milestones, curating a Fragrance Trio featuring contrasting scent profiles — such as grounding Mysore Sandalwood alongside uplifting Damask Rose and comforting Vanilla — allows the recipient to curate their home's fragrance by mood.",
-      "For return gifts and wedding favors in Chennai and across India, compact 80g frosted jars or botanical wax sachets wrapped in gold-foil sleeves offer an approachable luxury favor that guests genuinely treasure and use in their daily rituals.",
-      "Aura Sparkles provides customized monogram labels, custom ribbon choices, and curated message cards for bulk event orders and bespoke festive gifting.",
+      "A scented candle is one of those rare gifts people actually unbox and use right away. Because scent connects directly to memory, lighting it brings back the celebration long after the day is done.",
+      "If you're gifting a housewarming or anniversary, a trio set with different scents lets the recipient switch moods—warm Mysore Sandalwood for quiet evenings, Damask Rose for lazy mornings, and Vanilla for afternoons.",
+      "For wedding favors and return gifts in Chennai and across India, compact 80g jars and wax sachets work wonderfully. They pack easily, look elegant on a table, and won't end up forgotten in a cupboard.",
+      "We include personalized gift tags, custom ribbon ties, and handwritten notes for bulk wedding orders and corporate gifting from our Chennai studio.",
     ],
   },
   {
@@ -129,7 +129,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Compare freshly brewed coffee aromas with warm Madagascar vanilla bean candles to discover which cozy gourmand fragrance fits your mood.",
     excerpt:
-      "Both belong to the comforting gourmand fragrance family, yet their olfactory energy is strikingly distinct. Here is how to choose between them.",
+      "Both coffee and vanilla bring warmth into a room, but they set very different moods. Here is how to choose the right one for your space.",
     author: {
       name: "Aura Sparkles Fragrance Atelier",
       role: "Studio Artisan & Chandler",
@@ -147,10 +147,10 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
       "https://images.unsplash.com/photo-1548907040-4baa42d10919?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Warm candle flame beside roasted coffee beans and Madagascar vanilla pods",
     content: [
-      "Warm gourmand fragrances have an unmatched ability to make any interior feel instantly welcoming, grounded, and tranquil. Within this fragrance family, coffee and vanilla stand out as the two most beloved notes in contemporary home fragrance.",
-      "An authentic coffee fragrance — such as our Iced Coffee Latte Candle — combines dark roasted Arabica beans, bittersweet cocoa, and foamed milk. It provides an invigorating, focused atmosphere that is ideal for mornings, home offices, and kitchen living areas.",
-      "In contrast, pure Madagascar vanilla offers a sweeter, softer embrace. Laced with toasted tonka bean and warm caramelized sugar, vanilla candles evoke serenity, nostalgia, and soothing calm — making them the preferred companion for quiet evening reading and bedside relaxation.",
-      "Can't decide? Scent pairing is a popular atelier technique: burn an 80g Vanilla Candle alongside a small Coffee Candle to create a decadent café latte aroma in your living room.",
+      "Rich aromas make any room feel lived-in. When browsing warm gourmand scents, most people narrow their pick down to roasted coffee or smooth Madagascar vanilla. They share a comforting base, but the way they transform your home could not be more different.",
+      "Mornings call for focus. Lighting our Iced Coffee Latte candle at your work desk fills the room with rich notes of dark Arabica beans, bittersweet cocoa, and steamed milk.",
+      "Evenings need the opposite. Our vanilla candles blend pure Madagascar beans with toasted tonka and warm caramel, softening the air so you can unwind with a book before turning off the lights.",
+      "Can't pick one? Burn both together. An 80g vanilla jar burning beside a small coffee candle blends in the air into a freshly poured café latte.",
     ],
   },
   {
@@ -161,7 +161,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     metaDescription:
       "Discover elegant, memorable handmade return gift ideas in Chennai for weddings, baby showers, and celebrations from Aura Sparkles candle studio.",
     excerpt:
-      "Move beyond standard stainless steel trays and dry fruits with bespoke botanical candles and hand-cast ceramic favors.",
+      "Thoughtful alternatives to conventional return gifts: botanical soy candles and ceramic favors made in Chennai.",
     author: {
       name: "Aura Sparkles Gifting Atelier",
       role: "Bespoke Gifting Specialist",
@@ -180,10 +180,10 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Artisanal handcrafted return gifts packaged with botanical dried flowers",
     content: [
-      "When hosting a milestone wedding, baby shower, or traditional ceremony in Chennai, hosts increasingly seek return gifts that reflect thoughtful craftsmanship rather than mass-produced utilitarian trinkets.",
-      "Botanical soy wax candles and wardrobe sachets have emerged as one of the most celebrated return gifts across Tamil Nadu. They are lightweight, shatter-resistant when properly packed, universally appreciated, and suitable for all age groups.",
-      "For traditional south Indian celebrations, our Terracotta Scented Candles and Lotus Ceramic Bowl Holders bridge timeless cultural symbolism with modern minimalist aesthetics, serving as both ambient candle and enduring keepsake.",
-      "All Aura Sparkles event orders are handcrafted at our Chennai studio in Ayanambakkam, allowing local pickup or expedited courier delivery across Chennai, Bengaluru, and surrounding southern regions.",
+      "Planning a wedding, baby shower, or housewarming in Chennai often comes down to finding return gifts people will genuinely enjoy rather than another unused bowl or box of sweets.",
+      "Hand-poured candles and wardrobe sachets have become popular choices across Tamil Nadu. They are easy to carry home, safe to travel with, and something guests can light and enjoy every week.",
+      "For traditional South Indian ceremonies, our Terracotta Scented Candles and Lotus Ceramic Bowls bring classic craft into a clean, modern form that doubles as home decor long after the wax is finished.",
+      "We hand-pour all custom event orders at our Chennai workshop in Ayanambakkam, with direct studio pickup or courier delivery across Chennai, Bengaluru, and southern India.",
     ],
   },
 ];

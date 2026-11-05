@@ -104,13 +104,13 @@ export function BrandStorySection() {
 
             <div className="space-y-4 text-sm sm:text-base text-[#766E65] leading-relaxed">
               <p className="reveal-right delay-200">
-                We believe that the scent of your home is the first thing that welcomes you and the last memory that lingers when guests leave. It has the quiet power to soften a long day, evoke cherished nostalgic afternoons, and transform an ordinary corner into a sacred sanctuary.
+                The scent of your home is what welcomes you back and what guests remember long after they leave. A good fragrance unwinds a busy day, brings back memories of family gatherings, and makes any quiet corner feel warm and inviting.
               </p>
               <p className="reveal-right delay-300">
-                AURA SPARKLES was born from a desire for approachable luxury. Rather than overpowering synthetic sprays or inaccessible designer price tags, we hand-pour pure soy wax candles in frosted glass jars—designed to cast a gentle warm glow and infuse spaces with authentic, balanced aromas.
+                We started Aura Sparkles with a simple aim: to make luxury candles you can actually burn every day. Instead of heavy synthetic sprays or overpriced imports, we hand-pour pure soy wax candles in frosted glass jars that fill your room with clean, comforting aromas.
               </p>
               <p className="reveal-right delay-400 font-serif text-lg italic text-[#452638]">
-                "From soothing Mysore Sandalwood to blooming Damask Rose, every jar is an invitation to pause, breathe, and illuminate your moments."
+                "From warm Mysore Sandalwood to dewy Damask Rose, each jar is poured to help you unwind and feel at home."
               </p>
             </div>
 

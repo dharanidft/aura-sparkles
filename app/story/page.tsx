@@ -55,10 +55,10 @@ export default function StoryPage() {
               The Essence of Approachable Luxury
             </h2>
             <p>
-              In our fast-paced lives, home is our anchor. Yet so often, scented candles in India were either mass-produced synthetic waxes that irritate the senses or ultra-expensive imported labels priced out of daily enjoyment.
+              Finding good scented candles in India used to mean choosing between cheap paraffin waxes that gave you a headache or expensive imported labels saved only for special occasions.
             </p>
             <p>
-              Aura Sparkles was born to bridge this exact gap. We set out to craft affordable luxury—formulating natural soy wax candles in timeless frosted-glass jars that you never feel hesitant to light, whether you are enjoying your morning meditation, reading in bed, or gathering around dinner with loved ones.
+              We started Aura Sparkles so people wouldn't have to choose. We pour clean-burning soy wax into frosted-glass jars that you can light any day of the week—at your desk, by the bed, or around the dinner table.
             </p>
           </div>
 
@@ -67,10 +67,10 @@ export default function StoryPage() {
               Authentic Indian Botanicals
             </h2>
             <p>
-              Our fragrance palette honors the sensory richness of the subcontinent. From the sacred woody depth of Mysore Sandalwood to the sweet, intoxicating nostalgia of night-blooming Kannauj Mogra and dewy Damask Roses, every fragrance is orchestrated with nuanced top, heart, and base notes.
+              Our scents draw from Indian botanical traditions: warm Mysore sandalwood, sweet Kannauj mogra, and fresh damask rose. We blend botanical oils with natural soy wax so the fragrance fills a room gently without feeling heavy.
             </p>
             <p>
-              Every jar is hand-poured with 100% natural soy wax and fitted with a clean lead-free cotton wick to guarantee a slow, soothing, soot-free burn.
+              Each candle is hand-poured in small batches in our Chennai studio with a lead-free cotton wick for a slow, soot-free burn.
             </p>
           </div>
         </div>
@@ -86,13 +86,13 @@ export default function StoryPage() {
           <div className="p-6 bg-white rounded-2xl border border-[#EAE0D5] text-center space-y-3">
             <Feather className="w-6 h-6 text-[#B69A62] mx-auto" />
             <h3 className="font-serif text-lg font-medium text-[#452638]">Thoughtful Aesthetics</h3>
-            <p className="text-xs text-[#766E65]">Frosted glass, muted gold details, and blush packaging designed to elevate your decor.</p>
+            <p className="text-xs text-[#766E65]">Frosted glass, muted gold accents, and blush packaging that sit naturally in any room.</p>
           </div>
 
           <div className="p-6 bg-white rounded-2xl border border-[#EAE0D5] text-center space-y-3">
             <Heart className="w-6 h-6 text-[#B69A62] mx-auto" />
             <h3 className="font-serif text-lg font-medium text-[#452638]">Thoughtful Gifting</h3>
-            <p className="text-xs text-[#766E65]">Curated keepsake gift boxes that make every recipient feel genuinely cherished.</p>
+            <p className="text-xs text-[#766E65]">Curated keepsake gift boxes ready to give, complete with an optional handwritten note.</p>
           </div>
         </div>
 

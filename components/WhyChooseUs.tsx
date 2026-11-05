@@ -10,7 +10,7 @@ const FEATURES = [
     icon: Sparkles,
     title: "Artisanal Fragrance Blends",
     description:
-      "From tranquil woody Mysore sandalwood to Kannauj damask rose, each blend is thoughtfully orchestrated with pure botanicals.",
+      "From warm Mysore sandalwood to Kannauj damask rose, each blend is made with pure botanical oils.",
     stat: 12,
     statSuffix: "+",
     statLabel: "Curated Fragrances",
@@ -19,7 +19,7 @@ const FEATURES = [
     icon: Compass,
     title: "Thoughtfully Hand-Poured",
     description:
-      "Frosted glass containers, lead-free cotton wicks, and pure plant-based soy wax formulated for a clean, soot-free burn.",
+      "Frosted glass jars, lead-free cotton wicks, and pure plant-based soy wax formulated for a clean, soot-free burn.",
     stat: 100,
     statSuffix: "%",
     statLabel: "Natural Soy Wax",
@@ -28,14 +28,14 @@ const FEATURES = [
     icon: PackageCheck,
     title: "Keepsake Gift Presentation",
     description:
-      "Every order arrives securely packaged and gifting-ready, nestled with protective cushioning and complimentary gift card.",
+      "Every order arrives securely packaged and gifting-ready, packed in protective cushioning with an optional gift card.",
     stat: 499,
     statSuffix: " ₹+",
     statLabel: "Free Shipping Order",
   },
   {
     icon: Flame,
-    title: "Authoritative Burn Times",
+    title: "Tested Burn Times",
     description:
       "Measured for consistent, safe performance: 18–22 hours for our 80g signature jars, and 3–4 hours per tea-light candle.",
     stat: 22,
