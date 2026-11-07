@@ -52,16 +52,23 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   };
 
   // 3D tilt on hover (gated strictly to fine pointer / mouse devices to prevent sticky tilt on touch)
+  const rafId = useRef<number | null>(null);
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (typeof window !== "undefined" && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    const el = cardRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 10;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -10;
-    el.style.transform = `perspective(700px) rotateX(${y}deg) rotateY(${x}deg) translateY(-4px)`;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(() => {
+      const el = cardRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = ((clientX - rect.left) / rect.width - 0.5) * 10;
+      const y = ((clientY - rect.top) / rect.height - 0.5) * -10;
+      el.style.transform = `perspective(700px) rotateX(${y}deg) rotateY(${x}deg) translateY(-4px)`;
+    });
   };
   const onLeave = () => {
+    if (rafId.current) cancelAnimationFrame(rafId.current);
     const el = cardRef.current;
     if (el) el.style.transform = "perspective(700px) rotateX(0) rotateY(0) translateY(0)";
   };
@@ -69,7 +76,7 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   return (
     <div
       ref={cardRef}
-      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-[#EAE0D5] hover:border-[#E8C9C5] shadow-sm hover:shadow-xl card-tilt cursor-default transition-all duration-300"
+      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-[#EAE0D5] hover:border-[#E8C9C5] shadow-sm hover:shadow-xl cursor-default transition-[border-color,box-shadow] duration-200"
       style={{
         transitionDelay: `${delay}ms`,
       }}

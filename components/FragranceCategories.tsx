@@ -48,16 +48,24 @@ interface Cat {
 
 function TiltCard({ cat, delay }: { cat: Cat; delay: number }) {
   const cardRef = useRef<HTMLAnchorElement>(null);
+  const rafId = useRef<number | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const el = cardRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 14;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -14;
-    el.style.transform = `perspective(600px) rotateX(${y}deg) rotateY(${x}deg) scale3d(1.03,1.03,1.03)`;
+    if (typeof window !== "undefined" && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(() => {
+      const el = cardRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = ((clientX - rect.left) / rect.width - 0.5) * 12;
+      const y = ((clientY - rect.top) / rect.height - 0.5) * -12;
+      el.style.transform = `perspective(600px) rotateX(${y}deg) rotateY(${x}deg) scale3d(1.02,1.02,1.02)`;
+    });
   };
   const handleMouseLeave = () => {
+    if (rafId.current) cancelAnimationFrame(rafId.current);
     const el = cardRef.current;
     if (el) el.style.transform = "perspective(600px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)";
   };
@@ -66,7 +74,7 @@ function TiltCard({ cat, delay }: { cat: Cat; delay: number }) {
     <Link
       ref={cardRef}
       href={`/shop?fragrance=${encodeURIComponent(cat.name)}`}
-      className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-md hover:shadow-xl border border-[#EAE0D5] flex flex-col justify-end p-4 card-tilt transition-all duration-300"
+      className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-md hover:shadow-xl border border-[#EAE0D5] flex flex-col justify-end p-4 transition-[border-color,box-shadow] duration-200"
       style={{
         transitionDelay: `${delay}ms`,
       }}

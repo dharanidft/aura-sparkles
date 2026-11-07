@@ -10,7 +10,7 @@ interface UseScrollRevealOptions {
 export function useScrollReveal<T extends HTMLElement>(
   options: UseScrollRevealOptions = {}
 ): RefObject<T> {
-  const { threshold = 0.15, once = true } = options;
+  const { threshold = 0.1, once = true } = options;
   const ref = useRef<T>(null);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export function useScrollReveal<T extends HTMLElement>(
           if (once) observer.disconnect();
         }
       },
-      { threshold }
+      { threshold, rootMargin: "0px 0px 80px 0px" }
     );
 
     observer.observe(el);
@@ -45,7 +45,7 @@ export function useScrollReveal<T extends HTMLElement>(
 
 /** Attach to a container to trigger children with .reveal* classes */
 export function useRevealContainer<T extends HTMLElement>(
-  threshold = 0.1
+  threshold = 0.05
 ): RefObject<T> {
   const ref = useRef<T>(null);
 
@@ -63,7 +63,7 @@ export function useRevealContainer<T extends HTMLElement>(
           observer.disconnect();
         }
       },
-      { threshold }
+      { threshold, rootMargin: "0px 0px 80px 0px" }
     );
 
     observer.observe(container);

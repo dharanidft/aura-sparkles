@@ -8,28 +8,29 @@ import { INITIAL_PRODUCTS, getStoreProducts, fetchStoreProducts } from "@/lib/pr
 import { formatINR } from "@/lib/shipping";
 import { Product } from "@/lib/types";
 
-// Floating candle particles
+// Static floating candle particles to prevent re-render allocations & GPU churn
+const STATIC_PARTICLES = [
+  { id: 0, left: 12, delay: 0.2, duration: 6.5, size: 4 },
+  { id: 1, left: 28, delay: 1.5, duration: 7.2, size: 3 },
+  { id: 2, left: 45, delay: 3.1, duration: 5.8, size: 5 },
+  { id: 3, left: 62, delay: 0.8, duration: 8.0, size: 4 },
+  { id: 4, left: 78, delay: 2.4, duration: 6.0, size: 3 },
+  { id: 5, left: 91, delay: 4.0, duration: 7.5, size: 4 },
+];
+
 function FloatingParticles() {
-  const particles = Array.from({ length: 12 }, (_, i) => ({
-    id: i,
-    left: 5 + Math.random() * 90,
-    delay: Math.random() * 6,
-    duration: 4 + Math.random() * 5,
-    size: 3 + Math.random() * 5,
-  }));
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-      {particles.map((p) => (
+      {STATIC_PARTICLES.map((p) => (
         <span
           key={p.id}
-          className="absolute bottom-0 rounded-full opacity-0"
+          className="absolute bottom-0 rounded-full opacity-0 will-change-transform"
           style={{
             left: `${p.left}%`,
             width: p.size,
             height: p.size,
             background: p.id % 3 === 0 ? "#B69A62" : p.id % 3 === 1 ? "#E8C9C5" : "#FAF7F2",
             animation: `particleRise ${p.duration}s ease-out ${p.delay}s infinite`,
-            boxShadow: `0 0 ${p.size * 2}px ${p.id % 3 === 0 ? "#B69A62" : "#E8C9C5"}`,
           }}
         />
       ))}

@@ -42,16 +42,18 @@
 /* Mobile-Native Platform Foundations */
 html {
   -webkit-tap-highlight-color: transparent;
+  overflow-x: clip;
+  scroll-behavior: smooth;
 }
 
-html, body {
+body {
   background-color: #FFFFFF !important;
   color: var(--color-charcoal);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  overscroll-behavior-y: none;
+  overflow-x: clip;
+  min-height: 100vh;
 }
 
 /* Elimination of 300ms tap delay & long-press selection on interactive controls */

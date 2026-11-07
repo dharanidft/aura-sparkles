@@ -71,10 +71,25 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY;
+          setIsScrolled((prev) => {
+            // Hysteresis deadband prevents rapid oscillation near boundary
+            if (!prev && y > 45) return true;
+            if (prev && y < 15) return false;
+            return prev;
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -112,7 +127,7 @@ export function Header() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 transition-all duration-300 ${
+        className={`sticky top-0 z-40 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-200 ${
           isScrolled
             ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-[#EAE0D5]"
             : "bg-white border-b border-[#EAE0D5]/40"
