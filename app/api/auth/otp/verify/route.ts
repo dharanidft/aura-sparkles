@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { normalizePhoneNumber, verifyOtp } from "@/lib/otp-service";
 import { 
   getCustomerByPhone, 
+  getCustomerByEmail,
   saveCustomer, 
   generateCustomerUid, 
-  getCustomerAddresses,
-  linkOrdersToCustomer
+  getCustomerAddresses, 
+  linkOrdersToCustomer 
 } from "@/lib/customer-store";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
 import { Customer } from "@/lib/customer-types";
@@ -15,6 +16,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
+    const email = body.email;
     const phoneNumber = body.phoneNumber || body.phone;
     const otpCode = body.otpCode || body.otp;
     const countryCode = body.countryCode || "+91";
@@ -22,6 +24,83 @@ export async function POST(request: Request) {
     const firebasePhone = body.firebasePhone;
     const firebaseUid = body.firebaseUid;
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Scenario A: Email OTP Verification
+    // ──────────────────────────────────────────────────────────────────────────
+    if (email && typeof email === "string" && email.includes("@")) {
+      const cleanEmail = email.trim().toLowerCase();
+      if (!otpCode) {
+        return NextResponse.json(
+          { error: "Email address and 6-digit verification code are required." },
+          { status: 400 }
+        );
+      }
+
+      const verification = verifyOtp(cleanEmail, otpCode.toString().trim());
+      if (!verification.valid) {
+        return NextResponse.json(
+          { error: verification.error || "Invalid verification code." },
+          { status: 400 }
+        );
+      }
+
+      const now = new Date().toISOString();
+      let customer = getCustomerByEmail(cleanEmail);
+      let isNewCustomer = false;
+
+      if (!customer) {
+        isNewCustomer = true;
+        const uid = generateCustomerUid();
+        customer = {
+          uid,
+          email: cleanEmail,
+          emailVerified: true,
+          displayName: (displayName || "").trim() || cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          createdAt: now,
+          updatedAt: now,
+          lastLoginAt: now,
+          accountStatus: "ACTIVE",
+        };
+        saveCustomer(customer);
+      } else {
+        customer.lastLoginAt = now;
+        customer.emailVerified = true;
+        if (displayName && (!customer.displayName || customer.displayName === "Aura Customer")) {
+          customer.displayName = displayName.trim();
+        }
+        customer.updatedAt = now;
+        saveCustomer(customer);
+      }
+
+      linkOrdersToCustomer(customer.uid, cleanEmail);
+
+      const sessionToken = createSessionToken(customer.uid, cleanEmail, customer.phoneNumber);
+      const addresses = getCustomerAddresses(customer.uid);
+
+      const response = NextResponse.json({
+        success: true,
+        isNewCustomer,
+        customer,
+        addresses,
+        sessionToken,
+      });
+
+      response.cookies.set({
+        name: SESSION_COOKIE_NAME,
+        value: sessionToken,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_MAX_AGE_SECONDS,
+        path: "/",
+      });
+
+      return response;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Scenario B: Mobile Phone OTP Verification
+    // ──────────────────────────────────────────────────────────────────────────
     let targetPhone = "";
 
     // 1. Verification Mode: Firebase verified credentials passed from client

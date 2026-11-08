@@ -14,6 +14,8 @@ interface AuthContextType {
   refreshCustomer: () => Promise<void>;
   refreshCustomerData: () => Promise<void>;
   sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devLink?: string; warning?: string }>;
+  sendEmailOtp: (email: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devOtp?: string; message?: string }>;
+  verifyEmailOtp: (email: string, otpCode: string, displayName?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
   sendOtp: (phoneNumber: string, countryCode?: string, channel?: "whatsapp" | "sms") => Promise<{ success: boolean; waitSeconds?: number; error?: string; devOtp?: string; message?: string }>;
   verifyOtp: (phoneNumber: string, otpCode: string, displayName?: string, countryCode?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -133,6 +135,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         devLink: data.devLink, 
         warning: data.warning 
       };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Network error. Please try again." };
+    }
+  };
+
+  const sendEmailOtp = async (email: string) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, channel: "email" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || "Failed to send verification code.", waitSeconds: data.waitSeconds };
+      }
+      return { 
+        success: true, 
+        devOtp: data.devOtp, 
+        message: data.message 
+      };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Network error. Please try again." };
+    }
+  };
+
+  const verifyEmailOtp = async (email: string, otpCode: string, displayName?: string) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await fetch("/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, otpCode, displayName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || "Invalid verification code." };
+      }
+      setCustomer(data.customer);
+      setAddresses(data.addresses || []);
+      await fetchOrders();
+      setIsAuthModalOpen(false);
+      return { success: true, isNewCustomer: data.isNewCustomer };
     } catch (err: any) {
       return { success: false, error: err.message || "Network error. Please try again." };
     }
@@ -281,6 +327,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshCustomer,
         refreshCustomerData: refreshCustomer,
         sendEmailSignInLink,
+        sendEmailOtp,
+        verifyEmailOtp,
         sendOtp,
         verifyOtp,
         logout,

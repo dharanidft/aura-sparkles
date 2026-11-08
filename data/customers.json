@@ -23,10 +23,11 @@
     "phoneNumber": "+919566725454",
     "displayName": "Dharanivel Aura VIP",
     "createdAt": "2026-10-23T10:18:17.466Z",
-    "updatedAt": "2026-10-29T18:18:29.074Z",
-    "lastLoginAt": "2026-10-29T18:18:29.073Z",
+    "updatedAt": "2026-11-08T15:32:23.056Z",
+    "lastLoginAt": "2026-11-08T15:32:23.055Z",
     "accountStatus": "ACTIVE",
     "defaultAddressId": "ADDR-304c01432e7c",
-    "email": "contact@aurasparkles.com"
+    "email": "contact@aurasparkles.com",
+    "emailVerified": true
   }
 ]

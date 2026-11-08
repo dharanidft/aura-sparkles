@@ -24,6 +24,8 @@ export function AuthModal() {
     closeAuthModal, 
     authModalRedirect, 
     sendEmailSignInLink,
+    sendEmailOtp,
+    verifyEmailOtp,
     sendOtp,
     verifyOtp
   } = useAuth();
@@ -38,9 +40,11 @@ export function AuthModal() {
   const [phoneStep, setPhoneStep] = useState<"phone_input" | "otp_input">("phone_input");
   const [devOtp, setDevOtp] = useState<string | null>(null);
 
-  // Email link states
+  // Email OTP states
   const [email, setEmail] = useState("");
-  const [emailStep, setEmailStep] = useState<"input" | "sent">("input");
+  const [emailOtpCode, setEmailOtpCode] = useState("");
+  const [emailStep, setEmailStep] = useState<"input" | "otp_input">("input");
+  const [emailDevOtp, setEmailDevOtp] = useState<string | null>(null);
   const [devLink, setDevLink] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
@@ -78,8 +82,10 @@ export function AuthModal() {
       setSuccessMessage(null);
       setDevLink(null);
       setDevOtp(null);
+      setEmailDevOtp(null);
       setWarningMessage(null);
       setOtpCode("");
+      setEmailOtpCode("");
     }
   }, [isAuthModalOpen]);
 
@@ -144,8 +150,65 @@ export function AuthModal() {
   };
 
   // ---------------------------------------------------------------------------
-  // Email Link Handlers
+  // Email OTP & Link Handlers
   // ---------------------------------------------------------------------------
+  const handleSendEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setEmailDevOtp(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+      setErrorMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setIsLoading(true);
+    const res = await sendEmailOtp(cleanEmail);
+    setIsLoading(false);
+
+    if (res.success) {
+      setEmailStep("otp_input");
+      setCooldown(60);
+      setSuccessMessage(`6-digit verification code sent to ${cleanEmail}`);
+      if (res.devOtp) {
+        setEmailDevOtp(res.devOtp);
+      }
+    } else {
+      setErrorMessage(res.error || "Failed to send email verification code.");
+      if (res.waitSeconds) {
+        setCooldown(res.waitSeconds);
+      }
+    }
+  };
+
+  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const cleanOtp = emailOtpCode.trim();
+    if (cleanOtp.length !== 6) {
+      setErrorMessage("Please enter the 6-digit verification code.");
+      return;
+    }
+
+    setIsLoading(true);
+    const cleanEmail = email.trim().toLowerCase();
+    const res = await verifyEmailOtp(cleanEmail, cleanOtp);
+    setIsLoading(false);
+
+    if (res.success) {
+      closeAuthModal();
+      if (authModalRedirect && typeof window !== "undefined") {
+        window.location.href = authModalRedirect;
+      }
+    } else {
+      setErrorMessage(res.error || "Invalid verification code. Please check and try again.");
+    }
+  };
+
   const handleSendEmailLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -164,8 +227,8 @@ export function AuthModal() {
     setIsLoading(false);
 
     if (res.success) {
-      setEmailStep("sent");
       setCooldown(60);
+      setSuccessMessage("Login link generated.");
       if (res.devLink) setDevLink(res.devLink);
       if (res.warning) setWarningMessage(res.warning);
     } else {
@@ -329,7 +392,7 @@ export function AuthModal() {
             }`}
           >
             <Mail className="w-4 h-4" />
-            <span>Email Link</span>
+            <span>Email OTP</span>
           </button>
         </div>
 
@@ -509,12 +572,12 @@ export function AuthModal() {
         )}
 
         {/* =================================================================== */}
-        {/* METHOD 2: EMAIL LINK FLOW                                           */}
+        {/* METHOD 2: EMAIL OTP                                                 */}
         {/* =================================================================== */}
         {authMethod === "email" && (
           <div className="space-y-4">
             {emailStep === "input" ? (
-              <form onSubmit={handleSendEmailLink} className="space-y-4">
+              <form onSubmit={handleSendEmailOtp} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
                     Email Address
@@ -532,39 +595,54 @@ export function AuthModal() {
                     />
                   </div>
                   <p className="text-[11px] text-[#766E65]">
-                    Passwordless email login · No password needed
+                    We will send a 6-digit verification code to your email
                   </p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading || !email.includes("@")}
-                  className="w-full py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full min-h-[48px] py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin text-[#B69A62]" />
-                      <span>Sending Login Link...</span>
+                      <span>Sending Email OTP...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 text-[#B69A62]" />
-                      <span>Send Login Link</span>
+                      <span>Send Email OTP</span>
                       <ArrowRight className="w-4 h-4 text-[#B69A62]" />
                     </>
                   )}
                 </button>
               </form>
             ) : (
-              <div className="space-y-5 animate-fadeIn">
-                {devLink && (
-                  <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 text-left space-y-2">
-                    <div className="flex items-center space-x-1.5 text-amber-900 text-xs font-semibold">
-                      <span>⚡ Instant Sign-In Link (Testing &amp; Development)</span>
+              /* Step 2: Email OTP Entry */
+              <form onSubmit={handleVerifyEmailOtp} className="space-y-4 animate-fadeIn">
+                {emailDevOtp && (
+                  <div className="bg-[#FAF7F2] border border-[#B69A62]/40 rounded-2xl p-3 text-left space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-[#452638]">
+                        ⚡ Email OTP Code: <code className="bg-white border border-[#EAE0D5] px-2 py-0.5 rounded text-[#452638] font-mono text-sm font-bold">{emailDevOtp}</code>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEmailOtpCode(emailDevOtp)}
+                        className="text-[11px] font-semibold text-[#452638] bg-[#B69A62]/20 hover:bg-[#B69A62]/30 px-2.5 py-1 rounded-lg"
+                      >
+                        Auto-fill
+                      </button>
                     </div>
-                    <p className="text-[11px] text-amber-800 leading-relaxed">
-                      {warningMessage || "Email delivery is awaiting Firebase keys or GoDaddy SMTP password in .env."}
-                    </p>
+                  </div>
+                )}
+
+                {devLink && (
+                  <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 text-left space-y-1.5">
+                    <span className="text-xs font-semibold text-amber-900 block">
+                      ⚡ One-Click Instant Sign-In:
+                    </span>
                     <a
                       href={devLink}
                       className="block text-center py-2 px-3 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-medium rounded-xl transition-colors shadow-xs"
@@ -574,38 +652,86 @@ export function AuthModal() {
                   </div>
                 )}
 
-                <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE0D5] text-left space-y-2.5">
-                  <div className="flex items-center space-x-2 text-[#452638] text-xs font-semibold">
-                    <Inbox className="w-4 h-4 text-[#B69A62]" />
-                    <span>Check your email for your sign-in link:</span>
-                  </div>
-                  <p className="text-xs font-medium text-[#452638] break-all bg-white py-1 px-2.5 rounded border border-[#EAE0D5]">
-                    {email}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setEmailStep("input")}
-                    className="text-[#766E65] hover:text-[#452638] underline"
-                  >
-                    Change email
-                  </button>
-                  {cooldown > 0 ? (
-                    <span className="text-[#B69A62] font-semibold">Resend in {cooldown}s</span>
-                  ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
+                      Enter 6-Digit Email Code
+                    </label>
                     <button
                       type="button"
-                      onClick={handleSendEmailLink}
-                      disabled={isLoading}
-                      className="text-[#452638] font-semibold hover:underline"
+                      onClick={() => {
+                        setEmailStep("input");
+                        setEmailOtpCode("");
+                      }}
+                      className="text-xs text-[#766E65] hover:text-[#452638] underline py-1"
                     >
-                      Resend Link
+                      Change Email
                     </button>
-                  )}
+                  </div>
+
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-4 pointer-events-none" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
+                      required
+                      autoFocus
+                      maxLength={6}
+                      value={emailOtpCode}
+                      onChange={(e) => setEmailOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="••••••"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-xl tracking-[0.3em] font-mono font-bold text-[#282522] focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638] min-h-[48px]"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || emailOtpCode.length !== 6}
+                  className="w-full min-h-[48px] py-3.5 px-4 bg-[#452638] hover:bg-[#5D354D] active:scale-[0.99] text-white text-xs uppercase tracking-luxury font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#B69A62]" />
+                      <span>Verifying Code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Verify &amp; Sign In</span>
+                      <ArrowRight className="w-4 h-4 text-[#B69A62]" />
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <div>
+                    {cooldown > 0 ? (
+                      <span className="text-xs text-[#B69A62]">Resend email code in {cooldown}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSendEmailOtp}
+                        disabled={isLoading}
+                        className="text-[#452638] font-semibold hover:underline inline-flex items-center space-x-1"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Resend Email OTP</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSendEmailLink}
+                    disabled={isLoading}
+                    className="text-[#766E65] hover:text-[#452638] text-[11px] underline"
+                  >
+                    Send magic link instead
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         )}

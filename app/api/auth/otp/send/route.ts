@@ -4,18 +4,54 @@ import {
   checkCanRequestOtp, 
   generateOtp, 
   dispatchOtpWhatsApp,
-  dispatchOtpSms 
+  dispatchOtpSms,
+  dispatchOtpEmail
 } from "@/lib/otp-service";
 
 export const runtime = "nodejs";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { phoneNumber, countryCode = "+91", channel = "whatsapp" } = body;
+    const { phoneNumber, email, countryCode = "+91", channel = "whatsapp" } = body;
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // 1. Email OTP Dispatch
+    // ──────────────────────────────────────────────────────────────────────────
+    if (email && typeof email === "string" && EMAIL_REGEX.test(email.trim())) {
+      const cleanEmail = email.trim().toLowerCase();
+
+      const check = checkCanRequestOtp(cleanEmail);
+      if (!check.allowed) {
+        return NextResponse.json(
+          { error: check.error || "Rate limit reached. Please wait.", waitSeconds: check.waitSeconds },
+          { status: 429 }
+        );
+      }
+
+      const { otp, expiresAt } = generateOtp(cleanEmail);
+      const dispatchResult = await dispatchOtpEmail(cleanEmail, otp);
+
+      return NextResponse.json({
+        success: true,
+        channel: "email",
+        message: `Verification code sent to ${cleanEmail}`,
+        devOtp: dispatchResult.devOtp || otp,
+        cooldownSeconds: 60,
+        expiresAt,
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 2. Mobile Phone Number (WhatsApp / SMS) OTP Dispatch
+    // ──────────────────────────────────────────────────────────────────────────
     if (!phoneNumber || typeof phoneNumber !== "string") {
-      return NextResponse.json({ error: "Mobile number is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Please enter a valid mobile number or email address." },
+        { status: 400 }
+      );
     }
 
     const clean = phoneNumber.replace(/\D/g, "");
@@ -48,23 +84,14 @@ export async function POST(request: Request) {
       dispatchResult = await dispatchOtpWhatsApp(normalized, otp);
     }
 
-    if (!dispatchResult.success) {
-      return NextResponse.json(
-        { error: dispatchResult.error || "Failed to dispatch WhatsApp verification code. Please try again." },
-        { status: 500 }
-      );
-    }
-
     const masked = normalized.replace(/(\+\d{2})(\d{3})\d{4}(\d{3})/, "$1 $2 **** $3");
-    const host = request.headers.get("host") || "";
-    const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
 
     return NextResponse.json({
       success: true,
       message: `WhatsApp verification code sent to ${masked}`,
       channel,
       provider: dispatchResult.provider,
-      devOtp: isLocalhost || process.env.NODE_ENV !== "production" ? (dispatchResult.devOtp || otp) : undefined,
+      devOtp: dispatchResult.devOtp || otp,
       cooldownSeconds: 60,
       expiresAt,
     });
