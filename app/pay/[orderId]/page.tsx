@@ -44,6 +44,7 @@ export default function UpiPaymentPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [localQrDataUrl, setLocalQrDataUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,6 +93,34 @@ export default function UpiPaymentPage() {
 
     fetchOrder();
   }, [orderId, accessKey, router]);
+
+  // Generate high-resolution, instant offline QR code locally in the browser (zero external network reliance)
+  useEffect(() => {
+    if (!paymentData?.upiIntentUri) return;
+    let isMounted = true;
+    import("qrcode")
+      .then((QRCode) => {
+        return QRCode.toDataURL(paymentData.upiIntentUri, {
+          width: 320,
+          margin: 2,
+          color: {
+            dark: "#2A1824",
+            light: "#FFFFFF",
+          },
+          errorCorrectionLevel: "M",
+        });
+      })
+      .then((dataUrl) => {
+        if (isMounted) setLocalQrDataUrl(dataUrl);
+      })
+      .catch((err) => {
+        console.warn("Client QR generation fallback:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [paymentData?.upiIntentUri]);
 
   // Real-time status polling: automatically detects instant payment from UPI Gateway webhook or bank sync
   useEffect(() => {
@@ -320,14 +349,21 @@ export default function UpiPaymentPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
-                    paymentData?.upiIntentUri
-                      ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(paymentData.upiIntentUri)}`
-                      : paymentData.qrImageUrl || "/images/upi-qr-placeholder.svg"
+                    localQrDataUrl ||
+                    (paymentData?.upiIntentUri
+                      ? `/api/qr?data=${encodeURIComponent(paymentData.upiIntentUri)}`
+                      : paymentData?.qrImageUrl || "/images/upi-qr-placeholder.svg")
                   }
                   alt="Aura Sparkles UPI QR Code"
                   width={220}
                   height={220}
-                  className="rounded-lg object-contain w-full h-full"
+                  className="rounded-lg object-contain w-full h-full transition-opacity duration-300"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (!img.src.includes("upi-qr-placeholder.svg")) {
+                      img.src = "/images/upi-qr-placeholder.svg";
+                    }
+                  }}
                 />
               </div>
               <p className="text-[11px] text-[#766E65]">
