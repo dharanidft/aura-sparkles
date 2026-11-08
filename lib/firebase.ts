@@ -6,7 +6,10 @@ import {
   isSignInWithEmailLink, 
   signInWithEmailLink, 
   ActionCodeSettings, 
-  UserCredential 
+  UserCredential,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult 
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -114,4 +117,64 @@ export async function signInWithFirebaseEmailLink(
   }
 
   return credential;
+}
+
+let recaptchaVerifier: RecaptchaVerifier | null = null;
+
+export function getRecaptchaVerifier(containerId: string = "recaptcha-container"): RecaptchaVerifier | null {
+  if (typeof window === "undefined") return null;
+  const auth = getFirebaseAuth();
+  if (!auth) return null;
+
+  try {
+    if (!recaptchaVerifier) {
+      recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+        size: "invisible",
+        callback: () => {
+          // reCAPTCHA solved - allow phone sign in
+        },
+      });
+    }
+    return recaptchaVerifier;
+  } catch (err) {
+    console.warn("[Firebase Auth] RecaptchaVerifier init warning:", err);
+    return null;
+  }
+}
+
+/**
+ * Sends real SMS OTP via Firebase Phone Authentication to any mobile carrier in India.
+ */
+export async function sendFirebasePhoneOtp(
+  phoneNumber: string,
+  containerId: string = "recaptcha-container"
+): Promise<{ success: boolean; confirmationResult?: ConfirmationResult; error?: string }> {
+  const auth = getFirebaseAuth();
+  if (!auth) {
+    return { success: false, error: "Firebase Authentication is not configured." };
+  }
+
+  try {
+    const verifier = getRecaptchaVerifier(containerId);
+    if (!verifier) {
+      return { success: false, error: "Could not initialize security verification." };
+    }
+
+    const cleanDigits = phoneNumber.replace(/\D/g, "");
+    const formatted = phoneNumber.startsWith("+") 
+      ? phoneNumber 
+      : cleanDigits.length === 10 
+        ? `+91${cleanDigits}` 
+        : `+${cleanDigits}`;
+
+    const confirmationResult = await signInWithPhoneNumber(auth, formatted, verifier);
+    return { success: true, confirmationResult };
+  } catch (err: any) {
+    console.warn("[Firebase Phone Auth] Error sending SMS:", err);
+    if (recaptchaVerifier) {
+      try { recaptchaVerifier.clear(); } catch {}
+      recaptchaVerifier = null;
+    }
+    return { success: false, error: err?.message || "Failed to send SMS via Firebase." };
+  }
 }

@@ -220,6 +220,8 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="max-w-md w-full bg-white rounded-3xl border border-[#EAE0D5] shadow-xl p-8 space-y-6">
+        {/* Invisible reCAPTCHA container for Firebase Phone SMS */}
+        <div id="recaptcha-container"></div>
         
         {/* Logo and Header */}
         <div className="text-center space-y-3">

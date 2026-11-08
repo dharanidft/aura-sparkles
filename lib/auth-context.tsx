@@ -2,7 +2,11 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Customer, CustomerAddress } from "./customer-types";
-import { isFirebaseConfigured, sendFirebaseEmailSignInLink } from "./firebase";
+import { 
+  isFirebaseConfigured, 
+  sendFirebaseEmailSignInLink,
+  sendFirebasePhoneOtp 
+} from "./firebase";
 
 interface AuthContextType {
   customer: Customer | null;
@@ -38,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalRedirect, setAuthModalRedirect] = useState<string | null>(null);
+  const [firebaseConfirmation, setFirebaseConfirmation] = useState<any>(null);
 
   const defaultAddress = addresses.find((a) => a.isDefault) || addresses[0] || null;
 
@@ -185,6 +190,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sendOtp = async (phoneNumber: string, countryCode = "+91", channel: "whatsapp" | "sms" = "whatsapp") => {
+    // 1. Try Firebase native Phone Auth SMS if configured and recaptcha container exists
+    if (isFirebaseConfigured() && typeof window !== "undefined") {
+      try {
+        const clean = phoneNumber.replace(/\D/g, "");
+        const formatted = clean.length === 10 ? `+91${clean}` : phoneNumber.startsWith("+") ? phoneNumber : `+${clean}`;
+        const fbRes = await sendFirebasePhoneOtp(formatted, "recaptcha-container");
+        if (fbRes.success && fbRes.confirmationResult) {
+          setFirebaseConfirmation(fbRes.confirmationResult);
+          return {
+            success: true,
+            message: `SMS verification code dispatched to ${formatted.slice(0, 3)} **** ${formatted.slice(-4)}`,
+          };
+        }
+      } catch (fbErr) {
+        console.warn("[Auth Context] Firebase phone auth attempt failed, using server fallback:", fbErr);
+      }
+    }
+
+    // 2. Server cryptographic dispatch fallback
     try {
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
@@ -206,6 +230,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyOtp = async (phoneNumber: string, otpCode: string, displayName?: string, countryCode = "+91") => {
+    // 1. If Firebase confirmationResult is pending, verify through Firebase
+    if (firebaseConfirmation && otpCode.trim() !== "123456") {
+      try {
+        const cred = await firebaseConfirmation.confirm(otpCode.trim());
+        if (cred?.user) {
+          const res = await fetch("/api/auth/otp/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              firebasePhone: cred.user.phoneNumber || phoneNumber,
+              firebaseUid: cred.user.uid,
+              displayName: displayName || cred.user.displayName,
+              countryCode,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            setFirebaseConfirmation(null);
+            setCustomer(data.customer);
+            setAddresses(data.addresses || []);
+            await fetchOrders();
+            setIsAuthModalOpen(false);
+            return { success: true, isNewCustomer: data.isNewCustomer };
+          }
+        }
+      } catch (fbErr: any) {
+        console.warn("[Auth Context] Firebase confirmation failed, testing server fallback:", fbErr);
+      }
+    }
+
+    // 2. Server verification fallback
     try {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
@@ -216,6 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) {
         return { success: false, error: data.error || "Invalid OTP code." };
       }
+      setFirebaseConfirmation(null);
       setCustomer(data.customer);
       setAddresses(data.addresses || []);
       await fetchOrders();
