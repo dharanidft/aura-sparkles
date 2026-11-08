@@ -799,14 +799,14 @@ export default function CheckoutPage() {
                       <div>
                         <div className="flex items-center space-x-2">
                           <p className="text-xs font-semibold text-[#452638]">
-                            Direct UPI Payment (GPay, PhonePe, Paytm, BHIM)
+                            Instant UPI Payment (Dynamic QR, GPay, PhonePe, Paytm, BHIM)
                           </p>
                           <span className="px-2 py-0.5 rounded-full bg-[#B69A62]/15 text-[#452638] text-[10px] font-medium tracking-wide">
-                            Recommended
+                            Fastest
                           </span>
                         </div>
                         <p className="text-[11px] text-[#766E65] mt-1 leading-relaxed">
-                          Pay directly to our official HDFC Bank UPI ID or scan QR code. Upload payment screenshot &amp; UTR to submit for verification.
+                          Scan dynamic UPI QR code with exact prefilled amount or pay with 1-tap UPI app. Instant automated verification &amp; order confirmation.
                         </p>
                       </div>
                     </div>

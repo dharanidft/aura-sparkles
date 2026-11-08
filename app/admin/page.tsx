@@ -41,7 +41,9 @@ import {
   MessageSquare,
   Send,
   Smartphone,
-  PlusCircle
+  PlusCircle,
+  Activity,
+  Loader2
 } from "lucide-react";
 import { getAllOrders, updateOrderStatusInStorage } from "@/lib/orders";
 import { 
@@ -144,6 +146,30 @@ export default function AdminPage() {
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // UPI Gateway Test Connection State (upi-gateway-main)
+  const [upiGatewayTesting, setUpiGatewayTesting] = useState(false);
+  const [upiGatewayResult, setUpiGatewayResult] = useState<any>(null);
+
+  const handleTestUpiGateway = async () => {
+    setUpiGatewayTesting(true);
+    setUpiGatewayResult(null);
+    try {
+      const storedPasscode = typeof window !== "undefined" ? sessionStorage.getItem("aura_admin_passcode") : "";
+      const res = await fetch("/api/admin/upi-gateway/test", {
+        method: "POST",
+        headers: {
+          "x-admin-passcode": storedPasscode || passcode || "aura2026",
+        },
+      });
+      const data = await res.json();
+      setUpiGatewayResult(data);
+    } catch (err: any) {
+      setUpiGatewayResult({ success: false, error: err.message });
+    } finally {
+      setUpiGatewayTesting(false);
+    }
+  };
 
   // Product edit modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -2050,6 +2076,141 @@ export default function AdminPage() {
                   Configure your secret admin passcode in your production environment (such as Vercel, Netlify, or server .env) by setting <code className="bg-white px-1.5 py-0.5 rounded border border-[#EAE0D5] text-[#452638] font-mono">ADMIN_PASSCODE=YourSecurePassword</code>. This secret is verified server-side only and is never exposed to the frontend.
                 </p>
               </div>
+            </div>
+
+            {/* ─── Self-Hosted UPI Payment Gateway (upi-gateway-main) ─── */}
+            <div className="bg-white p-6 rounded-2xl border border-[#EAE0D5] shadow-subtle space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAE0D5] pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <QrCode className="w-5 h-5 text-[#B69A62]" />
+                    <h2 className="font-serif text-xl text-[#452638]">Self-Hosted UPI Payment Gateway</h2>
+                    <span className="text-[10px] font-mono px-2 py-0.5 bg-[#FAF6F0] text-[#766E65] border border-[#EAE0D5] rounded-full">
+                      upi-gateway-main
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#766E65]">
+                    Dynamic UPI QR codes, instant UPI app intents (Google Pay, PhonePe, Paytm, BHIM), and automated HMAC-SHA256 webhook reconciliation.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Engine Active</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-neutral-50 rounded-xl border border-[#EAE0D5] space-y-2">
+                  <p className="text-xs font-semibold text-[#452638]">1. Capabilities &amp; Flow</p>
+                  <ul className="text-xs text-[#766E65] space-y-1 list-disc pl-4">
+                    <li>Dynamic UPI QR generation for each checkout with exact prefilled amounts.</li>
+                    <li>One-click mobile deep linking to GPay, PhonePe, Paytm, and BHIM.</li>
+                    <li>Automated order status transition to <code>CONFIRMED / PAID</code>.</li>
+                    <li>Automatic outbound WhatsApp receipt dispatched upon settlement.</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 bg-neutral-50 rounded-xl border border-[#EAE0D5] space-y-2">
+                  <p className="text-xs font-semibold text-[#452638]">2. Webhook Integration URL</p>
+                  <p className="text-xs text-[#766E65]">
+                    Enter this URL inside your UPI Gateway dashboard (<strong>Settings &rarr; API &amp; Webhooks</strong>):
+                  </p>
+                  <div className="p-2 bg-white rounded border border-[#EAE0D5] font-mono text-[11px] text-[#452638] break-all select-all flex items-center justify-between">
+                    <span>https://www.aurasparkles.com/api/webhooks/upi-gateway</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("https://www.aurasparkles.com/api/webhooks/upi-gateway");
+                        showToast("Webhook URL copied to clipboard!");
+                      }}
+                      className="ml-2 p-1 text-[#B69A62] hover:text-[#452638]"
+                      title="Copy URL"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#766E65]">
+                    Subscribed events: <code>order.paid</code>, <code>order.under_review</code>, <code>order.expired</code>.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-neutral-50 rounded-xl border border-[#EAE0D5] space-y-2">
+                  <p className="text-xs font-semibold text-[#452638]">3. Production Environment (.env)</p>
+                  <p className="text-[11px] text-[#766E65]">Configured in your deployment environment variables:</p>
+                  <div className="font-mono text-[10px] bg-white p-2 rounded border border-[#EAE0D5] text-[#452638] space-y-0.5">
+                    <div>UPI_GATEWAY_ENABLED=true</div>
+                    <div>UPI_GATEWAY_URL=http://localhost:8000</div>
+                    <div>UPI_GATEWAY_API_KEY=key_xxx</div>
+                    <div>UPI_GATEWAY_API_SECRET=sec_xxx</div>
+                    <div>UPI_GATEWAY_WEBHOOK_SECRET=sec_xxx</div>
+                    <div>UPI_GATEWAY_ENVIRONMENT=sandbox</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Connection Diagnostics Test */}
+              <div className="p-4 bg-[#FAF6F0]/70 rounded-xl border border-[#EAE0D5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-[#452638] flex items-center space-x-1.5">
+                    <ShieldCheck className="w-4 h-4 text-[#B69A62]" />
+                    <span>Gateway Health &amp; Credentials Diagnostics</span>
+                  </p>
+                  <p className="text-[11px] text-[#766E65]">
+                    Send a test ping to <code>/api/v1/accounts</code> to verify connection and credentials.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTestUpiGateway}
+                  disabled={upiGatewayTesting}
+                  className="px-4 py-2 bg-[#452638] text-white hover:bg-[#5D354D] rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center space-x-1.5 transition-colors disabled:opacity-60"
+                >
+                  {upiGatewayTesting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Testing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="w-3.5 h-3.5 text-[#B69A62]" />
+                      <span>Test Connection</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {upiGatewayResult && (
+                <div
+                  className={`p-3.5 rounded-xl border text-xs ${
+                    upiGatewayResult.success
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                      : "bg-amber-50 border-amber-200 text-amber-900"
+                  }`}
+                >
+                  <div className="flex items-start space-x-2">
+                    {upiGatewayResult.success ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div className="space-y-1 flex-1">
+                      <p className="font-semibold">
+                        {upiGatewayResult.success ? "Connection Successful" : "Connection Test Notice"}
+                      </p>
+                      <p className="text-[11px] leading-relaxed">
+                        {upiGatewayResult.result?.message || upiGatewayResult.error || "Gateway diagnostics finished."}
+                      </p>
+                      {upiGatewayResult.config && (
+                        <div className="font-mono text-[10px] opacity-80 pt-1">
+                          Mode: {upiGatewayResult.config.environment} · URL: {upiGatewayResult.config.url} · API Key: {upiGatewayResult.config.hasApiKey ? "Configured" : "Missing"} · Secret: {upiGatewayResult.config.hasApiSecret ? "Configured" : "Missing"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ─── Razorpay Payment Gateway Integration ─── */}

@@ -72,6 +72,17 @@ export default function UpiPaymentPage() {
           setUploadSuccess(true);
           setUtr(data.order.transactionReference || "");
         }
+
+        // If already paid, trigger celebratory redirect
+        if (data.order.paymentStatus === "PAID" || data.order.paymentStatus === "CONFIRMED") {
+          try {
+            const confetti = (await import("canvas-confetti")).default;
+            confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
+          } catch {}
+          setTimeout(() => {
+            router.push(`/order-success/${orderId}`);
+          }, 2000);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load order.");
       } finally {
@@ -80,7 +91,34 @@ export default function UpiPaymentPage() {
     }
 
     fetchOrder();
-  }, [orderId, accessKey]);
+  }, [orderId, accessKey, router]);
+
+  // Real-time status polling: automatically detects instant payment from UPI Gateway webhook or bank sync
+  useEffect(() => {
+    if (!orderId || !accessKey) return;
+    if (orderData?.paymentStatus === "PAID" || orderData?.paymentStatus === "CONFIRMED") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/orders/${orderId}?key=${accessKey}`);
+        const data = await res.json();
+        if (data.success && data.order) {
+          if (data.order.paymentStatus === "PAID" || data.order.paymentStatus === "CONFIRMED") {
+            setOrderData((prev: any) => ({ ...prev, ...data.order }));
+            try {
+              const confetti = (await import("canvas-confetti")).default;
+              confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+            } catch {}
+            setTimeout(() => {
+              router.push(`/order-success/${orderId}`);
+            }, 2000);
+          }
+        }
+      } catch {}
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [orderId, accessKey, orderData?.paymentStatus, router]);
 
   // Copy UPI ID to clipboard
   const handleCopyUpiId = async () => {
@@ -245,15 +283,29 @@ export default function UpiPaymentPage() {
             <span>Order Reference:</span>
             <strong className="text-[#452638] font-mono">{orderData.orderId}</strong>
           </div>
+
+          {(orderData.paymentStatus === "PAID" || orderData.paymentStatus === "CONFIRMED") && (
+            <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2 animate-fadeIn">
+              <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+              <p className="font-serif text-lg text-emerald-900 font-medium">Payment Verified Successfully!</p>
+              <p className="text-xs text-emerald-700">Thank you! Your order is confirmed. Redirecting to receipt...</p>
+              <Link
+                href={`/order-success/${orderId}`}
+                className="inline-block mt-2 px-5 py-2 bg-emerald-700 text-white rounded-full text-xs font-semibold hover:bg-emerald-800"
+              >
+                View Order Receipt
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* ─── Step 1: Complete UPI Payment ────────────────────────────── */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EAE0D5] shadow-card space-y-6">
           <div className="border-b border-[#EAE0D5] pb-4 flex items-center justify-between">
             <div>
-              <h2 className="font-serif text-xl text-[#452638]">Step 1: Scan &amp; Pay Exact Amount</h2>
+              <h2 className="font-serif text-xl text-[#452638]">Step 1: Scan Dynamic QR or Pay with UPI App</h2>
               <p className="text-xs text-[#766E65] mt-0.5">
-                Pay using Google Pay, PhonePe, Paytm, BHIM, or any HDFC/Bank UPI app.
+                Dynamic QR pre-filled with exact amount • Instant verification with Google Pay, PhonePe, Paytm &amp; BHIM.
               </p>
             </div>
             <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
@@ -262,28 +314,32 @@ export default function UpiPaymentPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            {/* Left: QR Code */}
+            {/* Left: Dynamic QR Code */}
             <div className="text-center space-y-3 bg-[#FAF6F0]/60 p-6 rounded-2xl border border-[#EAE0D5]">
               <div className="relative w-56 h-56 mx-auto bg-white p-3 rounded-2xl border border-[#EAE0D5] shadow-xs flex items-center justify-center">
-                <Image
-                  src={paymentData.qrImageUrl}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={
+                    paymentData?.upiIntentUri
+                      ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(paymentData.upiIntentUri)}`
+                      : paymentData.qrImageUrl || "/images/upi-qr-placeholder.svg"
+                  }
                   alt="Aura Sparkles UPI QR Code"
                   width={220}
                   height={220}
-                  className="rounded-lg object-contain"
-                  priority
+                  className="rounded-lg object-contain w-full h-full"
                 />
               </div>
               <p className="text-[11px] text-[#766E65]">
-                Scan with any UPI app on your phone to pay directly.
+                Dynamic UPI QR — amount &amp; order reference automatically prefilled.
               </p>
             </div>
 
             {/* Right: UPI ID & Mobile App Button */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-xs font-semibold text-[#452638] uppercase tracking-wider">
-                  Official Merchant UPI ID:
+                  Merchant UPI ID:
                 </label>
                 <div className="flex items-center space-x-2">
                   <div className="flex-1 px-4 py-3 bg-[#FAF6F0] border border-[#EAE0D5] rounded-xl font-mono text-sm text-[#452638] font-bold select-all truncate">
@@ -320,8 +376,29 @@ export default function UpiPaymentPage() {
                   <span>PAY USING UPI APP (MOBILE)</span>
                 </button>
                 <p className="text-[10px] text-center text-[#766E65] mt-1.5">
-                  Opens GPay, PhonePe, Paytm, or BHIM directly on mobile devices.
+                  Opens GPay, PhonePe, Paytm, or BHIM with exact ₹{orderData.totalRupees} prefilled.
                 </p>
+              </div>
+
+              {/* Hosted Gateway Checkout Button if available */}
+              {paymentData?.gatewayPaymentUrl && (
+                <div>
+                  <a
+                    href={paymentData.gatewayPaymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 bg-[#FAF6F0] hover:bg-[#F2ECE1] border border-[#B69A62] text-[#452638] text-xs font-semibold uppercase tracking-luxury rounded-xl flex items-center justify-center space-x-2 transition-all shadow-xs"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-[#B69A62]" />
+                    <span>Open Gateway Payment Page &rarr;</span>
+                  </a>
+                </div>
+              )}
+
+              {/* Instant Verification Status Indicator */}
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center space-x-2 text-xs text-emerald-900">
+                <Loader2 className="w-3.5 h-3.5 text-emerald-600 animate-spin flex-shrink-0" />
+                <span>Listening for automatic payment confirmation...</span>
               </div>
 
               {/* Important Instruction Notice */}

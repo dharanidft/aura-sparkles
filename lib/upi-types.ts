@@ -89,6 +89,13 @@ export interface StoredOrder {
     newStatus: OrderPaymentStatus;
     reason?: string;
   }>;
+  // UPI Gateway Integration Fields (upi-gateway-main)
+  gatewayOrderId?: string;
+  gatewayPaymentUrl?: string;
+  gatewayUpiIntent?: string;
+  gatewayStatus?: string;
+  gatewayEnvironment?: "live" | "sandbox";
+  gatewayExpiresAt?: string;
 }
 
 export interface UpiConfig {

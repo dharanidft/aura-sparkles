@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getStoredOrderById } from "@/lib/order-store";
+import { getStoredOrderById, saveStoredOrder } from "@/lib/order-store";
 import { getUpiConfig, generateUpiPaymentUri } from "@/lib/upi-config";
 import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
 import { verifyAdminRequest, canAccessOrder } from "@/lib/security";
+import { getUpiGatewayOrderStatus, getUpiGatewayConfig } from "@/lib/upi-gateway";
+import { dispatchOrderWhatsAppNotification } from "@/lib/whatsapp-notifications";
 
 export const runtime = "nodejs";
 
@@ -32,9 +34,46 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized access to order." }, { status: 403 });
     }
 
+    // If order is still pending and has a gateway reference, check status with UPI Gateway
+    const gwConfig = getUpiGatewayConfig();
+    if (gwConfig.enabled && gwConfig.isConfigured && order.paymentStatus === "PENDING_PAYMENT") {
+      try {
+        const gwLookupId = order.gatewayOrderId || order.orderId;
+        const gwStatus = await getUpiGatewayOrderStatus(gwLookupId);
+        if (gwStatus.success && gwStatus.status === "paid") {
+          console.log(`[Aura Orders] Order ${order.orderId} verified as PAID by UPI Gateway!`);
+          order.paymentStatus = "PAID";
+          order.orderStatus = "Confirmed";
+          order.gatewayStatus = "paid";
+          if (gwStatus.utr && !order.proof) {
+            order.proof = {
+              orderId: order.orderId,
+              transactionReference: gwStatus.utr,
+              screenshotStoragePath: "",
+              screenshotFileName: "verified_via_upi_gateway",
+              screenshotMimeType: "application/json",
+              fileSizeBytes: 0,
+              submittedAt: new Date().toISOString(),
+              verificationStatus: "VERIFIED",
+              verifiedBy: "UPI_GATEWAY",
+              verifiedAt: gwStatus.paidAt || new Date().toISOString(),
+              verificationNote: `Automated instant verification via UPI Gateway (${gwStatus.gatewayOrderId || gwLookupId})`,
+            };
+          }
+          saveStoredOrder(order);
+          dispatchOrderWhatsAppNotification("PAYMENT_VERIFIED", order).catch((err) => {
+            console.warn("[Aura Orders] WhatsApp notification error:", err.message);
+          });
+        }
+      } catch (err: any) {
+        console.warn("[Aura Orders] Gateway status polling notice:", err.message);
+      }
+    }
+
     const upiConfig = getUpiConfig();
     const amountRupees = order.totalPaise / 100;
-    const upiIntentUri = generateUpiPaymentUri(amountRupees, order.orderId);
+    // Prefer gateway dynamic intent if provided; fallback to standard NPCI UPI URI
+    const upiIntentUri = order.gatewayUpiIntent || generateUpiPaymentUri(amountRupees, order.orderId);
 
     return NextResponse.json({
       success: true,
@@ -53,6 +92,8 @@ export async function GET(
         proofSubmittedAt: order.proof?.submittedAt,
         transactionReference: order.proof?.transactionReference,
         verificationNote: order.proof?.verificationNote,
+        gatewayOrderId: order.gatewayOrderId,
+        gatewayStatus: order.gatewayStatus,
       },
       payment: {
         upiId: upiConfig.upiId,
@@ -60,6 +101,8 @@ export async function GET(
         qrImageUrl: upiConfig.qrImageUrl,
         upiIntentUri,
         payableAmount: amountRupees,
+        gatewayPaymentUrl: order.gatewayPaymentUrl,
+        gatewayUpiIntent: order.gatewayUpiIntent,
       },
     });
   } catch (error: any) {

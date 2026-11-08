@@ -1,0 +1,216 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Support\InstallationManager;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Password;
+use Throwable;
+
+class InstallController extends Controller
+{
+    public function __construct(private InstallationManager $installer) {}
+
+    public function index()
+    {
+        return view('install.index', ['requirements' => $this->checkRequirements()]);
+    }
+
+    public function database()
+    {
+        return view('install.database');
+    }
+
+    public function databaseSave(Request $request)
+    {
+        $data = $request->validate([
+            'db_connection' => 'required|in:mysql',
+            'db_host' => ['required', 'string', 'max:255', 'not_regex:/[\r\n]/'],
+            'db_port' => ['required', 'integer', 'between:1,65535'],
+            'db_database' => ['required', 'string', 'max:64', 'regex:/^[A-Za-z0-9_$-]+$/'],
+            'db_username' => ['required', 'string', 'max:128', 'not_regex:/[\r\n]/'],
+            'db_password' => ['nullable', 'string', 'max:512', 'not_regex:/[\r\n]/'],
+            'app_url' => ['required', 'url:http,https', 'max:500'],
+            'app_name' => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
+        ]);
+
+        try {
+            $this->installer->testDatabaseConnection($data);
+        } catch (Throwable) {
+            return back()
+                ->withErrors(['db_host' => 'Could not connect to the database. Check your credentials and try again.'])
+                ->withInput($request->except('db_password'));
+        }
+
+        try {
+            $this->installer->writeEnvironment($data);
+            Artisan::call('config:clear');
+        } catch (Throwable $e) {
+            Log::error('Installer environment write failed', [
+                'exception_type' => $e::class,
+            ]);
+
+            return back()
+                ->withErrors(['app_name' => 'The environment configuration could not be saved. Check file permissions and try again.'])
+                ->withInput($request->except('db_password'));
+        }
+
+        $request->session()->put('installer.database_configured', true);
+
+        return redirect()->route('install.migrate');
+    }
+
+    public function migrate()
+    {
+        try {
+            DB::connection()->getPdo();
+        } catch (Throwable) {
+            return redirect()->route('install.database')->withErrors([
+                'db_host' => 'Configure a working database connection before running migrations.',
+            ]);
+        }
+
+        return view('install.migrate');
+    }
+
+    public function migrateRun()
+    {
+        try {
+            $exitCode = Artisan::call('migrate', ['--force' => true]);
+            $output = Artisan::output();
+
+            if ($exitCode !== 0 || ! $this->installer->databaseIsMigrated()) {
+                Log::error('Installer migration failed', [
+                    'exit_code' => $exitCode,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database migration failed. Check the application logs for details.',
+                ], 500);
+            }
+        } catch (Throwable $e) {
+            Log::error('Installer migration failed', [
+                'exception_type' => $e::class,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Database migration failed. Check the application logs for details.',
+            ], 500);
+        }
+
+        session()->put('installer.migrated', true);
+
+        return response()->json(['success' => true, 'output' => $output]);
+    }
+
+    public function admin()
+    {
+        if (! $this->installer->databaseIsMigrated()) {
+            return redirect()->route('install.migrate')->withErrors([
+                'database' => 'Run the database migrations before creating the administrator.',
+            ]);
+        }
+
+        if ($this->installer->hasAdminUser()) {
+            return redirect()->route('home');
+        }
+
+        return view('install.admin');
+    }
+
+    public function adminSave(Request $request)
+    {
+        if (! $this->installer->databaseIsMigrated()) {
+            return redirect()->route('install.migrate')->withErrors([
+                'database' => 'Run the database migrations before creating the administrator.',
+            ]);
+        }
+
+        if ($this->installer->hasAdminUser()) {
+            abort(409, 'An administrator already exists.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|unique:users,email',
+            'password' => ['required', 'confirmed', Password::min(10)],
+        ]);
+
+        try {
+            DB::transaction(function () use ($request) {
+                if ($this->installer->hasAdminUser()) {
+                    abort(409, 'An administrator already exists.');
+                }
+
+                DB::table('installation_guards')->insert([
+                    'name' => 'primary_admin',
+                    'created_at' => now(),
+                ]);
+
+                if (User::where('role', 'admin')->exists()) {
+                    abort(409, 'An administrator already exists.');
+                }
+
+                $admin = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'role' => 'admin',
+                    'is_active' => true,
+                ]);
+
+                DB::table('installation_guards')
+                    ->where('name', 'primary_admin')
+                    ->update(['user_id' => $admin->id]);
+            });
+        } catch (UniqueConstraintViolationException) {
+            abort(409, 'An administrator already exists.');
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), 'UNIQUE') || str_contains($e->getMessage(), 'Duplicate') || $e->getCode() == 23000) {
+                abort(409, 'An administrator already exists.');
+            }
+            throw $e;
+        }
+
+        $this->installer->markInstalled();
+        $request->session()->put('installer.completed', true);
+
+        Artisan::call('config:clear');
+
+        return redirect()->route('install.done');
+    }
+
+    public function done(Request $request)
+    {
+        if (! $request->session()->pull('installer.completed', false)) {
+            return redirect()->route('home');
+        }
+
+        return view('install.done');
+    }
+
+    private function checkRequirements(): array
+    {
+        return [
+            ['name' => 'PHP >= 8.2',         'pass' => version_compare(PHP_VERSION, '8.2.0', '>=')],
+            ['name' => 'PDO Extension',       'pass' => extension_loaded('pdo')],
+            ['name' => 'PDO MySQL (required)', 'pass' => extension_loaded('pdo_mysql')],
+            ['name' => 'OpenSSL Extension',   'pass' => extension_loaded('openssl')],
+            ['name' => 'Mbstring Extension',  'pass' => extension_loaded('mbstring')],
+            ['name' => 'Tokenizer Extension', 'pass' => extension_loaded('tokenizer')],
+            ['name' => 'JSON Extension',      'pass' => extension_loaded('json')],
+            ['name' => 'cURL Extension',      'pass' => extension_loaded('curl')],
+            ['name' => 'storage/ writable',   'pass' => is_writable(storage_path())],
+            ['name' => '.env writable',       'pass' => is_writable(base_path('.env')) || ! file_exists(base_path('.env'))],
+        ];
+    }
+}

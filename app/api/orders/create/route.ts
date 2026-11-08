@@ -8,6 +8,7 @@ import { sanitizeText, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
 import { checkRateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 import { getAuthenticatedCustomerFromRequest } from "@/lib/session";
 import { dispatchOrderWhatsAppNotification } from "@/lib/whatsapp-notifications";
+import { getUpiGatewayConfig, createUpiGatewayOrder } from "@/lib/upi-gateway";
 
 export const runtime = "nodejs";
 
@@ -105,6 +106,41 @@ export async function POST(request: Request) {
       pincode: (shippingAddress.pincode || "").replace(/\D/g, "").slice(0, 6),
     };
 
+    // 5. Attempt dynamic order creation via Self-Hosted UPI Gateway (upi-gateway-main)
+    const gatewayConfig = getUpiGatewayConfig();
+    let gatewayOrderId: string | undefined;
+    let gatewayPaymentUrl: string | undefined;
+    let gatewayUpiIntent: string | undefined;
+    let gatewayExpiresAt: string | undefined;
+
+    if (gatewayConfig.enabled && gatewayConfig.isConfigured) {
+      try {
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://www.aurasparkles.com").trim().replace(/\/+$/, "");
+        const redirectUrl = `${appUrl}/pay/${orderId}?key=${accessKey}`;
+        const gwResult = await createUpiGatewayOrder({
+          amountRupees: orderTotals.finalTotal,
+          clientOrderId: orderId,
+          customerName: addressSnapshot.fullName,
+          customerEmail: addressSnapshot.email,
+          customerMobile: addressSnapshot.phone,
+          note: `Aura Sparkles ${orderId}`,
+          redirectUrl,
+        });
+
+        if (gwResult.success) {
+          gatewayOrderId = gwResult.gatewayOrderId;
+          gatewayPaymentUrl = gwResult.paymentUrl;
+          gatewayUpiIntent = gwResult.upiIntent;
+          gatewayExpiresAt = gwResult.expiresAt;
+          console.log(`[Aura Orders] Created UPI Gateway order: ${gatewayOrderId} for ${orderId}`);
+        } else {
+          console.warn(`[Aura Orders] UPI Gateway notice: ${gwResult.error}. Operating with direct HDFC UPI mode.`);
+        }
+      } catch (gwErr: any) {
+        console.warn(`[Aura Orders] UPI Gateway non-blocking error: ${gwErr.message}`);
+      }
+    }
+
     const storedOrder: any = {
       orderId,
       customerUid: authenticatedUid,
@@ -122,6 +158,11 @@ export async function POST(request: Request) {
       createdAt: now,
       updatedAt: now,
       accessKey,
+      gatewayOrderId,
+      gatewayPaymentUrl,
+      gatewayUpiIntent,
+      gatewayEnvironment: gatewayConfig.environment,
+      gatewayExpiresAt,
     };
 
     saveStoredOrder(storedOrder);
@@ -142,6 +183,9 @@ export async function POST(request: Request) {
       currency: "INR",
       paymentStatus: "PENDING_PAYMENT",
       paymentUrl: `/pay/${orderId}?key=${accessKey}`,
+      gatewayOrderId,
+      gatewayPaymentUrl,
+      gatewayUpiIntent,
     });
   } catch (error: any) {
     console.error("[Aura Orders] Error creating order:", error);

@@ -1,0 +1,57 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+/vendor
+/node_modules
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+/public/build
+/public/hot
+/public/storage
+
+# ── Storage ───────────────────────────────────────────────────────────────────
+/storage/logs/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing
+/storage/framework/views/*
+/storage/*.key
+/storage/pail
+/storage/installed
+
+# ── Database ──────────────────────────────────────────────────────────────────
+/database/*.sqlite
+/database/*.sqlite-journal
+/database/*.sqlite-shm
+/database/*.sqlite-wal
+upi_gateway
+*.sqlite
+*.sqlite3
+
+# ── Archives & Backups ────────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+__MACOSX
+backup zip/
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+.phpunit.result.cache
+/.phpunit.cache
+
+# ── IDEs & OS ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+/.idea
+/.vscode
+/.fleet
+/.nova
+/.zed
+.phpactor.json
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+/auth.json
+Homestead.json
+Homestead.yaml
