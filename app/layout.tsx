@@ -11,6 +11,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { CursorSparkle } from "@/components/CursorSparkle";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
+import { AuraChatbot } from "@/components/AuraChatbot";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -204,6 +205,7 @@ export default function RootLayout({
             <Toast />
             <AuthModal />
             <CookieConsentBanner />
+            <AuraChatbot />
             <Footer />
           </CartProvider>
         </AuthProvider>
