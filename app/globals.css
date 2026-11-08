@@ -339,7 +339,13 @@ h1, h2, h3, h4, .font-serif, [class*="font-serif"] {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
-.animate-ticker { animation: ticker 22s linear infinite; }
+.animate-ticker { 
+  animation: ticker 50s linear infinite; 
+  will-change: transform;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
 
 /* Hero text word-by-word reveal */
 @keyframes wordReveal {
