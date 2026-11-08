@@ -269,7 +269,7 @@ export async function dispatchOtpSms(phoneNumber: string, otp: string): Promise<
 export async function dispatchOtpWhatsApp(
   phoneNumber: string,
   otp: string
-): Promise<{ success: boolean; provider: string; error?: string; devOtp?: string }> {
+): Promise<{ success: boolean; provider: string; error?: string }> {
   const maskedPhone = phoneNumber.replace(/(\+\d{2})(\d{3})\d{4}(\d{3})/, "$1 $2 **** $3");
   const cleanDigits = phoneNumber.replace(/\D/g, "");
 
@@ -492,10 +492,9 @@ export async function dispatchOtpWhatsApp(
         body: JSON.stringify({ chatId: targetChatId, text: messageText }),
       });
 
-      const isDev = process.env.NODE_ENV !== "production";
       if (res.ok) {
-        console.log(`[Aura WhatsApp Auth] OpenWA dispatched OTP to ${maskedPhone} ${isDev ? `(OTP: ${otp})` : ""}`);
-        return { success: true, provider: "openwa", devOtp: isDev ? otp : undefined };
+        console.log(`[Aura WhatsApp Auth] OpenWA dispatched OTP to ${maskedPhone}`);
+        return { success: true, provider: "openwa" };
       } else {
         const errData = await res.text();
         console.warn(`[Aura WhatsApp Auth] OpenWA responded with ${res.status}:`, errData);
@@ -505,24 +504,75 @@ export async function dispatchOtpWhatsApp(
     }
   }
 
-  // 5. Graceful Fallback Mode: Log code and return devOtp so customer is never blocked
-  console.log(`[Aura WhatsApp OTP Fallback] Active OTP for ${maskedPhone}: ${otp}`);
+  // 5. If all gateways failed, report actual failure (no devOtp / autofill leaks)
+  console.warn(`[Aura WhatsApp Auth] All WhatsApp dispatch providers failed for ${maskedPhone}`);
   return { 
-    success: true, 
-    provider: "fallback", 
-    devOtp: otp 
+    success: false, 
+    provider: "failed_delivery", 
+    error: "WhatsApp gateway is currently offline or unreachable. Please verify your gateway credentials or use Email OTP." 
   };
 }
 
 /**
- * Sends 6-digit OTP code to customer's email address via GoDaddy SMTP.
- * If SMTP is not yet configured or fails, falls back gracefully with devOtp.
+ * Sends 6-digit OTP code to customer's email address via GoDaddy SMTP or Resend API.
  */
 export async function dispatchOtpEmail(
   email: string,
   otp: string
-): Promise<{ success: boolean; provider: string; error?: string; devOtp?: string }> {
+): Promise<{ success: boolean; provider: string; error?: string }> {
   const cleanEmail = email.trim().toLowerCase();
+
+  // 1. Check Resend API first (if RESEND_API_KEY is configured in .env)
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const fromEmail = process.env.RESEND_FROM || "Aura Sparkles <onboarding@resend.dev>";
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [cleanEmail],
+          subject: `Your Aura Sparkles Verification Code: ${otp}`,
+          html: `
+            <div style="font-family: 'Georgia', serif; max-width: 580px; margin: 0 auto; background-color: #FAF7F2; padding: 32px 24px; border-radius: 20px; border: 1px solid #EAE0D5;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #452638; letter-spacing: 0.18em; font-size: 24px; text-transform: uppercase; margin: 0;">AURA SPARKLES</h1>
+                <p style="color: #B69A62; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; margin-top: 4px;">Pure · Elegant · You</p>
+              </div>
+              <div style="background-color: #ffffff; padding: 28px; border-radius: 16px; border: 1px solid #EAE0D5; text-align: center;">
+                <h2 style="color: #452638; font-size: 20px; margin-top: 0;">Login Verification Code</h2>
+                <p style="color: #766E65; font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+                  Enter the 6-digit verification code below to securely sign in to your Aura Sparkles account:
+                </p>
+                <div style="display: inline-block; background-color: #FAF7F2; padding: 14px 28px; border-radius: 12px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #452638; border: 2px dashed #B69A62; margin-bottom: 20px;">
+                  ${otp}
+                </div>
+                <p style="color: #A89F91; font-size: 11px; margin-top: 16px; line-height: 1.5;">
+                  This code is valid for 5 minutes. If you did not request this code, you can safely ignore this email.
+                </p>
+              </div>
+              <p style="color: #A89F91; font-size: 10px; text-align: center; margin-top: 24px;">
+                © ${new Date().getFullYear()} Aura Sparkles · Handcrafted Luxury Scented Candles
+              </p>
+            </div>
+          `,
+        }),
+      });
+
+      if (res.ok) {
+        console.log(`[Aura Email OTP] Dispatched OTP via Resend to ${cleanEmail}`);
+        return { success: true, provider: "resend" };
+      }
+    } catch (e: any) {
+      console.warn("[Aura Email OTP] Resend dispatch failed:", e.message);
+    }
+  }
+
+  // 2. GoDaddy / Custom SMTP Delivery
   const smtpHost = process.env.SMTP_HOST || "smtpout.secureserver.net";
   const smtpUser = process.env.SMTP_USER || "contact@aurasparkles.com";
   const smtpPass = process.env.SMTP_PASS;
@@ -583,15 +633,20 @@ export async function dispatchOtpEmail(
       console.log(`[Aura Email OTP] Dispatched OTP ${otp} via SMTP to ${cleanEmail}`);
       return { success: true, provider: "smtp" };
     } catch (err: any) {
-      console.warn("[Aura Email OTP] SMTP dispatch failed, using instant fallback:", err.message);
+      console.error("[Aura Email OTP] SMTP dispatch failed:", err.message);
+      return { 
+        success: false, 
+        provider: "smtp", 
+        error: `Email delivery failed: ${err.message}` 
+      };
     }
   }
 
-  // Graceful fallback when SMTP is placeholder or offline
-  console.log(`[Aura Email OTP Fallback] Code for ${cleanEmail}: ${otp}`);
+  // If SMTP password is not set in .env
+  console.warn(`[Aura Email OTP] Cannot send real email: SMTP_PASS is unconfigured in .env`);
   return { 
-    success: true, 
-    provider: "fallback", 
-    devOtp: otp 
+    success: false, 
+    provider: "unconfigured_smtp", 
+    error: "Email delivery service is pending configuration. Please set your GoDaddy password for contact@aurasparkles.com in SMTP_PASS inside .env." 
   };
 }

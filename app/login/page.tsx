@@ -40,14 +40,11 @@ function LoginPageContent() {
   const [otpCode, setOtpCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [phoneStep, setPhoneStep] = useState<"phone_input" | "otp_input">("phone_input");
-  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   // Email OTP states
   const [email, setEmail] = useState("");
   const [emailOtpCode, setEmailOtpCode] = useState("");
   const [emailStep, setEmailStep] = useState<"input" | "otp_input">("input");
-  const [emailDevOtp, setEmailDevOtp] = useState<string | null>(null);
-  const [devLink, setDevLink] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   // Common states
@@ -81,11 +78,10 @@ function LoginPageContent() {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
-    setDevOtp(null);
 
     const clean = phone.replace(/\D/g, "");
     if (clean.length < 10) {
-      setErrorMessage("Please enter a valid 10-digit Indian WhatsApp mobile number.");
+      setErrorMessage("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
 
@@ -96,12 +92,9 @@ function LoginPageContent() {
     if (res.success) {
       setPhoneStep("otp_input");
       setCooldown(60);
-      setSuccessMessage(`WhatsApp OTP code sent to +91 ${clean.slice(-10)}`);
-      if (res.devOtp) {
-        setDevOtp(res.devOtp);
-      }
+      setSuccessMessage(`Verification code sent to +91 ${clean.slice(-10)}`);
     } else {
-      setErrorMessage(res.error || "Failed to send WhatsApp verification code.");
+      setErrorMessage(res.error || "Failed to send verification code.");
       if (res.waitSeconds) {
         setCooldown(res.waitSeconds);
       }
@@ -115,7 +108,7 @@ function LoginPageContent() {
 
     const cleanOtp = otpCode.trim();
     if (cleanOtp.length !== 6) {
-      setErrorMessage("Please enter the 6-digit OTP code received on WhatsApp.");
+      setErrorMessage("Please enter the 6-digit OTP code received.");
       return;
     }
 
@@ -138,7 +131,6 @@ function LoginPageContent() {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
-    setEmailDevOtp(null);
 
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
@@ -154,9 +146,6 @@ function LoginPageContent() {
       setEmailStep("otp_input");
       setCooldown(60);
       setSuccessMessage(`6-digit verification code sent to ${cleanEmail}`);
-      if (res.devOtp) {
-        setEmailDevOtp(res.devOtp);
-      }
     } else {
       setErrorMessage(res.error || "Failed to send email verification code.");
       if (res.waitSeconds) {
@@ -191,7 +180,6 @@ function LoginPageContent() {
   const handleSendEmailLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-    setDevLink(null);
     setWarningMessage(null);
 
     const cleanEmail = email.trim().toLowerCase();
@@ -206,8 +194,7 @@ function LoginPageContent() {
 
     if (res.success) {
       setCooldown(60);
-      setSuccessMessage("Login link generated.");
-      if (res.devLink) setDevLink(res.devLink);
+      setSuccessMessage("Login link dispatched to your email.");
       if (res.warning) setWarningMessage(res.warning);
     } else {
       setErrorMessage(res.error || "Failed to send sign-in link.");
@@ -360,23 +347,6 @@ function LoginPageContent() {
             ) : (
               /* Step 2: OTP Entry */
               <form onSubmit={handleVerifyWhatsAppOtp} className="space-y-4 animate-fadeIn">
-                {devOtp && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-left space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-emerald-900">
-                        ⚡ WhatsApp OTP Code: <code className="bg-emerald-100 px-2 py-0.5 rounded text-emerald-950 font-mono text-sm">{devOtp}</code>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setOtpCode(devOtp)}
-                        className="text-[11px] font-semibold text-emerald-700 underline hover:text-emerald-900 p-1"
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">
@@ -500,37 +470,6 @@ function LoginPageContent() {
             ) : (
               /* Step 2: Email OTP Entry */
               <form onSubmit={handleVerifyEmailOtp} className="space-y-4 animate-fadeIn">
-                {emailDevOtp && (
-                  <div className="bg-[#FAF7F2] border border-[#B69A62]/40 rounded-2xl p-3 text-left space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-[#452638]">
-                        ⚡ Email OTP Code: <code className="bg-white border border-[#EAE0D5] px-2 py-0.5 rounded text-[#452638] font-mono text-sm font-bold">{emailDevOtp}</code>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setEmailOtpCode(emailDevOtp)}
-                        className="text-[11px] font-semibold text-[#452638] bg-[#B69A62]/20 hover:bg-[#B69A62]/30 px-2.5 py-1 rounded-lg"
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {devLink && (
-                  <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 text-left space-y-1.5">
-                    <span className="text-xs font-semibold text-amber-900 block">
-                      ⚡ One-Click Instant Sign-In:
-                    </span>
-                    <a
-                      href={devLink}
-                      className="block text-center py-2 px-3 bg-[#452638] hover:bg-[#5D354D] text-white text-xs font-medium rounded-xl transition-colors shadow-xs"
-                    >
-                      Click Here to Sign In Instantly →
-                    </a>
-                  </div>
-                )}
-
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-[#452638]">

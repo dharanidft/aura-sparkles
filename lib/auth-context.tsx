@@ -17,10 +17,10 @@ interface AuthContextType {
   defaultAddress: CustomerAddress | null;
   refreshCustomer: () => Promise<void>;
   refreshCustomerData: () => Promise<void>;
-  sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devLink?: string; warning?: string }>;
-  sendEmailOtp: (email: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; devOtp?: string; message?: string }>;
+  sendEmailSignInLink: (email: string, returnPath?: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; warning?: string }>;
+  sendEmailOtp: (email: string) => Promise<{ success: boolean; waitSeconds?: number; error?: string; message?: string }>;
   verifyEmailOtp: (email: string, otpCode: string, displayName?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
-  sendOtp: (phoneNumber: string, countryCode?: string, channel?: "whatsapp" | "sms") => Promise<{ success: boolean; waitSeconds?: number; error?: string; devOtp?: string; message?: string }>;
+  sendOtp: (phoneNumber: string, countryCode?: string, channel?: "whatsapp" | "sms") => Promise<{ success: boolean; waitSeconds?: number; error?: string; message?: string }>;
   verifyOtp: (phoneNumber: string, otpCode: string, displayName?: string, countryCode?: string) => Promise<{ success: boolean; isNewCustomer?: boolean; error?: string }>;
   logout: () => Promise<void>;
   saveAddress: (addressData: Partial<CustomerAddress>) => Promise<{ success: boolean; address?: CustomerAddress; error?: string }>;
@@ -137,7 +137,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { 
         success: true, 
-        devLink: data.devLink, 
         warning: data.warning 
       };
     } catch (err: any) {
@@ -159,7 +158,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { 
         success: true, 
-        devOtp: data.devOtp, 
         message: data.message 
       };
     } catch (err: any) {
@@ -190,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sendOtp = async (phoneNumber: string, countryCode = "+91", channel: "whatsapp" | "sms" = "whatsapp") => {
-    // 1. Try Firebase native Phone Auth SMS if configured and recaptcha container exists
+    // 1. If Firebase Phone Auth is configured, attempt native SMS delivery
     if (isFirebaseConfigured() && typeof window !== "undefined") {
       try {
         const clean = phoneNumber.replace(/\D/g, "");
@@ -203,12 +201,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             message: `SMS verification code dispatched to ${formatted.slice(0, 3)} **** ${formatted.slice(-4)}`,
           };
         }
-      } catch (fbErr) {
-        console.warn("[Auth Context] Firebase phone auth attempt failed, using server fallback:", fbErr);
+        if (fbRes.error) {
+          // Firebase explicit error (e.g. Phone auth disabled in Firebase Console)
+          let friendlyError = fbRes.error;
+          if (fbRes.error.includes("operation-not-allowed")) {
+            friendlyError = "Phone authentication is not enabled in Firebase Console. Please enable Phone sign-in under Firebase Console > Authentication > Sign-in method.";
+          }
+          return {
+            success: false,
+            error: friendlyError,
+          };
+        }
+      } catch (fbErr: any) {
+        console.warn("[Auth Context] Firebase phone auth attempt failed:", fbErr);
+        return {
+          success: false,
+          error: fbErr?.message || "Failed to send SMS verification code.",
+        };
       }
     }
 
-    // 2. Server cryptographic dispatch fallback
+    // 2. Server WhatsApp / SMS dispatch if Firebase is not active
     try {
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
@@ -221,7 +234,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { 
         success: true, 
-        devOtp: data.devOtp, 
         message: data.message 
       };
     } catch (err: any) {

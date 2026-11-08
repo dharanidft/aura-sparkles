@@ -34,11 +34,20 @@ export async function POST(request: Request) {
       const { otp, expiresAt } = generateOtp(cleanEmail);
       const dispatchResult = await dispatchOtpEmail(cleanEmail, otp);
 
+      if (!dispatchResult.success) {
+        return NextResponse.json(
+          { 
+            error: dispatchResult.error || "Failed to send verification code to email.",
+            provider: dispatchResult.provider 
+          },
+          { status: 502 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
         channel: "email",
-        message: `Verification code sent to ${cleanEmail}`,
-        devOtp: dispatchResult.devOtp || otp,
+        message: `6-digit verification code sent to ${cleanEmail}`,
         cooldownSeconds: 60,
         expiresAt,
       });
@@ -77,11 +86,21 @@ export async function POST(request: Request) {
     const { otp, expiresAt } = generateOtp(normalized);
 
     // Dispatch via WhatsApp (or SMS fallback)
-    let dispatchResult: { success: boolean; provider: string; error?: string; devOtp?: string };
+    let dispatchResult: { success: boolean; provider: string; error?: string };
     if (channel === "sms") {
       dispatchResult = await dispatchOtpSms(normalized, otp);
     } else {
       dispatchResult = await dispatchOtpWhatsApp(normalized, otp);
+    }
+
+    if (!dispatchResult.success) {
+      return NextResponse.json(
+        { 
+          error: dispatchResult.error || "Failed to send WhatsApp verification code.",
+          provider: dispatchResult.provider 
+        },
+        { status: 502 }
+      );
     }
 
     const masked = normalized.replace(/(\+\d{2})(\d{3})\d{4}(\d{3})/, "$1 $2 **** $3");
@@ -91,7 +110,6 @@ export async function POST(request: Request) {
       message: `WhatsApp verification code sent to ${masked}`,
       channel,
       provider: dispatchResult.provider,
-      devOtp: dispatchResult.devOtp || otp,
       cooldownSeconds: 60,
       expiresAt,
     });
