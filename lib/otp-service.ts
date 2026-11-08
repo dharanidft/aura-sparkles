@@ -524,6 +524,8 @@ export async function dispatchOtpEmail(
 
   // 1. Check Resend API first (if RESEND_API_KEY is configured in .env)
   const resendApiKey = process.env.RESEND_API_KEY;
+  let lastResendError: string | null = null;
+
   if (resendApiKey) {
     try {
       const fromEmail = process.env.RESEND_FROM || "Aura Sparkles <onboarding@resend.dev>";
@@ -566,8 +568,13 @@ export async function dispatchOtpEmail(
       if (res.ok) {
         console.log(`[Aura Email OTP] Dispatched OTP via Resend to ${cleanEmail}`);
         return { success: true, provider: "resend" };
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        lastResendError = errData.message || `Resend HTTP ${res.status}`;
+        console.warn("[Aura Email OTP] Resend dispatch response:", errData);
       }
     } catch (e: any) {
+      lastResendError = e.message;
       console.warn("[Aura Email OTP] Resend dispatch failed:", e.message);
     }
   }
@@ -642,11 +649,20 @@ export async function dispatchOtpEmail(
     }
   }
 
-  // If SMTP password is not set in .env
-  console.warn(`[Aura Email OTP] Cannot send real email: SMTP_PASS is unconfigured in .env`);
+  // If Resend gave an error (e.g. sandbox restriction)
+  if (lastResendError) {
+    return {
+      success: false,
+      provider: "resend",
+      error: lastResendError,
+    };
+  }
+
+  // If neither Resend nor SMTP is configured
+  console.warn(`[Aura Email OTP] Cannot send real email: No active email credentials in .env`);
   return { 
     success: false, 
     provider: "unconfigured_smtp", 
-    error: "Email delivery service is pending configuration. Please set your GoDaddy password for contact@aurasparkles.com in SMTP_PASS inside .env." 
+    error: "Email delivery service is pending configuration. Please verify aurasparkles.com at resend.com/domains or configure SMTP_PASS in .env." 
   };
 }
