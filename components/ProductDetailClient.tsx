@@ -22,6 +22,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Product } from "@/lib/types";
+import { getStoreProducts } from "@/lib/products-data";
 import { useCart } from "@/lib/cart-context";
 import { formatINR, checkIndianPincode, PincodeCheckResult, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
 import { ProductCard } from "@/components/ProductCard";
@@ -42,6 +43,24 @@ interface ProductDetailClientProps {
 export function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
   const { addItem, toggleWishlist, isWishlisted, showToast } = useCart();
   const wishlisted = isWishlisted(product.id);
+
+  const [currentProduct, setCurrentProduct] = useState<Product>(product);
+
+  useEffect(() => {
+    setCurrentProduct(product);
+  }, [product]);
+
+  useEffect(() => {
+    const handleStoreUpdate = () => {
+      const storeProducts = getStoreProducts();
+      const updated = storeProducts.find((p) => p.id === product.id || p.slug === product.slug);
+      if (updated) {
+        setCurrentProduct(updated);
+      }
+    };
+    window.addEventListener("aura_products_updated", handleStoreUpdate);
+    return () => window.removeEventListener("aura_products_updated", handleStoreUpdate);
+  }, [product.id, product.slug]);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -85,7 +104,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const handleTouchEnd = () => {
     if (!touchStartX.current || !touchEndX.current) return;
     const diff = touchStartX.current - touchEndX.current;
-    const imgLen = product.images?.length || 0;
+    const imgLen = currentProduct.images?.length || 0;
     if (diff > 40 && imgLen > 1) {
       // Swiped Left -> Next Image
       setActiveImageIndex((prev) => (prev + 1) % imgLen);
@@ -200,11 +219,11 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
               aria-label="Swipe to change image"
             >
               <Image
-                src={product.images[activeImageIndex] || "/images/logo.png"}
-                alt={`${product.name} - ${product.sizeVariant || "View"}`}
+                src={currentProduct.images?.[activeImageIndex] || currentProduct.images?.[0] || "/images/logo.png"}
+                alt={`${currentProduct.name} - ${currentProduct.sizeVariant || "View"}`}
                 fill
                 priority
-                unoptimized={!(product.images[activeImageIndex] || "").startsWith("/uploads/") && !(product.images[activeImageIndex] || "").startsWith("/images/")}
+                unoptimized={!((currentProduct.images?.[activeImageIndex] || "").startsWith("/uploads/") || (currentProduct.images?.[activeImageIndex] || "").startsWith("/images/"))}
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-contain p-2 transition-transform duration-300 ease-out"
               />
@@ -220,9 +239,9 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
               </div>
 
               {/* Mobile pagination dots */}
-              {product.images.length > 1 && (
+              {(currentProduct.images?.length || 0) > 1 && (
                 <div className="absolute bottom-3 inset-x-0 flex justify-center space-x-1.5 z-10 sm:hidden">
-                  {product.images.map((_, i) => (
+                  {currentProduct.images.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveImageIndex(i)}
@@ -237,9 +256,9 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
             </div>
 
             {/* Thumbnail selector */}
-            {product.images.length > 1 && (
+            {(currentProduct.images?.length || 0) > 1 && (
               <div className="flex space-x-3 overflow-x-auto pb-1">
-                {product.images.map((img, idx) => (
+                {currentProduct.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
@@ -855,8 +874,8 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         <div className="flex items-center space-x-3 min-w-0">
           <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#EAE0D5] flex-shrink-0 bg-[#FAF7F2]">
             <Image
-              src={product.images?.[0] || "/images/logo.png"}
-              alt={product.imageAlts?.[0] || product.name}
+              src={currentProduct.images?.[0] || "/images/logo.png"}
+              alt={currentProduct.imageAlts?.[0] || currentProduct.name}
               fill
               className="object-cover"
             />

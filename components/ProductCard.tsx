@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Heart, ShoppingBag, Star, Sparkles } from "lucide-react";
 import { Product } from "@/lib/types";
+import { getStoreProducts } from "@/lib/products-data";
 import { useCart } from "@/lib/cart-context";
 import { formatINR } from "@/lib/shipping";
 import { getProductReviewStats } from "@/lib/reviews";
@@ -26,6 +27,19 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   useEffect(() => {
     setImgSrc(product.images?.[0] || "/images/logo.png");
   }, [product.images]);
+
+  // Reactive binding to authoritative store updates for this product
+  useEffect(() => {
+    const handleStoreUpdate = () => {
+      const storeProducts = getStoreProducts();
+      const current = storeProducts.find((p) => p.id === product.id || p.slug === product.slug);
+      if (current && current.images?.[0]) {
+        setImgSrc(current.images[0]);
+      }
+    };
+    window.addEventListener("aura_products_updated", handleStoreUpdate);
+    return () => window.removeEventListener("aura_products_updated", handleStoreUpdate);
+  }, [product.id, product.slug]);
 
   // Requirement 4: Calculate rating strictly from real stored review data
   const [reviewStats, setReviewStats] = useState<{ count: number; averageRating: number | null }>({

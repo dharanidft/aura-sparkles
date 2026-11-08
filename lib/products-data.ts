@@ -2017,24 +2017,43 @@ export async function fetchStoreProducts(): Promise<Product[]> {
   return getStoreProducts();
 }
 
+function sanitizeProductsForLocalStorage(products: Product[]): Product[] {
+  return products.map((p) => {
+    if (!p.images || !Array.isArray(p.images)) return p;
+    // Strip giant base64 dataUrls from localStorage to prevent 5MB quota errors
+    const sanitizedImages = p.images.map((img) => {
+      if (typeof img === "string" && img.startsWith("data:image/") && img.length > 50000) {
+        return "/images/logo.png";
+      }
+      return img;
+    });
+    return { ...p, images: sanitizedImages };
+  });
+}
+
 export function saveStoreProducts(products: Product[]): void {
   if (typeof window === "undefined") return;
   const tempKey = "aura_products_temp";
   try {
-    // 1. Serialize first to catch any payload/serialization errors
-    const serialized = JSON.stringify(products);
+    const safeProducts = sanitizeProductsForLocalStorage(products);
+    const serialized = JSON.stringify(safeProducts);
 
-    // 2. Write to temporary key to guarantee storage space and atomic persistence
-    localStorage.setItem(tempKey, serialized);
-
-    // 3. Persist products to primary key
-    localStorage.setItem("aura_products", serialized);
-
-    // 4. Clean up temporary key
-    localStorage.removeItem(tempKey);
-
-    // 5. Write catalogue version as the final commit marker
-    localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
+    // Write to temporary key to guarantee storage space and atomic persistence
+    try {
+      localStorage.setItem(tempKey, serialized);
+      localStorage.setItem("aura_products", serialized);
+      localStorage.removeItem(tempKey);
+      localStorage.setItem("aura_catalogue_version", STORE_CATALOGUE_VERSION);
+    } catch (storageErr) {
+      console.warn("Storage quota hit in saveStoreProducts, clearing stale cache:", storageErr);
+      try {
+        localStorage.removeItem(tempKey);
+        localStorage.removeItem("aura_products");
+        localStorage.setItem("aura_products", serialized);
+      } catch (retryErr) {
+        console.error("Critical localStorage quota exceeded; rely on server product store:", retryErr);
+      }
+    }
 
     window.dispatchEvent(new Event("aura_products_updated"));
   } catch (err) {

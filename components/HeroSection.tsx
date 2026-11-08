@@ -259,7 +259,7 @@ export function HeroSection() {
               {/* Main image - uncropped with object-contain */}
               <div className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-[#EAE0D5] group flex items-center justify-center p-3">
                 <Image
-                  src={featuredProduct.images[0] || "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85"}
+                  src={featuredProduct.images?.[0] || "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85"}
                   alt={`${featuredProduct.name} - ${featuredProduct.netWeight}`}
                   fill
                   className={`object-contain p-2 transition-transform duration-[1.2s] ease-out group-hover:scale-105 ${imageLoaded ? "scale-100" : "scale-110"}`}
