@@ -204,7 +204,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (fbRes.error) {
           let friendlyError = fbRes.error;
           const lower = fbRes.error.toLowerCase();
-          if (lower.includes("operation-not-allowed") || lower.includes("internal-error") || lower.includes("region")) {
+          if (lower.includes("billing")) {
+            friendlyError = "Firebase SMS requires the Blaze plan for real carrier SMS. To test for free right now, add your phone number under Firebase Console > Authentication > Sign-in method > Phone > 'Phone numbers for testing' (with PIN 123456).";
+          } else if (lower.includes("operation-not-allowed") || lower.includes("internal-error") || lower.includes("region")) {
             friendlyError = "SMS Region Policy: India (+91) is not enabled in Firebase. Please enable India under Firebase Console > Authentication > Settings > SMS region policy.";
           } else if (lower.includes("captcha") || lower.includes("recaptcha")) {
             friendlyError = "Security verification failed. Please refresh and try again.";
