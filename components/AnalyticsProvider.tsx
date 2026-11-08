@@ -7,7 +7,7 @@ import { hasAnalyticsConsent } from "@/lib/analytics";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1623908339479567";
 
 function AnalyticsTracker() {
   const pathname = usePathname();
@@ -93,14 +93,14 @@ export function AnalyticsProvider() {
         </>
       )}
 
-      {/* Meta Pixel */}
+      {/* Meta Pixel (Fallback if not already mounted in <head>) */}
       {META_PIXEL_ID && (
-        <>
-          <Script
-            id="meta-pixel"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
+        <Script
+          id="meta-pixel-fallback"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== "undefined" && !window.fbq) {
                 !function(f,b,e,v,n,t,s)
                 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
                 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -111,19 +111,10 @@ export function AnalyticsProvider() {
                 'https://connect.facebook.net/en_US/fbevents.js');
                 fbq('init', '${META_PIXEL_ID}');
                 fbq('track', 'PageView');
-              `,
-            }}
-          />
-          <noscript>
-            <img
-              height="1"
-              width="1"
-              style={{ display: "none" }}
-              src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-              alt=""
-            />
-          </noscript>
-        </>
+              }
+            `,
+          }}
+        />
       )}
     </>
   );
