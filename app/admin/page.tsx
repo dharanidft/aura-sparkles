@@ -576,23 +576,45 @@ export default function AdminPage() {
           console.warn("Upload endpoint returned error:", errData);
         }
       } catch (uploadErr) {
-        console.warn("Direct upload endpoint failed, falling back to local file reader:", uploadErr);
+        console.warn("Direct upload endpoint failed, trying JSON base64 upload:", uploadErr);
       }
 
-      // Safe local fallback if server upload endpoint fails
+      // Safe fallback: send base64 dataUrl to /api/admin/products/upload-image to persist to public/uploads/
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const dataUrl = e.target?.result as string;
-        if (dataUrl) {
-          if (isEdit) {
-            setEditingProduct((prev) =>
-              prev ? { ...prev, images: [...prev.images, dataUrl] } : null
-            );
-          } else {
-            setNewProdImages((prev) => [...prev, dataUrl]);
+        if (!dataUrl) return;
+
+        try {
+          const jsonRes = await fetch("/api/admin/products/upload-image", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-passcode": getAdminPasscode(),
+            },
+            body: JSON.stringify({ dataUrl, filename: file.name }),
+          });
+
+          if (jsonRes.ok) {
+            const data = await jsonRes.json();
+            if (data.url) {
+              if (isEdit) {
+                setEditingProduct((prev) =>
+                  prev ? { ...prev, images: [...prev.images, data.url] } : null
+                );
+              } else {
+                setNewProdImages((prev) => [...prev, data.url]);
+              }
+              showToast("Image saved to server upload store!");
+              return;
+            }
           }
-          showToast("Image loaded from device!");
+        } catch (postErr) {
+          console.warn("Failed to save base64 to server upload store:", postErr);
         }
+
+        // Only as absolute last resort: warn user if image cannot be saved to server
+        showToast("Could not upload image to server. Please check file format.");
       };
       reader.readAsDataURL(file);
     }

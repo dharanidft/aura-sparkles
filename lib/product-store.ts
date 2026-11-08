@@ -59,6 +59,27 @@ export function saveAuthoritativeProducts(products: Product[]): void {
 }
 
 /**
+ * Finds a single product by its slug from authoritative store.
+ */
+export function getAuthoritativeProductBySlug(slug: string): Product | undefined {
+  const products = getAuthoritativeProducts();
+  return products.find((p) => p.slug === slug);
+}
+
+/**
+ * Updates a specific product in authoritative store.
+ */
+export function updateAuthoritativeProduct(id: string, updates: Partial<Product>): Product | null {
+  const products = getAuthoritativeProducts();
+  const idx = products.findIndex((p) => p.id === id);
+  if (idx === -1) return null;
+
+  products[idx] = { ...products[idx], ...updates };
+  saveAuthoritativeProducts(products);
+  return products[idx];
+}
+
+/**
  * Resets products to official defaults.
  */
 export function resetAuthoritativeProducts(): Product[] {
