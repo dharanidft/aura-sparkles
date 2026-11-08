@@ -1798,12 +1798,19 @@ export default function AdminPage() {
                   {products.map((prod) => (
                     <tr key={prod.id} className="hover:bg-neutral-50/50 transition-colors">
                       <td className="p-4 flex items-center space-x-3">
-                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-[#EAE0D5] p-1 shadow-xs">
-                          <Image 
-                            src={prod.images[0] || "/images/logo.png"} 
+                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-[#EAE0D5] p-1 shadow-xs flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={prod.images && prod.images.length > 0 ? prod.images[0] : "/images/logo.png"} 
                             alt={prod.name} 
-                            fill 
-                            className="object-contain" 
+                            loading="lazy"
+                            className="w-full h-full object-contain" 
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (target.src !== window.location.origin + "/images/logo.png" && target.src !== "/images/logo.png") {
+                                target.src = "/images/logo.png";
+                              }
+                            }}
                           />
                         </div>
                         <div>

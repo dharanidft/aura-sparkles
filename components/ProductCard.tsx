@@ -109,7 +109,7 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
             alt={product.imageAlts?.[0] || `${product.name} - Handcrafted Scented Candle by Aura Sparkles`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            unoptimized={!imgSrc.startsWith("/uploads/") && !imgSrc.startsWith("/images/")}
+            unoptimized={true}
             onError={() => setImgSrc("/images/logo.png")}
             className="object-contain p-2.5 group-hover:scale-105 transition-transform duration-500 ease-out drop-shadow-sm"
           />

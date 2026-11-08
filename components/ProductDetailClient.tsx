@@ -223,7 +223,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                 alt={`${currentProduct.name} - ${currentProduct.sizeVariant || "View"}`}
                 fill
                 priority
-                unoptimized={!((currentProduct.images?.[activeImageIndex] || "").startsWith("/uploads/") || (currentProduct.images?.[activeImageIndex] || "").startsWith("/images/"))}
+                unoptimized={true}
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-contain p-2 transition-transform duration-300 ease-out"
               />
@@ -272,7 +272,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                       src={img}
                       alt={`Thumbnail ${idx + 1}`}
                       fill
-                      unoptimized={!img.startsWith("/uploads/") && !img.startsWith("/images/")}
+                      unoptimized={true}
                       className="object-contain p-0.5"
                     />
                   </button>
