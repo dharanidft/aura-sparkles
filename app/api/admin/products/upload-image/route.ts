@@ -47,10 +47,11 @@ export async function POST(request: Request) {
       }
 
       const safeBaseName = (origName ? path.basename(origName, path.extname(origName)) : "upload")
-        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "_")
         .slice(0, 40);
       const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-      const filename = `${safeBaseName}-${uniqueSuffix}.${subType}`;
+      const filename = `${safeBaseName || "product"}-${uniqueSuffix}.${subType}`;
       const filePath = path.join(UPLOADS_DIR, filename);
 
       fs.writeFileSync(filePath, buffer);
@@ -95,10 +96,10 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(bytes);
 
     // Compute extension safely
-    const ext = path.extname(file.name).toLowerCase() || (mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg");
-    const safeBaseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 40);
+    const ext = (path.extname(file.name).toLowerCase() || (mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg")).toLowerCase();
+    const safeBaseName = path.basename(file.name, ext).toLowerCase().replace(/[^a-z0-9_-]/g, "_").slice(0, 40);
     const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    const filename = `${safeBaseName}-${uniqueSuffix}${ext}`;
+    const filename = `${safeBaseName || "product"}-${uniqueSuffix}${ext}`;
     const filePath = path.join(UPLOADS_DIR, filename);
 
     fs.writeFileSync(filePath, buffer);

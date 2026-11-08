@@ -77,16 +77,23 @@ export async function middleware(request: NextRequest) {
   }
 
   // Normalise trailing slash (except root) to avoid duplicate content
-  if (pathname !== "/" && pathname.endsWith("/") && !pathname.startsWith("/api/")) {
+  if (
+    pathname !== "/" &&
+    pathname.endsWith("/") &&
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/uploads/")
+  ) {
     const cleanUrl = request.nextUrl.clone();
     cleanUrl.pathname = pathname.slice(0, -1);
     return NextResponse.redirect(cleanUrl, 301);
   }
 
-  // Normalise uppercase URLs to lowercase for public pages
+  // Normalise uppercase URLs to lowercase for public pages (except static assets and API)
   if (
     !pathname.startsWith("/api/") &&
     !pathname.startsWith("/_next/") &&
+    !pathname.startsWith("/uploads/") &&
+    !pathname.startsWith("/images/") &&
     /[A-Z]/.test(pathname)
   ) {
     const lowerUrl = request.nextUrl.clone();

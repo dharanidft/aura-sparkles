@@ -62,7 +62,11 @@ import { AuraFont, FONT_MAP, FONT_LIST } from "@/components/Header";
 // Admin requests are authenticated server-side via signed HttpOnly session cookie or x-admin-passcode
 const getAdminPasscode = (): string => {
   if (typeof window === "undefined") return "aura2026";
-  return localStorage.getItem("aura_admin_passcode") || "aura2026";
+  return (
+    sessionStorage.getItem("aura_admin_passcode") ||
+    localStorage.getItem("aura_admin_passcode") ||
+    "aura2026"
+  );
 };
 
 export interface QuickImageTemplate {
@@ -174,6 +178,7 @@ export default function AdminPage() {
   // Product edit modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editImageUrlInput, setEditImageUrlInput] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
   // New product form state
@@ -438,6 +443,8 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setIsAuthenticated(true);
+        localStorage.setItem("aura_admin_passcode", passcode);
+        sessionStorage.setItem("aura_admin_passcode", passcode);
         setAuthError("");
         loadAdminData();
       } else {
@@ -563,86 +570,102 @@ export default function AdminPage() {
   // ─── Image Helpers for New / Edit Product ───────────────────────────────────
   const handleImageUpload = async (files: FileList | null, isEdit: boolean) => {
     if (!files || files.length === 0) return;
+    setIsUploadingImage(true);
     showToast("Uploading candle image to server...");
 
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) {
-        alert("Please select a valid image file (PNG, JPG, WebP, GIF).");
-        continue;
-      }
-
-      let uploadedUrl = "";
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/admin/products/upload-image", {
-          method: "POST",
-          headers: {
-            "x-admin-passcode": getAdminPasscode(),
-          },
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.url) {
-            uploadedUrl = data.url;
-            if (isEdit) {
-              setEditingProduct((prev) =>
-                prev ? { ...prev, images: [...prev.images, uploadedUrl] } : null
-              );
-            } else {
-              setNewProdImages((prev) => [...prev, uploadedUrl]);
-            }
-            showToast("Candle image uploaded & saved!");
-            continue;
-          }
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          console.warn("Upload endpoint returned error:", errData);
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) {
+          alert("Please select a valid image file (PNG, JPG, WebP, GIF, AVIF).");
+          continue;
         }
-      } catch (uploadErr) {
-        console.warn("Direct upload endpoint failed, trying JSON base64 upload:", uploadErr);
-      }
 
-      // Safe fallback: send base64 dataUrl to /api/admin/products/upload-image to persist to public/uploads/
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string;
-        if (!dataUrl) return;
-
+        let uploadedUrl = "";
         try {
-          const jsonRes = await fetch("/api/admin/products/upload-image", {
+          const formData = new FormData();
+          formData.append("file", file);
+          const res = await fetch("/api/admin/products/upload-image", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
               "x-admin-passcode": getAdminPasscode(),
             },
-            body: JSON.stringify({ dataUrl, filename: file.name }),
+            body: formData,
           });
 
-          if (jsonRes.ok) {
-            const data = await jsonRes.json();
+          if (res.ok) {
+            const data = await res.json();
             if (data.url) {
+              uploadedUrl = data.url;
               if (isEdit) {
                 setEditingProduct((prev) =>
-                  prev ? { ...prev, images: [...prev.images, data.url] } : null
+                  prev ? { ...prev, images: [...prev.images, uploadedUrl] } : null
                 );
               } else {
-                setNewProdImages((prev) => [...prev, data.url]);
+                setNewProdImages((prev) => [...prev, uploadedUrl]);
               }
-              showToast("Image saved to server upload store!");
-              return;
+              showToast("Candle image uploaded & saved!");
+              continue;
+            }
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            console.warn("Upload endpoint returned error:", errData);
+            if (errData?.error) {
+              showToast(errData.error);
             }
           }
-        } catch (postErr) {
-          console.warn("Failed to save base64 to server upload store:", postErr);
+        } catch (uploadErr) {
+          console.warn("Direct upload endpoint failed, trying JSON base64 upload:", uploadErr);
         }
 
-        // Only as absolute last resort: warn user if image cannot be saved to server
-        showToast("Could not upload image to server. Please check file format.");
-      };
-      reader.readAsDataURL(file);
+        // Safe fallback: send base64 dataUrl to /api/admin/products/upload-image to persist to public/uploads/
+        await new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            const dataUrl = e.target?.result as string;
+            if (!dataUrl) {
+              resolve();
+              return;
+            }
+
+            try {
+              const jsonRes = await fetch("/api/admin/products/upload-image", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-admin-passcode": getAdminPasscode(),
+                },
+                body: JSON.stringify({ dataUrl, filename: file.name }),
+              });
+
+              if (jsonRes.ok) {
+                const data = await jsonRes.json();
+                if (data.url) {
+                  if (isEdit) {
+                    setEditingProduct((prev) =>
+                      prev ? { ...prev, images: [...prev.images, data.url] } : null
+                    );
+                  } else {
+                    setNewProdImages((prev) => [...prev, data.url]);
+                  }
+                  showToast("Image saved to server upload store!");
+                  resolve();
+                  return;
+                }
+              }
+            } catch (postErr) {
+              console.warn("Failed to save base64 to server upload store:", postErr);
+            }
+
+            showToast("Could not upload image to server. Please check file format.");
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    } finally {
+      setIsUploadingImage(false);
+      if (editFileInputRef.current) editFileInputRef.current.value = "";
+      if (addFileInputRef.current) addFileInputRef.current.value = "";
     }
   };
 
@@ -2462,11 +2485,21 @@ export default function AdminPage() {
 
                   <button
                     type="button"
+                    disabled={isUploadingImage}
                     onClick={() => editFileInputRef.current?.click()}
-                    className="px-3.5 py-2 bg-[#452638] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#5D354D] shadow-xs"
+                    className="px-3.5 py-2 bg-[#452638] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#5D354D] disabled:opacity-60 shadow-xs"
                   >
-                    <Upload className="w-3.5 h-3.5 text-[#B69A62]" />
-                    <span>Upload Image File</span>
+                    {isUploadingImage ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 text-[#B69A62] animate-spin" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-3.5 h-3.5 text-[#B69A62]" />
+                        <span>Upload Image File</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -2538,13 +2571,23 @@ export default function AdminPage() {
                       key={idx}
                       className="group relative aspect-square rounded-2xl overflow-hidden border-2 border-[#EAE0D5] bg-white p-2 shadow-xs flex items-center justify-center"
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={imgUrl}
                         alt={`Photo ${idx + 1}`}
-                        fill
-                        unoptimized
-                        className="object-contain p-2"
+                        loading="lazy"
+                        className="w-full h-full object-contain p-1"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.style.display = "none";
+                          const fallback = target.parentElement?.querySelector(".img-fallback-box");
+                          if (fallback) (fallback as HTMLElement).style.display = "flex";
+                        }}
                       />
+                      <div className="img-fallback-box hidden flex-col items-center justify-center text-center p-2 text-neutral-400">
+                        <AlertTriangle className="w-6 h-6 text-amber-500 mb-1" />
+                        <span className="text-[10px] text-neutral-500 font-medium">Image unavailable</span>
+                      </div>
 
                       {/* Primary Badge */}
                       {idx === 0 ? (
@@ -2774,11 +2817,21 @@ export default function AdminPage() {
 
                   <button
                     type="button"
+                    disabled={isUploadingImage}
                     onClick={() => addFileInputRef.current?.click()}
-                    className="px-3.5 py-2 bg-[#452638] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#5D354D] shadow-xs"
+                    className="px-3.5 py-2 bg-[#452638] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#5D354D] disabled:opacity-60 shadow-xs"
                   >
-                    <Upload className="w-3.5 h-3.5 text-[#B69A62]" />
-                    <span>Upload Image File</span>
+                    {isUploadingImage ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 text-[#B69A62] animate-spin" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-3.5 h-3.5 text-[#B69A62]" />
+                        <span>Upload Image File</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -2851,13 +2904,23 @@ export default function AdminPage() {
                         key={idx}
                         className="group relative aspect-square rounded-2xl overflow-hidden border-2 border-[#EAE0D5] bg-white p-2 shadow-xs flex items-center justify-center"
                       >
-                        <Image
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
                           src={imgUrl}
                           alt={`Uploaded photo ${idx + 1}`}
-                          fill
-                          unoptimized
-                          className="object-contain p-2"
+                          loading="lazy"
+                          className="w-full h-full object-contain p-1"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const fallback = target.parentElement?.querySelector(".img-fallback-box");
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
                         />
+                        <div className="img-fallback-box hidden flex-col items-center justify-center text-center p-2 text-neutral-400">
+                          <AlertTriangle className="w-6 h-6 text-amber-500 mb-1" />
+                          <span className="text-[10px] text-neutral-500 font-medium">Image unavailable</span>
+                        </div>
 
                         {idx === 0 ? (
                           <span className="absolute top-2 left-2 bg-[#452638] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-xs">
