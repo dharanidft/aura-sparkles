@@ -202,10 +202,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
         }
         if (fbRes.error) {
-          // Firebase explicit error (e.g. Phone auth disabled in Firebase Console)
           let friendlyError = fbRes.error;
-          if (fbRes.error.includes("operation-not-allowed")) {
-            friendlyError = "Phone authentication is not enabled in Firebase Console. Please enable Phone sign-in under Firebase Console > Authentication > Sign-in method.";
+          const lower = fbRes.error.toLowerCase();
+          if (lower.includes("operation-not-allowed") || lower.includes("internal-error") || lower.includes("region")) {
+            friendlyError = "SMS Region Policy: India (+91) is not enabled in Firebase. Please enable India under Firebase Console > Authentication > Settings > SMS region policy.";
+          } else if (lower.includes("captcha") || lower.includes("recaptcha")) {
+            friendlyError = "Security verification failed. Please refresh and try again.";
+          } else if (lower.includes("quota")) {
+            friendlyError = "SMS quota exceeded for today. Please try again tomorrow or use Email OTP.";
           }
           return {
             success: false,
