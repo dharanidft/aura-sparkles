@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatINR, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
+import { SafeImage } from "@/components/SafeImage";
 
 export function CartDrawer() {
   const {
@@ -323,12 +324,12 @@ export function CartDrawer() {
                   animation: `fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 40}ms forwards`,
                 }}
               >
-                <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-white border border-[#EAE0D5] flex-shrink-0 p-1">
-                  <Image
-                    src={item.product.images[0] || "/images/logo.png"}
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-white border border-[#D6D3D1] flex-shrink-0 p-1 flex items-center justify-center">
+                  <SafeImage
+                    src={item.product.images?.[0] || ""}
                     alt={item.product.name}
-                    fill
-                    className="object-contain p-0.5"
+                    fallbackTitle={item.product.name}
+                    className="w-full h-full object-contain p-0.5"
                   />
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">

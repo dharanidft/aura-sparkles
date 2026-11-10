@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { SafeImage } from "@/components/SafeImage";
 import { 
   Lock, 
   Package, 
@@ -1798,19 +1799,12 @@ export default function AdminPage() {
                   {products.map((prod) => (
                     <tr key={prod.id} className="hover:bg-neutral-50/50 transition-colors">
                       <td className="p-4 flex items-center space-x-3">
-                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-[#EAE0D5] p-1 shadow-xs flex items-center justify-center">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={prod.images && prod.images.length > 0 ? prod.images[0] : "/images/logo.png"} 
-                            alt={prod.name} 
-                            loading="lazy"
-                            className="w-full h-full object-contain" 
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              if (target.src !== window.location.origin + "/images/logo.png" && target.src !== "/images/logo.png") {
-                                target.src = "/images/logo.png";
-                              }
-                            }}
+                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-[#D6D3D1] p-1 shadow-xs flex items-center justify-center">
+                          <SafeImage
+                            src={prod.images && prod.images.length > 0 ? prod.images[0] : ""}
+                            alt={prod.name}
+                            fallbackTitle={prod.name}
+                            className="w-full h-full object-contain"
                           />
                         </div>
                         <div>
@@ -2578,23 +2572,12 @@ export default function AdminPage() {
                       key={idx}
                       className="group relative aspect-square rounded-2xl overflow-hidden border-2 border-[#EAE0D5] bg-white p-2 shadow-xs flex items-center justify-center"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <SafeImage
                         src={imgUrl}
                         alt={`Photo ${idx + 1}`}
-                        loading="lazy"
+                        fallbackTitle={editingProduct.name}
                         className="w-full h-full object-contain p-1"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          target.style.display = "none";
-                          const fallback = target.parentElement?.querySelector(".img-fallback-box");
-                          if (fallback) (fallback as HTMLElement).style.display = "flex";
-                        }}
                       />
-                      <div className="img-fallback-box hidden flex-col items-center justify-center text-center p-2 text-neutral-400">
-                        <AlertTriangle className="w-6 h-6 text-amber-500 mb-1" />
-                        <span className="text-[10px] text-neutral-500 font-medium">Image unavailable</span>
-                      </div>
 
                       {/* Primary Badge */}
                       {idx === 0 ? (
@@ -2911,23 +2894,12 @@ export default function AdminPage() {
                         key={idx}
                         className="group relative aspect-square rounded-2xl overflow-hidden border-2 border-[#EAE0D5] bg-white p-2 shadow-xs flex items-center justify-center"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <SafeImage
                           src={imgUrl}
                           alt={`Uploaded photo ${idx + 1}`}
-                          loading="lazy"
+                          fallbackTitle="New Product"
                           className="w-full h-full object-contain p-1"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = "none";
-                            const fallback = target.parentElement?.querySelector(".img-fallback-box");
-                            if (fallback) (fallback as HTMLElement).style.display = "flex";
-                          }}
                         />
-                        <div className="img-fallback-box hidden flex-col items-center justify-center text-center p-2 text-neutral-400">
-                          <AlertTriangle className="w-6 h-6 text-amber-500 mb-1" />
-                          <span className="text-[10px] text-neutral-500 font-medium">Image unavailable</span>
-                        </div>
 
                         {idx === 0 ? (
                           <span className="absolute top-2 left-2 bg-[#452638] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-xs">

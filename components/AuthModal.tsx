@@ -17,6 +17,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { OtpInput } from "@/components/OtpInput";
 
 export function AuthModal() {
   const { 
@@ -484,20 +485,11 @@ export function AuthModal() {
                     </button>
                   </div>
 
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-4 pointer-events-none" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="one-time-code"
-                      required
-                      autoFocus
-                      maxLength={6}
+                  <div className="pt-1">
+                    <OtpInput
                       value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="••••••"
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-xl tracking-[0.3em] font-mono font-bold text-[#282522] focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 min-h-[48px]"
+                      onChange={(val) => setOtpCode(val)}
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -607,20 +599,11 @@ export function AuthModal() {
                     </button>
                   </div>
 
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-[#766E65] absolute left-3.5 top-4 pointer-events-none" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="one-time-code"
-                      required
-                      autoFocus
-                      maxLength={6}
+                  <div className="pt-1">
+                    <OtpInput
                       value={emailOtpCode}
-                      onChange={(e) => setEmailOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="••••••"
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#EAE0D5] rounded-xl text-center text-xl tracking-[0.3em] font-mono font-bold text-[#282522] focus:outline-none focus:border-[#452638] focus:ring-1 focus:ring-[#452638] min-h-[48px]"
+                      onChange={(val) => setEmailOtpCode(val)}
+                      disabled={isLoading}
                     />
                   </div>
                 </div>

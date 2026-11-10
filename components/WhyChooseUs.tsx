@@ -53,13 +53,13 @@ export function WhyChooseUs() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs uppercase tracking-[0.15em] text-[#B69A62] font-semibold mb-2">
+          <p className="text-xs uppercase tracking-[0.15em] text-[#A16207] font-semibold mb-2">
             The Aura Difference
           </p>
-          <h2 className="font-serif text-3xl md:text-4xl text-[#452638] font-normal tracking-tight">
+          <h2 className="font-serif text-3xl md:text-4xl text-[#1C1917] font-normal tracking-tight">
             Why Choose Aura Sparkles
           </h2>
-          <div className="w-12 h-[1px] bg-[#B69A62] mx-auto my-4" />
+          <div className="w-12 h-[1px] bg-[#A16207] mx-auto my-4" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

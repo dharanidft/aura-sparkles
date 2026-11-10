@@ -30,6 +30,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { CustomerAddress, AddressType } from "@/lib/customer-types";
 import { formatINR } from "@/lib/shipping";
+import { SafeImage } from "@/components/SafeImage";
 
 type AccountTab = "overview" | "orders" | "addresses" | "profile";
 
@@ -672,12 +673,12 @@ function AccountDashboardContent() {
                             <div className="space-y-3">
                               {order.items?.map((item: any, idx: number) => (
                                 <div key={idx} className="flex items-center space-x-3">
-                                  <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-[#FAF7F2] border border-[#EAE0D5] flex-shrink-0">
-                                    <Image
-                                      src={item.image || "/images/products/rose-candle.png"}
+                                  <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-white border border-[#D6D3D1] flex-shrink-0 p-1 flex items-center justify-center">
+                                    <SafeImage
+                                      src={item.image || ""}
                                       alt={item.name}
-                                      fill
-                                      className="object-cover"
+                                      fallbackTitle={item.name}
+                                      className="w-full h-full object-contain"
                                     />
                                   </div>
                                   <div className="flex-1 min-w-0">

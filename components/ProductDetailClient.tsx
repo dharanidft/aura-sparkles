@@ -19,13 +19,17 @@ import {
   MapPin,
   Share2,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Info
 } from "lucide-react";
 import { Product } from "@/lib/types";
 import { getStoreProducts } from "@/lib/products-data";
 import { useCart } from "@/lib/cart-context";
 import { formatINR, checkIndianPincode, PincodeCheckResult, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
 import { ProductCard } from "@/components/ProductCard";
+import { SafeImage } from "@/components/SafeImage";
 import { 
   getStoredReviews, 
   getProductReviewStats, 
@@ -84,6 +88,19 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const [formFeedback, setFormFeedback] = useState<{ text: string; isError: boolean } | null>(null);
 
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
+  const buySectionRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [showBurnerGuide, setShowBurnerGuide] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!buySectionRef.current) return;
+      const rect = buySectionRef.current.getBoundingClientRect();
+      setShowStickyBar(rect.bottom < 80);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     trackViewItem(product);
@@ -215,25 +232,22 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden border border-[#EAE0D5] shadow-card flex items-center justify-center p-3 select-none touch-pan-y"
-              aria-label="Swipe to change image"
+              className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden border border-[#D6D3D1] shadow-card flex items-center justify-center p-3 select-none touch-pan-y group"
+              aria-label="Product image gallery"
             >
-              <Image
-                src={currentProduct.images?.[activeImageIndex] || currentProduct.images?.[0] || "/images/logo.png"}
+              <SafeImage
+                src={currentProduct.images?.[activeImageIndex] || currentProduct.images?.[0] || ""}
                 alt={`${currentProduct.name} - ${currentProduct.sizeVariant || "View"}`}
-                fill
-                priority
-                unoptimized={true}
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-contain p-2 transition-transform duration-300 ease-out"
+                fallbackTitle={currentProduct.name}
+                className="w-full h-full object-contain p-2 transition-transform duration-300 ease-out group-hover:scale-105"
               />
 
               {/* Brand watermark */}
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md shadow-xs border border-[#EAE0D5]">
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md shadow-xs border border-[#D6D3D1]">
                 <div className="relative w-4 h-4 rounded-full overflow-hidden flex-shrink-0">
                   <Image src="/images/logo.png" alt="Aura Sparkles Logo" fill className="object-contain" />
                 </div>
-                <span className="text-[9px] font-bold tracking-wider uppercase text-[#452638]">
+                <span className="text-[9px] font-bold tracking-wider uppercase text-[#1C1917]">
                   AURA SPARKLES
                 </span>
               </div>
@@ -247,7 +261,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                       onClick={() => setActiveImageIndex(i)}
                       aria-label={`Show image ${i + 1}`}
                       className={`h-1.5 rounded-full transition-all ${
-                        activeImageIndex === i ? "w-5 bg-[#452638]" : "w-1.5 bg-[#EAE0D5]"
+                        activeImageIndex === i ? "w-5 bg-[#1C1917]" : "w-1.5 bg-[#D6D3D1]"
                       }`}
                     />
                   ))}
@@ -262,18 +276,17 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all p-1 bg-white ${
+                    className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all p-1 bg-white cursor-pointer ${
                       activeImageIndex === idx
-                        ? "border-[#452638] shadow-sm"
-                        : "border-[#EAE0D5] hover:border-[#B69A62]"
+                        ? "border-[#1C1917] shadow-sm ring-2 ring-[#A16207]/30"
+                        : "border-[#D6D3D1] hover:border-[#A16207]"
                     }`}
                   >
-                    <Image
+                    <SafeImage
                       src={img}
                       alt={`Thumbnail ${idx + 1}`}
-                      fill
-                      unoptimized={true}
-                      className="object-contain p-0.5"
+                      fallbackTitle={currentProduct.name}
+                      className="w-full h-full object-contain p-0.5"
                     />
                   </button>
                 ))}
@@ -381,44 +394,98 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
               </div>
             </div>
 
-            {/* Scent Notes Pyramid */}
+            {/* Scent Notes Olfactory Visualizer */}
             {product.notes && (
-              <div className="p-4 bg-[#F2E9DF]/40 rounded-xl border border-[#E8C9C5]/50 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-luxury text-[#452638]">
-                  Fragrance Note Pyramid
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-                  <div className="border-r border-[#EAE0D5] pr-2">
-                    <span className="text-[10px] uppercase font-bold text-[#B69A62]">Top Notes</span>
-                    <p className="text-[#452638] font-medium mt-0.5">{product.notes.top.join(", ")}</p>
+              <div className="p-5 bg-gradient-to-br from-[#FAF7F2] to-white rounded-2xl border border-[#D6D3D1] space-y-4 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4 text-[#A16207]" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#1C1917]">
+                      Olfactory Fragrance Pyramid
+                    </p>
                   </div>
-                  <div className="border-r border-[#EAE0D5] px-2">
-                    <span className="text-[10px] uppercase font-bold text-[#B69A62]">Heart Notes</span>
-                    <p className="text-[#452638] font-medium mt-0.5">{product.notes.heart.join(", ")}</p>
+                  {/* Scent intensity indicator */}
+                  <div className="flex items-center space-x-1" title="Fragrance Intensity: 4 of 5">
+                    <span className="text-[10px] text-[#44403C] mr-1">Intensity:</span>
+                    <div className="flex space-x-1">
+                      <span className="w-2 h-2 rounded-full bg-[#A16207]" />
+                      <span className="w-2 h-2 rounded-full bg-[#A16207]" />
+                      <span className="w-2 h-2 rounded-full bg-[#A16207]" />
+                      <span className="w-2 h-2 rounded-full bg-[#A16207]" />
+                      <span className="w-2 h-2 rounded-full bg-[#D6D3D1]" />
+                    </div>
                   </div>
-                  <div className="pl-2">
-                    <span className="text-[10px] uppercase font-bold text-[#B69A62]">Base Notes</span>
-                    <p className="text-[#452638] font-medium mt-0.5">{product.notes.base.join(", ")}</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                  <div className="p-3 rounded-xl bg-white/80 border border-[#D6D3D1] shadow-xs">
+                    <span className="text-[10px] uppercase font-bold text-[#A16207] tracking-wider block">Top Notes</span>
+                    <p className="text-[#1C1917] font-medium mt-1 leading-relaxed">{product.notes.top.join(" · ")}</p>
+                    <span className="text-[9px] text-[#44403C]/70 mt-1 block">First 15 mins impression</span>
                   </div>
+                  <div className="p-3 rounded-xl bg-white/80 border border-[#D6D3D1] shadow-xs">
+                    <span className="text-[10px] uppercase font-bold text-[#A16207] tracking-wider block">Heart Notes</span>
+                    <p className="text-[#1C1917] font-medium mt-1 leading-relaxed">{product.notes.heart.join(" · ")}</p>
+                    <span className="text-[9px] text-[#44403C]/70 mt-1 block">Main aromatic character</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/80 border border-[#D6D3D1] shadow-xs">
+                    <span className="text-[10px] uppercase font-bold text-[#A16207] tracking-wider block">Base Notes</span>
+                    <p className="text-[#1C1917] font-medium mt-1 leading-relaxed">{product.notes.base.join(" · ")}</p>
+                    <span className="text-[9px] text-[#44403C]/70 mt-1 block">Lingering evening sillage</span>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-[#44403C] flex items-center justify-between pt-1 border-t border-[#D6D3D1]/60">
+                  <span>Room throw: <strong>150–250 sq ft</strong></span>
+                  <span>Pure cotton wick · Lead free</span>
                 </div>
               </div>
             )}
 
+            {/* Interactive Candle Care & Burner Guide Accordion */}
+            <div className="border border-[#D6D3D1] rounded-2xl overflow-hidden bg-white shadow-xs">
+              <button
+                type="button"
+                onClick={() => setShowBurnerGuide(!showBurnerGuide)}
+                className="w-full px-5 py-3.5 flex items-center justify-between text-left hover:bg-neutral-50/80 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center space-x-2">
+                  <Flame className="w-4 h-4 text-[#A16207]" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#1C1917]">
+                    Master Burner Guide & Candle Care
+                  </span>
+                </div>
+                {showBurnerGuide ? (
+                  <ChevronUp className="w-4 h-4 text-[#44403C]" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[#44403C]" />
+                )}
+              </button>
+
+              {showBurnerGuide && (
+                <div className="px-5 pb-4 pt-1 border-t border-[#D6D3D1]/60 space-y-2 text-xs text-[#44403C] leading-relaxed">
+                  <p><strong>• Memory Burn:</strong> On first lighting, allow wax to melt fully to jar edges (approx 2 hours) to prevent tunneling.</p>
+                  <p><strong>• Wick Trimming:</strong> Trim cotton wick to 6mm (1/4 inch) before each light to eliminate soot and smoke.</p>
+                  <p><strong>• Safe Extinguishing:</strong> Never burn for over 4 consecutive hours. Keep away from drafts, pets, and children.</p>
+                </div>
+              )}
+            </div>
+
             {/* Add to Bag and Wishlist Actions */}
-            <div className="space-y-4 pt-2">
+            <div ref={buySectionRef} className="space-y-4 pt-2">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center border border-[#EAE0D5] rounded-full px-3 py-2 bg-white shadow-xs">
+                <div className="flex items-center border border-[#D6D3D1] rounded-full px-3 py-2 bg-white shadow-xs">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="text-[#766E65] hover:text-[#452638] p-1"
+                    className="text-[#44403C] hover:text-[#1C1917] p-1 cursor-pointer"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="px-4 text-xs font-semibold text-[#452638]">{quantity}</span>
+                  <span className="px-4 text-xs font-semibold text-[#1C1917]">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="text-[#766E65] hover:text-[#452638] p-1"
+                    className="text-[#44403C] hover:text-[#1C1917] p-1 cursor-pointer"
                     aria-label="Increase quantity"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -430,22 +497,22 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                     addItem(product, quantity);
                     trackAddToCart(product, quantity, product.sizeVariant);
                   }}
-                  className="flex-1 py-3.5 bg-[#452638] hover:bg-[#5D354D] active:scale-[0.98] text-[#FAF7F2] text-xs font-semibold uppercase tracking-luxury rounded-full shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all duration-150"
+                  className="flex-1 py-3.5 bg-[#A16207] hover:bg-[#854D0E] active:scale-[0.98] text-white text-xs font-semibold uppercase tracking-wider rounded-full shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all duration-150 cursor-pointer"
                 >
-                  <ShoppingBag className="w-4 h-4 text-[#B69A62]" />
+                  <ShoppingBag className="w-4 h-4 text-white" />
                   <span>ADD TO SHOPPING BAG</span>
                 </button>
 
                 <button
                   onClick={() => toggleWishlist(product.id)}
                   aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-                  className={`p-3.5 rounded-full border transition-all ${
+                  className={`p-3.5 rounded-full border transition-all cursor-pointer ${
                     wishlisted
-                      ? "bg-[#452638] border-[#452638] text-[#E8C9C5]"
-                      : "bg-white border-[#EAE0D5] text-[#452638] hover:border-[#B69A62]"
+                      ? "bg-[#1C1917] border-[#1C1917] text-white"
+                      : "bg-white border-[#D6D3D1] text-[#1C1917] hover:border-[#A16207]"
                   }`}
                 >
-                  <Heart className={`w-4 h-4 ${wishlisted ? "fill-current" : ""}`} />
+                  <Heart className={`w-4 h-4 ${wishlisted ? "fill-[#A16207] text-[#A16207]" : ""}`} />
                 </button>
               </div>
 
@@ -869,43 +936,58 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
           </div>
         )}
 
-      {/* Mobile Sticky Add to Cart Bar with iOS safe-area support */}
-      <aside aria-label="Quick purchase actions" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE0D5] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
-        <div className="flex items-center space-x-3 min-w-0">
-          <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#EAE0D5] flex-shrink-0 bg-[#FAF7F2]">
-            <Image
-              src={currentProduct.images?.[0] || "/images/logo.png"}
-              alt={currentProduct.imageAlts?.[0] || currentProduct.name}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-[#452638] truncate">{product.name}</p>
-            <div className="flex items-baseline space-x-1.5">
-              <span className="text-sm font-bold text-[#452638] tabular-nums">{formatINR(product.price)}</span>
-              {product.mrp > product.price && (
-                <span className="text-[10px] text-[#766E65] line-through tabular-nums">{formatINR(product.mrp)}</span>
-              )}
+      {/* Universal Sticky Purchase Bar with iOS safe-area support */}
+      <aside 
+        aria-label="Quick purchase actions" 
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#D6D3D1] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_32px_rgba(28,25,23,0.12)] transition-transform duration-300 ${
+          showStickyBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden border border-[#D6D3D1] flex-shrink-0 bg-white p-1">
+              <SafeImage
+                src={currentProduct.images?.[0] || ""}
+                alt={currentProduct.name}
+                fallbackTitle={currentProduct.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-serif font-semibold text-[#1C1917] truncate">{product.name}</p>
+              <div className="flex items-baseline space-x-1.5">
+                <span className="text-sm font-bold text-[#A16207] tabular-nums">{formatINR(product.price)}</span>
+                {product.mrp > product.price && (
+                  <span className="text-[10px] text-[#44403C]/70 line-through tabular-nums">MRP {formatINR(product.mrp)}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <button
-          onClick={() => {
-            addItem(product, 1);
-            trackAddToCart(product, 1, product.sizeVariant);
-          }}
-          disabled={!product.inStock}
-          className={`flex-shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-luxury flex items-center space-x-2 shadow-md transition-all duration-150 ${
-            product.inStock
-              ? "bg-[#452638] active:bg-[#5D354D] active:scale-95 text-[#FAF7F2]"
-              : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
-          }`}
-        >
-          <ShoppingBag className="w-3.5 h-3.5 text-[#B69A62]" />
-          <span>{product.inStock ? "Add to Bag" : "Out of Stock"}</span>
-        </button>
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+            <div className="hidden sm:flex items-center border border-[#D6D3D1] rounded-full px-2.5 py-1 bg-white">
+              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-1 text-[#44403C] hover:text-[#1C1917] cursor-pointer"><Minus className="w-3 h-3" /></button>
+              <span className="px-3 text-xs font-semibold text-[#1C1917]">{quantity}</span>
+              <button onClick={() => setQuantity(quantity + 1)} className="p-1 text-[#44403C] hover:text-[#1C1917] cursor-pointer"><Plus className="w-3 h-3" /></button>
+            </div>
+
+            <button
+              onClick={() => {
+                addItem(product, quantity);
+                trackAddToCart(product, quantity, product.sizeVariant);
+              }}
+              disabled={!product.inStock}
+              className={`flex-shrink-0 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center space-x-2 shadow-md transition-all duration-150 cursor-pointer active:scale-95 ${
+                product.inStock
+                  ? "bg-[#A16207] hover:bg-[#854D0E] text-white"
+                  : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4 text-white" />
+              <span>{product.inStock ? "Add to Bag" : "Out of Stock"}</span>
+            </button>
+          </div>
+        </div>
       </aside>
 
       </div>

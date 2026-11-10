@@ -7,6 +7,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { INITIAL_PRODUCTS, getStoreProducts, fetchStoreProducts } from "@/lib/products-data";
 import { formatINR } from "@/lib/shipping";
 import { Product } from "@/lib/types";
+import { SafeImage } from "@/components/SafeImage";
 
 // Static floating candle particles to prevent re-render allocations & GPU churn
 const STATIC_PARTICLES = [
@@ -205,15 +206,15 @@ export function HeroSection() {
             >
               <MagneticButton
                 href="/shop"
-                className="w-full sm:w-auto px-8 py-4 bg-[#452638] hover:bg-[#5D354D] text-[#FAF7F2] text-xs font-semibold tracking-[0.14em] uppercase rounded-full shadow-lg flex items-center justify-center space-x-2 group"
+                className="w-full sm:w-auto px-8 py-4 bg-[#A16207] hover:bg-[#854D0E] text-white text-xs font-semibold tracking-[0.14em] uppercase rounded-full shadow-lg flex items-center justify-center space-x-2 group transition-all duration-200 cursor-pointer"
               >
                 <span>SHOP COLLECTION</span>
-                <ArrowRight className="w-4 h-4 text-[#B69A62] group-hover:translate-x-1.5 transition-transform duration-300" />
+                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform duration-300" />
               </MagneticButton>
 
               <MagneticButton
                 href="/story"
-                className="w-full sm:w-auto px-8 py-4 bg-transparent hover:bg-[#F2E9DF] text-[#452638] border border-[#452638]/30 hover:border-[#452638]/60 text-xs font-semibold tracking-[0.14em] uppercase rounded-full transition-all text-center"
+                className="w-full sm:w-auto px-8 py-4 bg-transparent hover:bg-[#FAF7F2] text-[#1C1917] border-2 border-[#1C1917] hover:border-[#A16207] text-xs font-semibold tracking-[0.14em] uppercase rounded-full transition-all text-center cursor-pointer"
               >
                 DISCOVER OUR STORY
               </MagneticButton>
@@ -257,47 +258,45 @@ export function HeroSection() {
           >
             <div className="relative mx-auto max-w-lg lg:max-w-none">
               {/* Main image - uncropped with object-contain */}
-              <div className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-[#EAE0D5] group flex items-center justify-center p-3">
-                <Image
-                  src={featuredProduct.images?.[0] || "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85"}
+              <div className="relative aspect-[4/5] bg-white rounded-2xl overflow-hidden shadow-2xl border-2 border-[#D6D3D1] group flex items-center justify-center p-3">
+                <SafeImage
+                  src={featuredProduct.images?.[0] || ""}
                   alt={`${featuredProduct.name} - ${featuredProduct.netWeight}`}
-                  fill
-                  className={`object-contain p-2 transition-transform duration-[1.2s] ease-out group-hover:scale-105 ${imageLoaded ? "scale-100" : "scale-110"}`}
-                  priority
-                  onLoad={() => setImageLoaded(true)}
+                  fallbackTitle={featuredProduct.name}
+                  className={`w-full h-full object-contain p-2 transition-transform duration-[1.2s] ease-out group-hover:scale-105`}
                 />
                 
                 {/* Aura Sparkles Authenticity Mark */}
-                <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-[#EAE0D5]">
+                <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-[#D6D3D1]">
                   <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
                     <Image src="/images/logo.png" alt="Aura Sparkles" fill className="object-contain" />
                   </div>
-                  <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#452638]">
+                  <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#1C1917]">
                     AURA SPARKLES
                   </span>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#282522]/45 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/40 via-transparent to-transparent pointer-events-none" />
 
                 {/* Floating caption dynamically tied to the authoritative featured product */}
                 <Link
                   href={`/shop/${featuredProduct.slug}`}
-                  className="absolute bottom-6 left-6 right-6 p-4 rounded-xl glass-nav border border-white/60 shadow-lg text-[#282522] translate-y-2 group-hover:translate-y-0 transition-all duration-500 block hover:border-[#B69A62]"
+                  className="absolute bottom-6 left-6 right-6 p-4 rounded-xl backdrop-blur-xl bg-white/90 border border-white/80 shadow-[0_8px_32px_rgba(28,25,23,0.12)] text-[#1C1917] translate-y-2 group-hover:translate-y-0 transition-all duration-500 block hover:border-[#A16207] cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] tracking-[0.15em] uppercase text-[#B69A62] font-bold">
+                      <p className="text-[10px] tracking-[0.15em] uppercase text-[#A16207] font-bold">
                         Signature Edition · {featuredProduct.sizeVariant || "80g"} Jar
                       </p>
-                      <p className="font-serif text-base font-semibold text-[#452638]">
+                      <p className="font-serif text-base font-semibold text-[#1C1917]">
                         {featuredProduct.name}
                       </p>
-                      <p className="text-xs text-[#766E65]">
+                      <p className="text-xs text-[#44403C]">
                         Frosted Glass Soy Candle · {featuredProduct.burnTime}
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-base font-bold text-[#452638]">
+                      <span className="text-base font-bold text-[#1C1917]">
                         {formatINR(featuredProduct.price)}
                       </span>
                       <p className="text-[10px] text-emerald-700 font-medium">In Stock</p>

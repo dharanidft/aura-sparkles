@@ -3,13 +3,14 @@
 import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ShoppingBag, Star, Sparkles } from "lucide-react";
+import { Heart, ShoppingBag, Star, Sparkles, Plus } from "lucide-react";
 import { Product } from "@/lib/types";
 import { getStoreProducts } from "@/lib/products-data";
 import { useCart } from "@/lib/cart-context";
 import { formatINR } from "@/lib/shipping";
 import { getProductReviewStats } from "@/lib/reviews";
 import { trackAddToCart, trackSelectItem } from "@/lib/analytics";
+import { SafeImage } from "@/components/SafeImage";
 
 interface ProductCardProps {
   product: Product;
@@ -98,20 +99,17 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
       onMouseLeave={onLeave}
     >
       {/* Image container with uncropped object-contain display on pure white */}
-      <div className="relative aspect-[4/5] bg-white overflow-hidden flex items-center justify-center p-2 border-b border-[#EAE0D5]/40">
+      <div className="relative aspect-[4/5] bg-white overflow-hidden flex items-center justify-center p-2 border-b border-[#D6D3D1]/60">
         <Link 
           href={`/shop/${product.slug}`} 
           onClick={() => trackSelectItem(product)}
-          className="block w-full h-full relative"
+          className="block w-full h-full relative cursor-pointer"
         >
-          <Image
+          <SafeImage
             src={imgSrc}
             alt={product.imageAlts?.[0] || `${product.name} - Handcrafted Scented Candle by Aura Sparkles`}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            unoptimized={true}
-            onError={() => setImgSrc("/images/logo.png")}
-            className="object-contain p-2.5 group-hover:scale-105 transition-transform duration-500 ease-out drop-shadow-sm"
+            fallbackTitle={product.name}
+            className="w-full h-full object-contain p-2.5 group-hover:scale-105 transition-transform duration-500 ease-out drop-shadow-sm"
           />
 
           {/* shimmer overlay on hover */}
@@ -120,7 +118,7 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
 
         {/* Aura Sparkles Authenticity Seal & Badges (Top Left) */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-xs border border-[#EAE0D5] group-hover:border-[#B69A62]/60 transition-colors">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-xs border border-[#D6D3D1] group-hover:border-[#A16207]/60 transition-colors">
             <div className="relative w-3.5 h-3.5 rounded-full overflow-hidden flex-shrink-0">
               <Image
                 src="/images/logo.png"
@@ -129,18 +127,18 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
                 className="object-contain"
               />
             </div>
-            <span className="text-[8.5px] font-bold tracking-wider uppercase text-[#452638]">
+            <span className="text-[8.5px] font-bold tracking-wider uppercase text-[#1C1917]">
               Aura Sparkles
             </span>
           </div>
 
           {product.isBestseller && (
-            <span className="self-start bg-[#452638] text-white text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
+            <span className="self-start bg-[#1C1917] text-white text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
               Bestseller
             </span>
           )}
           {product.isNewArrival && (
-            <span className="self-start bg-[#B69A62] text-white text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
+            <span className="self-start bg-[#A16207] text-white text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
               New
             </span>
           )}
@@ -153,38 +151,47 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
             toggleWishlist(product.id);
           }}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all duration-300 z-10 ${
+          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all duration-300 z-10 cursor-pointer ${
             wishlisted
-              ? "bg-[#452638] text-[#E8C9C5] scale-110"
-              : "bg-white/90 text-[#452638] hover:bg-white hover:text-[#B69A62] hover:scale-110 shadow-sm"
+              ? "bg-[#1C1917] text-[#FAF7F2] scale-110"
+              : "bg-white/90 text-[#1C1917] hover:bg-white hover:text-[#A16207] hover:scale-110 shadow-sm border border-[#D6D3D1]"
           }`}
         >
-          <Heart className={`w-4 h-4 transition-transform ${wishlisted ? "fill-current" : ""}`} />
+          <Heart className={`w-4 h-4 transition-transform ${wishlisted ? "fill-[#A16207] text-[#A16207]" : ""}`} />
         </button>
 
-        {/* Quick Add Overlay — slides up (crisp 200ms ease-out per Emil Kowalski rule) */}
+        {/* Quick Add Overlay — Desktop: slides up 200ms ease-out */}
         <div className="absolute inset-x-3 bottom-3 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200 ease-out z-10 hidden sm:block">
           <button
             onClick={handleAdd}
-            className={`w-full py-2.5 text-[#FAF7F2] text-xs font-semibold uppercase tracking-[0.12em] rounded-lg shadow-md backdrop-blur-sm flex items-center justify-center space-x-2 active:scale-[0.97] transition-all duration-150 ${
+            className={`w-full py-2.5 text-white text-xs font-semibold uppercase tracking-[0.12em] rounded-lg shadow-md backdrop-blur-sm flex items-center justify-center space-x-2 active:scale-[0.97] transition-all duration-150 cursor-pointer ${
               adding
                 ? "bg-emerald-700 scale-95"
-                : "bg-[#452638]/95 hover:bg-[#452638]"
+                : "bg-[#1C1917]/95 hover:bg-[#A16207]"
             }`}
           >
             {adding ? (
               <>
-                <Sparkles className="w-3.5 h-3.5 text-[#B69A62] animate-spin-slow" />
+                <Sparkles className="w-3.5 h-3.5 text-white animate-spin-slow" />
                 <span>Added!</span>
               </>
             ) : (
               <>
-                <ShoppingBag className="w-3.5 h-3.5 text-[#B69A62]" />
+                <ShoppingBag className="w-3.5 h-3.5 text-white" />
                 <span>Quick Add</span>
               </>
             )}
           </button>
         </div>
+
+        {/* Mobile Quick Add Floating Button — touch target 44x44px */}
+        <button
+          onClick={handleAdd}
+          aria-label="Add to cart"
+          className="sm:hidden absolute bottom-2 right-2 w-10 h-10 rounded-full bg-[#1C1917] text-white shadow-md flex items-center justify-center active:scale-95 transition-transform z-10 cursor-pointer"
+        >
+          {adding ? <Sparkles className="w-4 h-4 text-[#A16207]" /> : <Plus className="w-5 h-5 text-white" />}
+        </button>
       </div>
 
       {/* Details */}
