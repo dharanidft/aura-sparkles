@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 
 export interface SafeImageProps {
   src?: string;
   alt: string;
   fallbackTitle?: string;
   className?: string;
-  loading?: "lazy" | "eager";
-  decoding?: "async" | "auto" | "sync";
+  priority?: boolean;
 }
 
 export function SafeImage({
@@ -16,11 +16,15 @@ export function SafeImage({
   alt,
   fallbackTitle,
   className = "",
-  loading = "lazy",
-  decoding = "async",
+  priority = false,
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const handleLoad = () => setIsLoaded(true);
+  const handleError = () => setHasError(true);
+
+  const resolvedAlt = alt || fallbackTitle || "Handcrafted Scented Candle by Aura Sparkles";
 
   // If no source or error occurred, show the luxury artisanal candle SVG
   if (!src || hasError) {
@@ -35,7 +39,7 @@ export function SafeImage({
       <div
         className={`relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#FAF7F2] via-[#F4EBE1] to-[#EAE0D5] select-none overflow-hidden ${className}`}
         role="img"
-        aria-label={alt || "Artisanal Scented Candle by Aura Sparkles"}
+        aria-label={resolvedAlt}
       >
         {/* Subtle decorative gold filigree ring */}
         <div className="absolute inset-1.5 border border-[#B69A62]/30 rounded-lg pointer-events-none" />
@@ -87,17 +91,16 @@ export function SafeImage({
     );
   }
 
-  const resolvedAlt = alt || fallbackTitle || "Handcrafted Scented Candle by Aura Sparkles";
-
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={src}
       alt={resolvedAlt}
-      loading={loading}
-      decoding={decoding}
-      onLoad={() => setIsLoaded(true)}
-      onError={() => setHasError(true)}
+      fill
+      unoptimized
+      priority={priority}
+      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+      onLoad={handleLoad}
+      onError={handleError}
       className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-90"} ${className}`}
     />
   );
