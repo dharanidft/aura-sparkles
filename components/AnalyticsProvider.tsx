@@ -93,7 +93,7 @@ export function AnalyticsProvider() {
         </>
       )}
 
-      {/* Meta Pixel (Fallback if not already mounted in <head>) */}
+      {/* Meta Pixel (Fallback if not already mounted in document head) */}
       {META_PIXEL_ID && (
         <Script
           id="meta-pixel-fallback"

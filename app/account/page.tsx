@@ -254,7 +254,7 @@ function AccountDashboardContent() {
             <User className="w-8 h-8" />
           </div>
           <div className="space-y-2">
-            <h1 className="font-serif text-3xl text-[#452638]">Customer Sign In</h1>
+            <h2 className="font-serif text-3xl text-[#452638]">Customer Sign In</h2>
             <p className="text-xs sm:text-sm text-[#766E65]">
               Sign in with your verified email address to view orders, manage delivery addresses, and track real-time shipments.
             </p>

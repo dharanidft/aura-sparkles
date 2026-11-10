@@ -82,17 +82,21 @@ export function SafeImage({
     );
   }
 
+  const { alt: propAlt, ...restProps } = props;
+  const imageAlt = alt || propAlt || fallbackTitle || "Handcrafted Scented Candle by Aura Sparkles";
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
+      {...restProps}
       src={src}
-      alt={alt}
+      alt={imageAlt}
       loading="lazy"
       decoding="async"
       onLoad={() => setIsLoaded(true)}
       onError={() => setHasError(true)}
       className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-90"} ${className}`}
-      {...props}
     />
   );
 }
+

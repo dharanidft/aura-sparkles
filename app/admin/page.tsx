@@ -931,9 +931,9 @@ export default function AdminPage() {
           </div>
 
           <div className="space-y-1">
-            <h1 className="font-serif text-2xl text-[#452638] font-medium">
+            <h2 className="font-serif text-2xl text-[#452638] font-medium">
               AURA SPARKLES Admin
-            </h1>
+            </h2>
             <p className="text-xs text-[#766E65]">
               Protected store operations, product management &amp; typography portal.
             </p>
