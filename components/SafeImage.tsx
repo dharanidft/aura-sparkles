@@ -2,17 +2,22 @@
 
 import React, { useState } from "react";
 
-interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+export interface SafeImageProps {
+  src?: string;
+  alt: string;
   fallbackTitle?: string;
   className?: string;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "auto" | "sync";
 }
 
 export function SafeImage({
   src,
-  alt = "Artisanal Candle",
+  alt,
   fallbackTitle,
   className = "",
-  ...props
+  loading = "lazy",
+  decoding = "async",
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -30,7 +35,7 @@ export function SafeImage({
       <div
         className={`relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#FAF7F2] via-[#F4EBE1] to-[#EAE0D5] select-none overflow-hidden ${className}`}
         role="img"
-        aria-label={alt}
+        aria-label={alt || "Artisanal Scented Candle by Aura Sparkles"}
       >
         {/* Subtle decorative gold filigree ring */}
         <div className="absolute inset-1.5 border border-[#B69A62]/30 rounded-lg pointer-events-none" />
@@ -82,21 +87,18 @@ export function SafeImage({
     );
   }
 
-  const { alt: propAlt, ...restProps } = props;
-  const imageAlt = alt || propAlt || fallbackTitle || "Handcrafted Scented Candle by Aura Sparkles";
+  const resolvedAlt = alt || fallbackTitle || "Handcrafted Scented Candle by Aura Sparkles";
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      {...restProps}
       src={src}
-      alt={imageAlt}
-      loading="lazy"
-      decoding="async"
+      alt={resolvedAlt}
+      loading={loading}
+      decoding={decoding}
       onLoad={() => setIsLoaded(true)}
       onError={() => setHasError(true)}
       className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-90"} ${className}`}
     />
   );
 }
-
